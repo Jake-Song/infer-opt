@@ -1,7 +1,25 @@
 [project]
 name = "infer-opt"
 version = "0.1.0"
-description = "Add your description here"
+description = "Decoder-only Transformer inference optimization research template"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "numpy>=2.0",
+    "torch>=2.6",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+infer-opt = "infer_opt.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
