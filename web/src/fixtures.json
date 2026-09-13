@@ -1,0 +1,534 @@
+[
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 1024,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 2816
+    },
+    "batch": 1,
+    "prompt": 1024,
+    "output": 64,
+    "precision": "float16",
+    "parameter_count": 245924864,
+    "resident_kv": 17809408,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 1024,
+        "context_len": 1024,
+        "flops": {
+          "linear": 369367187456,
+          "attention": 34393292800,
+          "lm_head": 67108864000,
+          "total": 470869344256
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 16777216,
+          "kv_write": 16777216,
+          "activations": 1072168960,
+          "total": 1597573120
+        },
+        "intensity": 294.7404024023639,
+        "ceiling": 100
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 1025,
+        "flops": {
+          "linear": 360710144,
+          "attention": 67174400,
+          "lm_head": 65536000,
+          "total": 493420544
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 16793600,
+          "kv_write": 16384,
+          "activations": 1047040,
+          "total": 509706752
+        },
+        "intensity": 0.9680478864835599,
+        "ceiling": 0.9680478864835599
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 1087,
+        "flops": {
+          "linear": 360710144,
+          "attention": 71237632,
+          "lm_head": 65536000,
+          "total": 497483776
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 17809408,
+          "kv_write": 16384,
+          "activations": 1047040,
+          "total": 510722560
+        },
+        "intensity": 0.9740783254219277,
+        "ceiling": 0.9740783254219277
+      }
+    ]
+  },
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 1024,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 2816
+    },
+    "batch": 32,
+    "prompt": 1024,
+    "output": 64,
+    "precision": "float16",
+    "parameter_count": 245924864,
+    "resident_kv": 569901056,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 1024,
+        "context_len": 1024,
+        "flops": {
+          "linear": 11819749998592,
+          "attention": 1100585369600,
+          "lm_head": 2147483648000,
+          "total": 15067819016192
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 536870912,
+          "kv_write": 536870912,
+          "activations": 34309406720,
+          "total": 35874998272
+        },
+        "intensity": 420.0089126680809,
+        "ceiling": 100
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 1025,
+        "flops": {
+          "linear": 11542724608,
+          "attention": 2149580800,
+          "lm_head": 2097152000,
+          "total": 15789457408
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 537395200,
+          "kv_write": 524288,
+          "activations": 33505280,
+          "total": 1063274496
+        },
+        "intensity": 14.849841190961849,
+        "ceiling": 14.849841190961849
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 1087,
+        "flops": {
+          "linear": 11542724608,
+          "attention": 2279604224,
+          "lm_head": 2097152000,
+          "total": 15919480832
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 569901056,
+          "kv_write": 524288,
+          "activations": 33505280,
+          "total": 1095780352
+        },
+        "intensity": 14.527985287328825,
+        "ceiling": 14.527985287328825
+      }
+    ]
+  },
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 1024,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 2816
+    },
+    "batch": 1,
+    "prompt": 32768,
+    "output": 512,
+    "precision": "float16",
+    "parameter_count": 245924864,
+    "resident_kv": 545243136,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 32768,
+        "context_len": 32768,
+        "flops": {
+          "linear": 11819749998592,
+          "attention": 35185445830656,
+          "lm_head": 2147483648000,
+          "total": 49152679477248
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 536870912,
+          "kv_write": 536870912,
+          "activations": 34309406720,
+          "total": 35874998272
+        },
+        "intensity": 1370.1095984612512,
+        "ceiling": 100
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 32769,
+        "flops": {
+          "linear": 360710144,
+          "attention": 2147549184,
+          "lm_head": 65536000,
+          "total": 2573795328
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 536887296,
+          "kv_write": 16384,
+          "activations": 1047040,
+          "total": 1029800448
+        },
+        "intensity": 2.499314632265532,
+        "ceiling": 2.499314632265532
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 33279,
+        "flops": {
+          "linear": 360710144,
+          "attention": 2180972544,
+          "lm_head": 65536000,
+          "total": 2607218688
+        },
+        "traffic": {
+          "weights": 491849728,
+          "kv_read": 545243136,
+          "kv_write": 16384,
+          "activations": 1047040,
+          "total": 1038156288
+        },
+        "intensity": 2.5113932440969813,
+        "ceiling": 2.5113932440969813
+      }
+    ]
+  },
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 256,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 704
+    },
+    "batch": 2,
+    "prompt": 16,
+    "output": 1,
+    "precision": "float32",
+    "parameter_count": 27664640,
+    "resident_kv": 262144,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 16,
+        "context_len": 16,
+        "flops": {
+          "linear": 721420288,
+          "attention": 4456448,
+          "lm_head": 524288000,
+          "total": 1250164736
+        },
+        "traffic": {
+          "weights": 110658560,
+          "kv_read": 262144,
+          "kv_write": 262144,
+          "activations": 19824640,
+          "total": 131007488
+        },
+        "intensity": 9.542696796079321,
+        "ceiling": 9.542696796079321
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 17,
+        "flops": {
+          "linear": 45088768,
+          "attention": 557056,
+          "lm_head": 32768000,
+          "total": 78413824
+        },
+        "traffic": {
+          "weights": 110658560,
+          "kv_read": 278528,
+          "kv_write": 16384,
+          "activations": 1239040,
+          "total": 112192512
+        },
+        "intensity": 0.6989220813595831,
+        "ceiling": 0.6989220813595831
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 16,
+        "flops": {
+          "linear": 45088768,
+          "attention": 524288,
+          "lm_head": 32768000,
+          "total": 78381056
+        },
+        "traffic": {
+          "weights": 110658560,
+          "kv_read": 262144,
+          "kv_write": 16384,
+          "activations": 1239040,
+          "total": 112176128
+        },
+        "intensity": 0.6987320510830968,
+        "ceiling": 0.6987320510830968
+      }
+    ]
+  },
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 512,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 1408
+    },
+    "batch": 8,
+    "prompt": 256,
+    "output": 16,
+    "precision": "bfloat16",
+    "parameter_count": 77873664,
+    "resident_kv": 17760256,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 256,
+        "context_len": 256,
+        "flops": {
+          "linear": 184683593728,
+          "attention": 8623489024,
+          "lm_head": 67108864000,
+          "total": 260415946752
+        },
+        "traffic": {
+          "weights": 155747328,
+          "kv_read": 16777216,
+          "kv_write": 16777216,
+          "activations": 1137704960,
+          "total": 1327006720
+        },
+        "intensity": 196.2431258464162,
+        "ceiling": 100
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 257,
+        "flops": {
+          "linear": 721420288,
+          "attention": 67371008,
+          "lm_head": 262144000,
+          "total": 1050935296
+        },
+        "traffic": {
+          "weights": 155747328,
+          "kv_read": 16842752,
+          "kv_write": 65536,
+          "activations": 4444160,
+          "total": 177099776
+        },
+        "intensity": 5.934142435053108,
+        "ceiling": 5.934142435053108
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 271,
+        "flops": {
+          "linear": 721420288,
+          "attention": 71041024,
+          "lm_head": 262144000,
+          "total": 1054605312
+        },
+        "traffic": {
+          "weights": 155747328,
+          "kv_read": 17760256,
+          "kv_write": 65536,
+          "activations": 4444160,
+          "total": 178017280
+        },
+        "intensity": 5.924173833012166,
+        "ceiling": 5.924173833012166
+      }
+    ]
+  },
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 2048,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 5632
+    },
+    "batch": 64,
+    "prompt": 4096,
+    "output": 128,
+    "precision": "float32",
+    "parameter_count": 852559872,
+    "resident_kv": 17712545792,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 4096,
+        "context_len": 4096,
+        "flops": {
+          "linear": 378231999954944,
+          "attention": 70385924046848,
+          "lm_head": 34359738368000,
+          "total": 482977662369792
+        },
+        "traffic": {
+          "weights": 3410239488,
+          "kv_read": 17179869184,
+          "kv_write": 17179869184,
+          "activations": 1064346583040,
+          "total": 1102116560896
+        },
+        "intensity": 438.2273885596459,
+        "ceiling": 100
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 4097,
+        "flops": {
+          "linear": 92341796864,
+          "attention": 34368126976,
+          "lm_head": 8388608000,
+          "total": 135098531840
+        },
+        "traffic": {
+          "weights": 3410239488,
+          "kv_read": 17184063488,
+          "kv_write": 4194304,
+          "activations": 259850240,
+          "total": 20858347520
+        },
+        "intensity": 6.4769527744449045,
+        "ceiling": 6.4769527744449045
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 4223,
+        "flops": {
+          "linear": 92341796864,
+          "attention": 35425091584,
+          "lm_head": 8388608000,
+          "total": 136155496448
+        },
+        "traffic": {
+          "weights": 3410239488,
+          "kv_read": 17712545792,
+          "kv_write": 4194304,
+          "activations": 259850240,
+          "total": 21386829824
+        },
+        "intensity": 6.366324395362618,
+        "ceiling": 6.366324395362618
+      }
+    ]
+  },
+  {
+    "config": {
+      "vocab_size": 32000,
+      "hidden_size": 4096,
+      "n_layers": 16,
+      "n_heads": 16,
+      "n_kv_heads": 4,
+      "intermediate_size": 11264
+    },
+    "batch": 128,
+    "prompt": 32768,
+    "output": 512,
+    "precision": "float16",
+    "parameter_count": 3147960320,
+    "resident_kv": 279164485632,
+    "ridge": 100.0,
+    "steps": [
+      {
+        "new_tokens": 32768,
+        "context_len": 32768,
+        "flops": {
+          "linear": 24206847997116416,
+          "attention": 18014948265295872,
+          "lm_head": 1099511627776000,
+          "total": 43321307890188288
+        },
+        "traffic": {
+          "weights": 6295920640,
+          "kv_read": 274877906944,
+          "kv_write": 274877906944,
+          "activations": 16761109872640,
+          "total": 17317161607168
+        },
+        "intensity": 2501.6402152334554,
+        "ceiling": 100
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 32769,
+        "flops": {
+          "linear": 738734374912,
+          "attention": 1099545182208,
+          "lm_head": 33554432000,
+          "total": 1871833989120
+        },
+        "traffic": {
+          "weights": 6295920640,
+          "kv_read": 274886295552,
+          "kv_write": 8388608,
+          "activations": 511508480,
+          "total": 281702113280
+        },
+        "intensity": 6.64472824617924,
+        "ceiling": 6.64472824617924
+      },
+      {
+        "new_tokens": 1,
+        "context_len": 33279,
+        "flops": {
+          "linear": 738734374912,
+          "attention": 1116657942528,
+          "lm_head": 33554432000,
+          "total": 1888946749440
+        },
+        "traffic": {
+          "weights": 6295920640,
+          "kv_read": 279164485632,
+          "kv_write": 8388608,
+          "activations": 511508480,
+          "total": 285980303360
+        },
+        "intensity": 6.605163807600207,
+        "ceiling": 6.605163807600207
+      }
+    ]
+  }
+]

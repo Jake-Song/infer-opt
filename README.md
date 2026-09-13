@@ -28,6 +28,50 @@ Use `--json` for JSON-only output suitable for an experiment runner. CPU is alwa
 
 ## Curriculum
 
+### Interactive website
+
+The Korean **Inference Lab** playground connects workload controls to a roofline chart,
+prefill/decode latency estimates, a token timeline, and memory breakdowns. Guided experiments
+compare batching, long context, and compute versus bandwidth. Everything runs in the browser;
+Python, a GPU, and a backend are not needed to use the site.
+
+With Node.js 22.12+ and npm installed:
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+Open **http://127.0.0.1:5173**. Use **기준 저장** to pin the current configuration for comparison,
+or select an experiment to load both its baseline and changed settings. **초기화** restores defaults.
+
+All displayed performance is **analytic, not measured**. Hardware defaults are a hypothetical
+100 TFLOP/s and 1000 GB/s profile. Memory traffic follows `infer_opt.profiling`, including its
+baseline activation-traffic approximation. Precision changes element size, not the compute input.
+The roofline shows modeled ceilings, while latency is a lower-bound estimate within that model.
+Open **계산 가정과 한계 알아보기** in the site for accounting conventions and limitations.
+
+Frontend validation and a production preview:
+
+```bash
+cd web
+npm test
+npm run build
+npx playwright install chromium  # first browser-test run only
+npm run test:browser
+npm run preview
+```
+
+The static production site is built into `web/dist/`. Fonts are bundled locally.
+To regenerate TypeScript test fixtures from the Python helpers, run from the repository root:
+
+```bash
+uv run python web/tests/generate_fixtures.py
+```
+
+### Notebooks
+
 This repository is both an experiment template and a course: the notebooks in `notebooks/`
 use the very model and cache defined here as their subject, so a lesson and a benchmark are
 the same artifact. Notebooks are committed with their outputs, measured on the machine named

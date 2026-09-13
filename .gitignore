@@ -11,3 +11,9 @@ wheels/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Website dependencies and generated reports
+node_modules/
+web/test-results/
+web/playwright-report/
+*.tsbuildinfo
