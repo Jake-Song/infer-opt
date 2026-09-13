@@ -56,7 +56,7 @@ def check_cached_decode(config: ModelConfig, run: RunConfig) -> dict[str, float 
     }
 
 
-def _synchronize(device: torch.device) -> None:
+def synchronize(device: torch.device) -> None:
     if device.type == "cuda":
         torch.cuda.synchronize(device)
 
@@ -78,18 +78,18 @@ def benchmark(config: ModelConfig, run: RunConfig) -> dict[str, object]:
     for _ in range(run.warmup):
         prefill_once()
         decode_once()
-    _synchronize(device)
+    synchronize(device)
     started = time.perf_counter()
     for _ in range(run.iterations):
         prefill_once()
-    _synchronize(device)
+    synchronize(device)
     prefill_seconds = time.perf_counter() - started
 
-    _synchronize(device)
+    synchronize(device)
     started = time.perf_counter()
     for _ in range(run.iterations):
         decode_once()
-    _synchronize(device)
+    synchronize(device)
     decode_seconds = time.perf_counter() - started
     prefill_tokens = run.iterations * run.batch_size * run.prompt_len
     decode_tokens = run.iterations * run.batch_size * run.decode_len

@@ -17,6 +17,12 @@ build-backend = "hatchling.build"
 dev = [
     "pytest>=8.0",
 ]
+notebooks = [
+    "ipykernel>=6.29",
+    "matplotlib>=3.9",
+    "nbformat>=5.10",
+    "nbconvert>=7.16",
+]
 
 [project.scripts]
 infer-opt = "infer_opt.cli:main"
