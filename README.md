@@ -86,10 +86,17 @@ uv run jupyter lab notebooks/
 |---|---|---|
 | 1 | [Inference performance fundamentals](notebooks/01_inference_performance_basics.ipynb) | latency vs throughput, TTFT vs TPOT, prefill vs decode, FLOPs / bandwidth / arithmetic intensity, compute- vs memory-bound, the roofline model, and how batch size, sequence length and hidden dimension move a workload across it |
 | 2 | [Operation breakdown and attention](notebooks/02_operation_breakdown_and_attention.ipynb) | splitting a step into embedding / norm / QKV / RoPE / attention / KV read-write / output projection / MLP / LM head / sampling and attributing device time to each, measured share against FLOP share, the causal mask decode does not need, MHA vs MQA vs GQA, FlashAttention-style tiling, KV cache layout, PagedAttention, and sampling cost |
+| 2A | [FlashAttention lab (Colab, A100)](notebooks/02b_flash_attention_a100_colab.ipynb) | online softmax derived and verified, the tiled attention loop written out by hand, all four SDPA backends including the real `FLASH_ATTENTION`, memory scaling to the limits of an A100, the FlashAttention 2 kernel loaded from the Hub with `kernels`, and `flash_attn_with_kvcache` for variable-length decode |
 
 `infer_opt.profiling` holds the measurement and analytic-cost helpers the notebooks share:
 CUDA-event timing, CUDA-graph capture (for workloads too small to keep the host ahead of the
 GPU), measured peak FLOPs and bandwidth, and FLOP/byte counts for any prefill or decode step.
+
+Chapter 2A is the exception to the rule above: it is **committed without outputs**, because the
+machine these notebooks are measured on is an RTX 2080 SUPER (sm75) and the kernel the lab exists
+to study needs sm80 or newer. It is self-contained -- it imports nothing from `infer_opt` and needs
+only the `torch` that Colab already ships -- so open it in Colab on an A100 runtime and the first
+numbers in it will be yours. Chapter 2 §7 covers the same ground as far as a Turing card allows.
 
 `infer_opt.opprofile` takes that one step further and splits a single forward step by operation.
 `infer_opt.model` names each span through `infer_opt.regions.region` -- free unless a profiler is
