@@ -39,7 +39,7 @@ def check_cached_decode(config: ModelConfig, run: RunConfig) -> dict[str, float 
     model, device, dtype, prompt, continuation = prepare(config, run)
     all_tokens = torch.cat((prompt, continuation), dim=1)
     full_logits = model(all_tokens)
-    cache = model.new_cache(run.batch_size, device, dtype)
+    cache = make_cache(model, run, device, dtype)
     pieces = [model.forward_prefill(prompt, cache)]
     for index in range(run.decode_len):
         pieces.append(model.forward_decode(continuation[:, index : index + 1], cache))
@@ -56,6 +56,13 @@ def check_cached_decode(config: ModelConfig, run: RunConfig) -> dict[str, float 
     }
 
 
+def make_cache(model: DecoderOnlyTransformer, run: RunConfig, device: torch.device, dtype: torch.dtype):
+    """Build whichever KV cache ``run`` asks for; the model treats them alike."""
+    if run.cache == "paged":
+        return model.new_paged_cache(run.batch_size, device, dtype, block_size=run.block_size)
+    return model.new_cache(run.batch_size, device, dtype)
+
+
 def synchronize(device: torch.device) -> None:
     if device.type == "cuda":
         torch.cuda.synchronize(device)
@@ -66,11 +73,11 @@ def benchmark(config: ModelConfig, run: RunConfig) -> dict[str, object]:
     model, device, dtype, prompt, continuation = prepare(config, run)
 
     def prefill_once() -> None:
-        cache = model.new_cache(run.batch_size, device, dtype)
+        cache = make_cache(model, run, device, dtype)
         model.forward_prefill(prompt, cache)
 
     def decode_once() -> None:
-        cache = model.new_cache(run.batch_size, device, dtype)
+        cache = make_cache(model, run, device, dtype)
         model.forward_prefill(prompt, cache)
         for index in range(run.decode_len):
             model.forward_decode(continuation[:, index : index + 1], cache)

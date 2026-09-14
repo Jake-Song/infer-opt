@@ -43,6 +43,8 @@ class RunConfig:
     device: str = "auto"
     dtype: str = "float32"
     strategy: str = "eager_sdpa"
+    cache: str = "contiguous"
+    block_size: int = 16
 
     def __post_init__(self) -> None:
         if min(self.batch_size, self.prompt_len, self.decode_len, self.iterations) <= 0:
@@ -51,6 +53,10 @@ class RunConfig:
             raise ValueError("warmup cannot be negative")
         if self.dtype not in {"float32", "float16", "bfloat16"}:
             raise ValueError("dtype must be float32, float16, or bfloat16")
+        if self.cache not in {"contiguous", "paged"}:
+            raise ValueError("cache must be contiguous or paged")
+        if self.block_size <= 0:
+            raise ValueError("block_size must be positive")
 
     def to_dict(self) -> dict[str, int | str]:
         return asdict(self)

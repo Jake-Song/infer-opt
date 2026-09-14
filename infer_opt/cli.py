@@ -18,6 +18,8 @@ def _add_config_arguments(parser: argparse.ArgumentParser) -> None:
         kwargs: dict[str, object] = {"default": field.default}
         if field.name == "strategy":
             kwargs["choices"] = available_attention_strategies()
+        elif field.name == "cache":
+            kwargs["choices"] = ("contiguous", "paged")
         elif isinstance(field.default, int):
             kwargs["type"] = int
         else:
