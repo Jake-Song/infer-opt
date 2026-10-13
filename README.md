@@ -101,6 +101,34 @@ Its original scalar fields retain arithmetic-mean semantics; `wall_ms`, `cuda_ms
 and `samples` add distributions and raw observations. Older decode measurements
 included prefill/cache setup and must not be compared directly with v2 results.
 
+### Local A100 result analysis
+
+Open [`04_a100_roofline_analysis.ipynb`](notebooks/04_a100_roofline_analysis.ipynb)
+with the repository's Python kernel. It reads local files without running inference
+or connecting to a GPU runtime.
+
+```bash
+uv sync --group notebooks
+# Select .venv as the notebook kernel in VS Code or Jupyter.
+```
+
+Set `BASELINE_PATH` to a saved baseline `results.json`. The default points to
+`experiments/baseline/a100-0.5b-bf16-20261014-cli/results.json`.
+If the raw run is unavailable, explicitly select the tracked summary at
+`notebooks/assets/a100_baseline_20261014_summary.json` (no per-repeat samples).
+Optionally set `PROFILE_PATH` to a saved `roofline_results.json` for operation GPU
+times, measured reference ceilings, and per-operation roofline charts.
+
+The baseline contains whole-phase timings only: missing operation times remain
+missing. The notebook separates those measurements from operation FLOP/byte models
+and an adjustable **hypothetical** roof; its defaults are not A100 measurements or
+specifications. Logical bytes/time is not measured HBM bandwidth. Profiled fixed-prefix
+one-token decode is kept separate from the baseline's 128-step average.
+
+Derived CSVs, PNGs, and an input SHA-256 manifest are saved under
+`experiments/roofline/local-analysis/`; source result files are not modified.
+Regenerate the notebook with `uv run python scripts/build_a100_roofline_analysis_notebook.py`.
+
 ## Curriculum
 
 ### Interactive website

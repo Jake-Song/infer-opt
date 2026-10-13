@@ -14,6 +14,7 @@ wheels/
 
 # Local Colab run outputs and source archives
 experiments/baseline/
+experiments/roofline/
 
 # Website dependencies and generated reports
 node_modules/

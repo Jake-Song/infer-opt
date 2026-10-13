@@ -1,0 +1,66 @@
+{
+  "origin": "A100 Colab CLI baseline, 2026-10-14 KST; measured before operation profiling",
+  "source_commit": "5ebd46d308115bfad019f3b3e97ec56f4c354ba3",
+  "source_sha256": "c75446555576fb393c745c779e42735a2f9b1ef977597adfd679a468456d1598",
+  "environment": {
+    "gpu_name": "NVIDIA A100-SXM4-40GB",
+    "gpu_memory_bytes": 42405855232,
+    "torch": "2.11.0+cu130",
+    "cuda_build": "13.0"
+  },
+  "model": {
+    "hidden_size": 2048,
+    "intermediate_size": 5632,
+    "max_seq_len": 16384,
+    "n_heads": 16,
+    "n_kv_heads": 4,
+    "n_layers": 8,
+    "rms_norm_eps": 1e-05,
+    "vocab_size": 32768
+  },
+  "parameter_count": 494962688,
+  "run": {
+    "batch_size": 1,
+    "block_size": 16,
+    "cache": "contiguous",
+    "decode_len": 128,
+    "device": "cuda",
+    "dtype": "bfloat16",
+    "iterations": 10,
+    "prompt_len": 128,
+    "seed": 0,
+    "strategy": "eager_sdpa",
+    "warmup": 3
+  },
+  "status": "passed",
+  "conditions": [
+    {
+      "prompt_len": 128,
+      "status": "passed",
+      "validation_passed": true,
+      "prefill_wall_median_ms": 10.52205600000633,
+      "decode_wall_median_ms_per_token": 10.093378835937472
+    },
+    {
+      "prompt_len": 512,
+      "status": "passed",
+      "validation_passed": true,
+      "prefill_wall_median_ms": 10.624764999995762,
+      "decode_wall_median_ms_per_token": 10.166892507812442
+    },
+    {
+      "prompt_len": 2048,
+      "status": "passed",
+      "validation_passed": true,
+      "prefill_wall_median_ms": 18.017882499989923,
+      "decode_wall_median_ms_per_token": 10.071356777343667
+    },
+    {
+      "prompt_len": 8192,
+      "status": "passed",
+      "validation_passed": true,
+      "prefill_wall_median_ms": 104.70028450001223,
+      "decode_wall_median_ms_per_token": 10.13579894531247
+    }
+  ]
+}
