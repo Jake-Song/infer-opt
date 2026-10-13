@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import fields
+from pathlib import Path
 
 from .config import ModelConfig, RunConfig
 from .runner import benchmark, check_cached_decode
@@ -42,7 +43,29 @@ def main(argv: list[str] | None = None) -> int:
         child = subparsers.add_parser(command)
         _add_config_arguments(child)
         child.add_argument("--json", action="store_true", help="emit only the JSON result record")
+    baseline = subparsers.add_parser("baseline", help="correctness-gated B=1 0.5B prefill/decode sweep")
+    baseline.add_argument("--output", type=Path, required=True)
+    baseline.add_argument("--prompt-lengths", type=int, nargs="+", default=[128, 512, 2048, 8192])
+    baseline.add_argument("--decode-len", type=int, default=128)
+    baseline.add_argument("--warmup", type=int, default=3)
+    baseline.add_argument("--iterations", type=int, default=10)
+    baseline.add_argument("--seed", type=int, default=0)
+    baseline.add_argument("--device", default="cuda")
+    baseline.add_argument("--dtype", choices=("float32", "float16", "bfloat16"), default="bfloat16")
+    baseline.add_argument("--expected-gpu", help="fail if the actual GPU name does not contain this value")
+    baseline.add_argument("--budget-minutes", type=float, default=120)
     args = parser.parse_args(argv)
+    if args.command == "baseline":
+        from .baseline import run_baseline
+
+        options = vars(args).copy()
+        options.pop("command")
+        options["prompt_lengths"] = tuple(options["prompt_lengths"])
+        result = run_baseline(**options)
+        print(f"baseline: {result['status']}; results: {args.output}")
+        if "error" in result:
+            print(result["error"])
+        return 0 if result["status"] == "passed" else 1
     model, run = _configs(args)
     result = check_cached_decode(model, run) if args.command == "check" else benchmark(model, run)
     payload = json.dumps(result, sort_keys=True)

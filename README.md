@@ -26,6 +26,81 @@ uv run infer-opt benchmark --device auto --prompt-len 128 --decode-len 64 --iter
 
 Use `--json` for JSON-only output suitable for an experiment runner. CPU is always supported. CUDA timings synchronize before and after each timed region, but results must be measured on the target GPU and with the intended dtype/model shape.
 
+### Reproducible 0.5B baseline
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/03_a100_baseline_colab.ipynb)
+
+To run the A100 experiment yourself, upload
+[`notebooks/03_a100_baseline_colab.ipynb`](notebooks/03_a100_baseline_colab.ipynb)
+to Colab, select an **A100 GPU**, and run all cells. This standalone notebook
+includes the current source snapshot, verifies hardware and correctness, measures
+all four prompt lengths, displays the results, and downloads a ZIP with raw data,
+logs, charts, and source. It needs no Colab CLI, GitHub clone, or Drive mount.
+After downloading, disconnect and delete the runtime in Colab.
+
+Regenerate the embedded source snapshot after changing the experiment code:
+
+```bash
+uv run python scripts/build_a100_baseline_notebook.py
+```
+
+Run the correctness-gated prefill/decode sweep on an existing GPU:
+
+```bash
+uv run infer-opt baseline --expected-gpu A100 --output experiments/baseline/my-run
+```
+
+Or allocate one Colab A100, run tests and measurements, download the results, and stop
+the session with the authenticated `colab` CLI:
+
+```bash
+uv run python scripts/run_baseline_colab.py --output experiments/baseline/my-a100-run
+```
+
+To use an A100 you already connected from the terminal, pass its session name:
+
+```bash
+uv run python scripts/run_baseline_colab.py --session my-a100 --output experiments/baseline/my-existing-a100-run
+```
+
+`--session` skips allocation and uses a fresh result directory on that runtime.
+Existing sessions stay connected unless `--stop-session` is added. New sessions
+created by the runner are always stopped. If any session is already active, the
+runner requires `--session` rather than requesting another runtime. The actual GPU
+is checked inside Colab in both modes; `colab.log` and `lifecycle.json` record the
+commands, CLI executable, failure stage, and final session state.
+
+The default is **494,962,688 random parameters**, BF16, B=1, `eager_sdpa`, contiguous
+KV cache, prompts **128/512/2048/8192**, and **128 fixed-token decode steps**.
+The model uses vocabulary 32768, hidden size 2048, 8 layers, 16 query heads,
+4 KV heads, intermediate size 5632, and maximum sequence length 16384.
+Each condition has 3 warmups and 10 measured repetitions. Override the workload with
+`--prompt-lengths`, `--decode-len`, `--warmup`, `--iterations`, and `--seed` on the
+`baseline` command. Its default device is CUDA; it never silently falls back to CPU.
+The Colab runner has a 120-minute budget including cleanup and keeps the runtime's
+installed CUDA PyTorch. It executes the bundled source without installing the project.
+
+Prefill includes KV writes and vocabulary logits for **every prompt position**.
+Decode measures only the sequential one-token forward calls, with a growing cache;
+cache allocation/reset and the prerequisite prefill finish before timing starts.
+Model setup, input transfer, RoPE initialization, warmup, validation and sampling
+are outside both timing regions. Wall time is the primary measurement; it includes
+Python dispatch, CUDA event recording and completion synchronization. CUDA event
+elapsed time is also saved and may include host launch gaps.
+
+`results.json` contains every repetition, environment/source identity and correctness
+checks; `summary.csv` and the Korean `report.md` show medians and throughput. Decode
+ms/token divides each full decode sequence by its step count; p90 is over repetition
+averages, **not individual token latencies**. Full logits and every layer's valid K/V
+must match the full causal reference (`atol=rtol=0.02` for BF16); cache prefix and
+position checks must also pass. Failed conditions have diagnostic records and no
+performance results. Existing output files are never overwritten.
+
+Benchmark JSON schema **v2** also applies to the existing `benchmark` command.
+Its original scalar fields retain arithmetic-mean semantics; `wall_ms`, `cuda_ms`
+and `samples` add distributions and raw observations. Older decode measurements
+included prefill/cache setup and must not be compared directly with v2 results.
+
 ## Curriculum
 
 ### Interactive website
