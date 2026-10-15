@@ -1,0 +1,19 @@
+{
+  "compile_config": {
+    "fullgraph": false,
+    "dynamic": null,
+    "backend": "inductor",
+    "mode": "reduce-overhead",
+    "options": null
+  },
+  "dtype": "bfloat16",
+  "attention": "sdpa",
+  "prompt_tokens": 128,
+  "output_tokens": 128,
+  "prefill": "native generate eager",
+  "decode": "native generate automatic compile",
+  "custom_torch_compile_options": null,
+  "atol": 0.02,
+  "rtol": 0.02,
+  "generation_policy": "greedy, fixed 128 outputs for reproducible comparison; not Qwen sampling recommendation"
+}

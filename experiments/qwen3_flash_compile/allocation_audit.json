@@ -1,0 +1,12 @@
+{
+  "allocation_attempts": 1,
+  "session": "qwen3-flash-1015-134612-afa5",
+  "allocation_attempt_utc": "2026-10-15T13:46:14.437028+00:00",
+  "cleanup_record_written_utc": "2026-10-15T13:57:11.300033+00:00",
+  "allocation_upper_bound_seconds": 656.863005,
+  "budget_seconds": 7200,
+  "within_budget": true,
+  "stop_exit_code": 0,
+  "server_has_no_active_sessions": true,
+  "note": "Conservative interval from allocation request until local cleanup record write; includes connection recovery and both runs."
+}

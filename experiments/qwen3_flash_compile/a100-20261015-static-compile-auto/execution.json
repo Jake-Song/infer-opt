@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "requested_gpu": "A100 80GB",
+  "model": "Qwen/Qwen3-14B",
+  "revision": "40c069824f4251a91eefaf281ebe4c544efd3e18",
+  "cache": "static",
+  "attention": "auto",
+  "compile": {
+    "fullgraph": true,
+    "dynamic": false,
+    "triton.cudagraphs": false
+  },
+  "error": "RuntimeError: logits/KV validation failed at prompt length 128; timing blocked"
+}

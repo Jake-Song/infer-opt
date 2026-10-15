@@ -1,0 +1,16 @@
+{
+  "session": "qwen3-flash-1015-134612-afa5",
+  "budget_minutes": 100.0,
+  "requested_gpu": "A100 80GB (--high-mem)",
+  "status": "failed",
+  "run_id": "qwen3-flash-1015-135256-95e7",
+  "reused_session": true,
+  "attention": "auto",
+  "source_sha256": "dca5ac693029ac3c2391d77520d29d5c247d38d430a20ad8367a28eb7c4d5f93",
+  "stage": "recovery",
+  "allocation_attempt_utc": "2026-10-15T13:52:58.750242+00:00",
+  "stop_exit_code": 0,
+  "final_sessions_output": "[colab] No active sessions found on server.\n",
+  "server_has_no_active_sessions": true,
+  "elapsed_seconds": 254.59501792399988
+}

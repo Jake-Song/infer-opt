@@ -1,0 +1,14 @@
+{
+  "status": "incompatible",
+  "requested_gpu": "A100 80GB",
+  "model": "Qwen/Qwen3-14B",
+  "revision": "40c069824f4251a91eefaf281ebe4c544efd3e18",
+  "cache": "static",
+  "attention": "forced PyTorch Flash SDPA",
+  "compile": {
+    "fullgraph": true,
+    "dynamic": false,
+    "triton.cudagraphs": false
+  },
+  "error": "Native StaticCache + forced Flash SDPA failed; no 14B weights downloaded and no latency substituted."
+}

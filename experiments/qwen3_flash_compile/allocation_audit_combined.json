@@ -1,0 +1,10 @@
+{
+  "successful_gpu_allocations": 2,
+  "failed_80gb_allocation_attempts": 1,
+  "first_allocation_upper_bound_seconds": 656.863005,
+  "second_allocation_upper_bound_seconds": 487.48034718300005,
+  "total_gpu_allocation_upper_bound_seconds": 1144.3433521830002,
+  "budget_seconds": 7200,
+  "last_stop_exit_code": 0,
+  "last_server_has_no_active_sessions": true
+}

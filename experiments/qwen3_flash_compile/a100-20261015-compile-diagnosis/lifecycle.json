@@ -1,0 +1,19 @@
+{
+  "session": "qwen3-flash-1015-140512-486e",
+  "budget_minutes": 100.0,
+  "requested_gpu": "A100 80GB (--high-mem)",
+  "status": "failed",
+  "run_id": "qwen3-flash-1015-140512-486e",
+  "reused_session": false,
+  "attention": "auto",
+  "emulate_precision_casts": false,
+  "source_sha256": "8f5a7f945acef62e5ae4721a99d097fad8fdfe8baff4d573fc819426803e0ef6",
+  "stage": "allocation",
+  "session_start_utc": "2026-10-15T14:05:13.973140+00:00",
+  "allocation_attempt_utc": "2026-10-15T14:05:13.973140+00:00",
+  "error": "RuntimeError: Command failed (1): ['colab', 'new']; see colab.log",
+  "stop_exit_code": 0,
+  "final_sessions_output": "[colab] No active sessions found on server.\n",
+  "server_has_no_active_sessions": true,
+  "elapsed_seconds": 95.33288452399984
+}

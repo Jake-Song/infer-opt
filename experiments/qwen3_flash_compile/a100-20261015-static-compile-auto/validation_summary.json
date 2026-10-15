@@ -1,0 +1,20 @@
+{
+  "logits": {
+    "checks": 128,
+    "failed_checks": 128,
+    "mismatched_elements": 8046672,
+    "max_abs_error": 10.53125,
+    "max_relative_l2": 0.25308772921562195
+  },
+  "kv": {
+    "checks": 480,
+    "failed_checks": 426,
+    "mismatched_elements": 10283548,
+    "max_abs_error": 18.9375,
+    "max_relative_l2": 0.11482911556959152
+  },
+  "cache_length_correct": true,
+  "teacher_forced_argmax_equal": true,
+  "free_generation_checked": false,
+  "timing_samples": 0
+}

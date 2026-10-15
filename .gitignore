@@ -13,8 +13,7 @@ wheels/
 .ipynb_checkpoints/
 
 # Local Colab run outputs and source archives
-experiments/baseline/
-experiments/roofline/
+experiments/
 
 # Website dependencies and generated reports
 node_modules/

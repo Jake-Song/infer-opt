@@ -1,0 +1,8 @@
+{
+  "status": "validation_failed",
+  "model": "Qwen/Qwen3-14B",
+  "revision": "40c069824f4251a91eefaf281ebe4c544efd3e18",
+  "compile_observed": true,
+  "generation_completed": true,
+  "timing_collected": false
+}

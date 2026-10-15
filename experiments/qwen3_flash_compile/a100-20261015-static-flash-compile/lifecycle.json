@@ -1,0 +1,9 @@
+{
+  "session": "qwen3-flash-1015-134612-afa5",
+  "budget_minutes": 120.0,
+  "requested_gpu": "A100 80GB (--high-mem)",
+  "status": "starting",
+  "source_sha256": "d77133f55d281f02b58ce8a3e36917fde01e7e90d15ed05fcd8dda58bc3c73ee",
+  "stage": "execution",
+  "allocation_attempt_utc": "2026-10-15T13:46:14.437028+00:00"
+}

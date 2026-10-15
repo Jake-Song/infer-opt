@@ -1,0 +1,4 @@
+{
+  "scripts/reproduce_qwen3_bf16_casts_cpu.py": "ed7f25cfe4d19f770fc744babac553a0c9e95e90e931c0893488cb5784f2c12d",
+  "scripts/measure_qwen3_flash_compile.py": "eccad171bc8329bffb5f375f3ac49b7c7bf017798e22c4f589428e555a212a6c"
+}
