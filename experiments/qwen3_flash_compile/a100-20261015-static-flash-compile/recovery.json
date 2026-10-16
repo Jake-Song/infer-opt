@@ -1,4 +1,0 @@
-{
-  "reason": "first local CLI lost connection; reused same runtime and recovered completed compatibility artifacts",
-  "followup": "user selected static + compile + automatic SDPA; retaining same owned runtime"
-}

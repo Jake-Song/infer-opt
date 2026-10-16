@@ -1,5 +1,0 @@
-{
-  "torch": "2.11.0+cu130",
-  "gpu": "NVIDIA A100-SXM4-40GB",
-  "memory_gib": 39.4935302734375
-}

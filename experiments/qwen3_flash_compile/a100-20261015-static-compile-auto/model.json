@@ -1,6 +1,0 @@
-{
-  "model": "Qwen/Qwen3-14B",
-  "revision": "40c069824f4251a91eefaf281ebe4c544efd3e18",
-  "load_and_download_seconds": 87.94517281700007,
-  "parameter_dtype": "torch.bfloat16"
-}
