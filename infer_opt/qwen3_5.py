@@ -2,9 +2,10 @@
 
 Source: transformers/models/qwen3_5/modeling_qwen3_5.py (Qwen3_5ForCausalLM path).
 Only the transformers dependencies were removed; the math is unchanged:
-  * kernel-hub / FLA / causal-conv1d dispatch is dropped, the torch fallbacks are used
+  * kernel-hub dispatch is dropped: the torch fallbacks are the default, and
+    ``set_kernels("fla")`` switches GatedDeltaNet to flash-linear-attention Triton kernels
   * the cache is a plain Qwen3_5Cache (KV for full attention, conv + recurrent state for
-    GatedDeltaNet); attention-mask utilities (padding), vision tower and MTP head are not included
+    GatedDeltaNet), dynamic or preallocated (static); attention-mask utilities (padding), vision tower and MTP head are not included
   * attention uses torch SDPA with is_causal=True (inputs are unpadded)
 
 Module names follow the checkpoint (``model.language_model.*``, tied ``lm_head``),
@@ -20,6 +21,20 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+
+KERNEL_CHOICES = ("torch", "fla", "fla-delta")
+
+
+def _load_fla():
+    try:
+        from fla.modules.convolution import causal_conv1d
+        from fla.ops.gated_delta_rule import chunk_gated_delta_rule, fused_recurrent_gated_delta_rule
+    except ImportError as exc:
+        raise ImportError(
+            'kernels="fla" needs flash-linear-attention and a CUDA GPU: pip install flash-linear-attention'
+        ) from exc
+    return causal_conv1d, chunk_gated_delta_rule, fused_recurrent_gated_delta_rule
 
 
 @dataclass
@@ -42,6 +57,9 @@ class Qwen3_5TextConfig:
     partial_rotary_factor: float
     mrope_section: list[int]
     tie_word_embeddings: bool = True
+    # GatedDeltaNet kernels: "torch" (reference), "fla" (flash-linear-attention delta rule + causal conv),
+    # or "fla-delta" (FLA delta rule only, torch conv)
+    kernels: str = "torch"
 
     @classmethod
     def from_json(cls, path: str | Path) -> "Qwen3_5TextConfig":
@@ -349,9 +367,14 @@ def torch_recurrent_gated_delta_rule(
 class Qwen3_5Cache:
     """Per-layer inference state.
 
-    full_attention  : growing K/V tensors, [B, kv_heads, S, head_dim]
+    full_attention  : K/V tensors, [B, kv_heads, S, head_dim]
     linear_attention: conv state [B, conv_dim, kernel - 1] (last pre-conv inputs)
                       and recurrent state [B, v_heads, Dk, Dv] in fp32 (constant size)
+
+    Dynamic (default): K/V grow with ``torch.cat`` and states are rebound every step.
+    Static (``Qwen3_5Cache.allocate``): every buffer is allocated once for ``max_seq_len``;
+    K/V are written in place at ``seen_tokens`` and states are updated with ``copy_``, so a
+    step allocates nothing and the addresses stay fixed (CUDA-graph friendly).
     """
 
     def __init__(self, num_layers: int):
@@ -360,14 +383,66 @@ class Qwen3_5Cache:
         self.conv_states: list[torch.Tensor | None] = [None] * num_layers
         self.recurrent_states: list[torch.Tensor | None] = [None] * num_layers
         self.seen_tokens = 0
+        self.max_seq_len: int | None = None
+
+    @classmethod
+    def allocate(cls, config: Qwen3_5TextConfig, batch_size: int, max_seq_len: int, dtype, device) -> "Qwen3_5Cache":
+        cache = cls(config.num_hidden_layers)
+        cache.max_seq_len = max_seq_len
+        conv_dim = 2 * config.linear_key_head_dim * config.linear_num_key_heads + (
+            config.linear_value_head_dim * config.linear_num_value_heads
+        )
+        for i, layer_type in enumerate(config.layer_types):
+            if layer_type == "full_attention":
+                shape = (batch_size, config.num_key_value_heads, max_seq_len, config.head_dim)
+                cache.keys[i] = torch.zeros(shape, dtype=dtype, device=device)
+                cache.values[i] = torch.zeros(shape, dtype=dtype, device=device)
+            else:
+                cache.conv_states[i] = torch.zeros(
+                    batch_size, conv_dim, config.linear_conv_kernel_dim - 1, dtype=dtype, device=device
+                )
+                cache.recurrent_states[i] = torch.zeros(
+                    batch_size, config.linear_num_value_heads, config.linear_key_head_dim,
+                    config.linear_value_head_dim, dtype=torch.float32, device=device,
+                )
+        return cache
+
+    @property
+    def is_static(self) -> bool:
+        return self.max_seq_len is not None
+
+    def reset(self) -> None:
+        """Start a new sequence. Static K/V need no clearing (they are only read below ``seen_tokens``)."""
+        self.seen_tokens = 0
+        if self.is_static:
+            for t in self.conv_states + self.recurrent_states:
+                if t is not None:
+                    t.zero_()
+        else:
+            n = len(self.keys)
+            self.keys, self.values = [None] * n, [None] * n
+            self.conv_states, self.recurrent_states = [None] * n, [None] * n
 
     def update_kv(self, layer_idx: int, key: torch.Tensor, value: torch.Tensor):
+        if self.is_static:
+            start, end = self.seen_tokens, self.seen_tokens + key.shape[2]
+            if end > self.max_seq_len:
+                raise ValueError(f"cache is full: {end} tokens > max_seq_len={self.max_seq_len}")
+            self.keys[layer_idx][:, :, start:end] = key
+            self.values[layer_idx][:, :, start:end] = value
+            return self.keys[layer_idx][:, :, :end], self.values[layer_idx][:, :, :end]
         if self.keys[layer_idx] is None:
             self.keys[layer_idx], self.values[layer_idx] = key, value
         else:
             self.keys[layer_idx] = torch.cat([self.keys[layer_idx], key], dim=2)
             self.values[layer_idx] = torch.cat([self.values[layer_idx], value], dim=2)
         return self.keys[layer_idx], self.values[layer_idx]
+
+    def set_state(self, states: list, layer_idx: int, new: torch.Tensor) -> None:
+        if self.is_static:
+            states[layer_idx].copy_(new)
+        else:
+            states[layer_idx] = new.contiguous()
 
     def nbytes(self) -> int:
         tensors = [t for group in (self.keys, self.values, self.conv_states, self.recurrent_states) for t in group]
@@ -386,6 +461,7 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         self.value_dim = self.head_v_dim * self.num_v_heads
         self.conv_kernel_size = config.linear_conv_kernel_dim
         self.layer_idx = layer_idx
+        self.kernels = config.kernels
 
         self.conv_dim = self.key_dim * 2 + self.value_dim
         self.conv1d = nn.Conv1d(
@@ -408,26 +484,41 @@ class Qwen3_5GatedDeltaNet(nn.Module):
 
     def forward(self, hidden_states: torch.Tensor, cache: Qwen3_5Cache | None = None):
         batch_size, seq_len, _ = hidden_states.shape
+        use_fla_conv = self.kernels == "fla"
+        use_fla_delta = self.kernels in ("fla", "fla-delta")
+        if use_fla_conv or use_fla_delta:
+            fla_conv, fla_chunk, fla_recurrent = _load_fla()
 
-        mixed_qkv = self.in_proj_qkv(hidden_states).transpose(1, 2)
+        mixed_qkv = self.in_proj_qkv(hidden_states)  # [B, T, conv_dim]
         z = self.in_proj_z(hidden_states).reshape(batch_size, seq_len, -1, self.head_v_dim)
         b = self.in_proj_b(hidden_states)
         a = self.in_proj_a(hidden_states)
 
         # causal depthwise conv + silu; the cache carries the last (kernel - 1) inputs
-        weight = self.conv1d.weight.squeeze(1)
-        state_len = self.conv_kernel_size - 1
-        conv_state = cache.conv_states[self.layer_idx] if cache is not None else None
-        if conv_state is None:
-            conv_state = mixed_qkv.new_zeros(batch_size, self.conv_dim, state_len)
-        conv_input = torch.cat([conv_state, mixed_qkv], dim=-1)
-        if cache is not None:
-            cache.conv_states[self.layer_idx] = conv_input[:, :, -state_len:].contiguous()
-        mixed_qkv = F.silu(
-            F.conv1d(conv_input.to(weight.dtype), weight=weight.unsqueeze(1), bias=None, groups=self.conv_dim)
-        ).to(hidden_states.dtype)
+        weight = self.conv1d.weight.squeeze(1)  # [conv_dim, kernel]
+        # an empty cache (seen_tokens == 0) holds all-zero states: pass None instead of reading them
+        fresh = cache is None or cache.seen_tokens == 0
+        conv_state = None if fresh else cache.conv_states[self.layer_idx]
+        if use_fla_conv:
+            # FLA keeps a state of `kernel` inputs; ours holds kernel - 1, so pad one zero column
+            initial = None if conv_state is None else F.pad(conv_state, (1, 0))
+            mixed_qkv, final = fla_conv(
+                mixed_qkv, weight, None, initial_state=initial, output_final_state=cache is not None,
+                activation="silu",
+            )
+            if cache is not None:
+                cache.set_state(cache.conv_states, self.layer_idx, final[:, :, 1:])
+        else:
+            x = mixed_qkv.transpose(1, 2)
+            if conv_state is None:
+                conv_state = x.new_zeros(batch_size, self.conv_dim, self.conv_kernel_size - 1)
+            conv_input = torch.cat([conv_state, x], dim=-1)
+            if cache is not None:
+                cache.set_state(cache.conv_states, self.layer_idx, conv_input[:, :, -(self.conv_kernel_size - 1):])
+            mixed_qkv = F.silu(
+                F.conv1d(conv_input.to(weight.dtype), weight=weight.unsqueeze(1), bias=None, groups=self.conv_dim)
+            ).to(hidden_states.dtype).transpose(1, 2)
 
-        mixed_qkv = mixed_qkv.transpose(1, 2)
         query, key, value = torch.split(mixed_qkv, [self.key_dim, self.key_dim, self.value_dim], dim=-1)
         query = query.reshape(batch_size, seq_len, -1, self.head_k_dim)
         key = key.reshape(batch_size, seq_len, -1, self.head_k_dim)
@@ -439,13 +530,21 @@ class Qwen3_5GatedDeltaNet(nn.Module):
             query = query.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
             key = key.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
 
-        recurrent_state = cache.recurrent_states[self.layer_idx] if cache is not None else None
-        rule = torch_recurrent_gated_delta_rule if seq_len == 1 else torch_chunk_gated_delta_rule
-        core_attn_out, last_recurrent_state = rule(
-            query, key, value, g=g, beta=beta, initial_state=recurrent_state, use_qk_l2norm_in_kernel=True
-        )
+        recurrent_state = None if fresh else cache.recurrent_states[self.layer_idx]
+        if use_fla_delta:
+            rule = fla_recurrent if seq_len == 1 else fla_chunk
+            core_attn_out, last_recurrent_state = rule(
+                query.contiguous(), key.contiguous(), value.contiguous(), g=g, beta=beta,
+                initial_state=recurrent_state, output_final_state=cache is not None,
+                use_qk_l2norm_in_kernel=True,
+            )
+        else:
+            rule = torch_recurrent_gated_delta_rule if seq_len == 1 else torch_chunk_gated_delta_rule
+            core_attn_out, last_recurrent_state = rule(
+                query, key, value, g=g, beta=beta, initial_state=recurrent_state, use_qk_l2norm_in_kernel=True
+            )
         if cache is not None:
-            cache.recurrent_states[self.layer_idx] = last_recurrent_state
+            cache.set_state(cache.recurrent_states, self.layer_idx, last_recurrent_state)
 
         core_attn_out = core_attn_out.reshape(-1, self.head_v_dim)
         z = z.reshape(-1, self.head_v_dim)
@@ -535,19 +634,39 @@ class Qwen3_5ForCausalLM(nn.Module):
         if config.tie_word_embeddings:
             self.lm_head.weight = self.model.language_model.embed_tokens.weight
 
-    def new_cache(self) -> Qwen3_5Cache:
-        return Qwen3_5Cache(self.config.num_hidden_layers)
+    def new_cache(self, batch_size: int = 1, max_seq_len: int | None = None) -> Qwen3_5Cache:
+        """Dynamic cache by default; pass ``max_seq_len`` for preallocated (static) buffers."""
+        if max_seq_len is None:
+            return Qwen3_5Cache(self.config.num_hidden_layers)
+        weight = self.lm_head.weight
+        return Qwen3_5Cache.allocate(self.config, batch_size, max_seq_len, weight.dtype, weight.device)
+
+    def set_kernels(self, kernels: str) -> "Qwen3_5ForCausalLM":
+        if kernels not in KERNEL_CHOICES:
+            raise ValueError(f"kernels must be one of {KERNEL_CHOICES}, got {kernels!r}")
+        if kernels != "torch":
+            _load_fla()
+        self.config.kernels = kernels
+        for module in self.modules():
+            if isinstance(module, Qwen3_5GatedDeltaNet):
+                module.kernels = kernels
+        return self
 
     def forward(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache | None = None) -> torch.Tensor:
         return self.lm_head(self.model.language_model(input_ids, cache))
 
     @torch.no_grad()
     def generate_greedy(
-        self, input_ids: torch.LongTensor, max_new_tokens: int, use_cache: bool = True
+        self, input_ids: torch.LongTensor, max_new_tokens: int, use_cache: bool = True, static_cache: bool = False
     ) -> torch.LongTensor:
         """Greedy decoding. With a cache: one prefill, then one token per step.
-        Without: re-runs the full prefix each step (reference for testing the cache)."""
-        cache = self.new_cache() if use_cache else None
+        Without: re-runs the full prefix each step (reference for testing the cache).
+        ``static_cache`` preallocates K/V for prompt + new tokens."""
+        if use_cache:
+            max_len = input_ids.shape[1] + max_new_tokens if static_cache else None
+            cache = self.new_cache(input_ids.shape[0], max_len)
+        else:
+            cache = None
         step_input = input_ids
         for _ in range(max_new_tokens):
             next_token = self(step_input, cache)[:, -1].argmax(-1, keepdim=True)
@@ -556,7 +675,9 @@ class Qwen3_5ForCausalLM(nn.Module):
         return input_ids
 
     @classmethod
-    def from_pretrained_dir(cls, path: str | Path, dtype=torch.bfloat16, device="cpu") -> "Qwen3_5ForCausalLM":
+    def from_pretrained_dir(
+        cls, path: str | Path, dtype=torch.bfloat16, device="cpu", kernels: str = "torch"
+    ) -> "Qwen3_5ForCausalLM":
         """Load safetensors shards from a local HF checkpoint dir; keys are used as-is."""
         from safetensors import safe_open
 
@@ -581,4 +702,4 @@ class Qwen3_5ForCausalLM(nn.Module):
         if missing:
             raise RuntimeError(f"parameters not loaded: {missing}")
         model.to(device=device, dtype=dtype)
-        return model.eval()
+        return model.set_kernels(kernels).eval()

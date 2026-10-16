@@ -74,3 +74,47 @@ def test_recurrent_state_is_constant_size():
         model(torch.randint(0, 97, (1, 1)), cache)
     assert before == [t.numel() for t in cache.recurrent_states if t is not None]
     assert len(before) == 3
+
+
+def test_static_cache_matches_dynamic_cache():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 70))
+    with torch.no_grad():
+        dyn, sta = model.new_cache(), model.new_cache(batch_size=2, max_seq_len=80)
+        out_d = [model(ids[:, :60], dyn)] + [model(ids[:, i : i + 1], dyn) for i in range(60, 70)]
+        out_s = [model(ids[:, :60], sta)] + [model(ids[:, i : i + 1], sta) for i in range(60, 70)]
+    assert torch.equal(torch.cat(out_d, 1), torch.cat(out_s, 1))
+    assert sta.keys[3].shape[2] == 80 and sta.seen_tokens == 70
+
+
+def test_static_cache_buffers_are_updated_in_place():
+    model = make_model()
+    cache = model.new_cache(max_seq_len=16)
+    addresses = [t.data_ptr() for t in cache.keys + cache.conv_states + cache.recurrent_states if t is not None]
+    with torch.no_grad():
+        model(torch.randint(0, 97, (1, 5)), cache)
+        model(torch.randint(0, 97, (1, 1)), cache)
+    assert addresses == [t.data_ptr() for t in cache.keys + cache.conv_states + cache.recurrent_states if t is not None]
+
+
+def test_static_cache_reset_and_overflow():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 12))
+    cache = model.new_cache(max_seq_len=12)
+    with torch.no_grad():
+        first = model(ids, cache)
+        cache.reset()
+        second = model(ids, cache)  # a dirty cache would change this
+        assert torch.equal(first, second)
+        try:
+            model(ids[:, :1], cache)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("expected overflow error")
+
+
+def test_static_greedy_matches_dynamic_greedy():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 9))
+    assert torch.equal(model.generate_greedy(ids, 12), model.generate_greedy(ids, 12, static_cache=True))

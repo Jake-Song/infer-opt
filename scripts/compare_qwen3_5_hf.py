@@ -36,6 +36,9 @@ def main() -> None:
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn", default="sdpa", choices=["sdpa", "eager"], help="HF attention implementation")
+    parser.add_argument("--kernels", default="torch", choices=["torch", "fla", "fla-delta"],
+                        help="GatedDeltaNet kernels for our model (HF picks FLA by itself when it is installed)")
+    parser.add_argument("--static-cache", action="store_true", help="use preallocated K/V and state buffers")
     parser.add_argument("--new-tokens", type=int, default=32)
     parser.add_argument("--out", default=None, help="write JSON results here")
     args = parser.parse_args()
@@ -47,9 +50,10 @@ def main() -> None:
     path = args.weights or snapshot_download(args.repo, allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
     tok = AutoTokenizer.from_pretrained(path)
 
-    ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=dtype, device=args.device)
+    ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=dtype, device=args.device, kernels=args.kernels)
     hf = AutoModelForCausalLM.from_pretrained(path, dtype=dtype, attn_implementation=args.attn).to(args.device).eval()
-    print(f"hf class: {type(hf).__name__}, torch {torch.__version__}, device {args.device}, dtype {args.dtype}")
+    print(f"hf class: {type(hf).__name__}, torch {torch.__version__}, device {args.device}, dtype {args.dtype}, "
+          f"kernels {args.kernels}, static_cache {args.static_cache}")
 
     results = []
     for prompt in PROMPTS:
@@ -63,7 +67,7 @@ def main() -> None:
 
         with torch.no_grad():
             ref_gen = hf.generate(ids, max_new_tokens=args.new_tokens, do_sample=False, use_cache=True)
-        our_gen = ours.generate_greedy(ids, args.new_tokens, use_cache=True)
+        our_gen = ours.generate_greedy(ids, args.new_tokens, use_cache=True, static_cache=args.static_cache)
         our_gen_nocache = ours.generate_greedy(ids, args.new_tokens, use_cache=False)
         n = min(ref_gen.shape[1], our_gen.shape[1])
         mismatch = (ref_gen[0, :n] != our_gen[0, :n]).nonzero()
@@ -73,7 +77,7 @@ def main() -> None:
         # (the first 8 positions of the logits come from the cached path, compared with the full forward)
         split = max(ids.shape[1] - 8, 1)
         with torch.no_grad():
-            cache = ours.new_cache()
+            cache = ours.new_cache(1, ids.shape[1] if args.static_cache else None)
             steps = [ours(ids[:, :split], cache)]
             steps += [ours(ids[:, i : i + 1], cache) for i in range(split, ids.shape[1])]
             cached_logits = torch.cat(steps, dim=1).float()
