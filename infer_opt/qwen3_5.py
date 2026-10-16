@@ -191,7 +191,7 @@ class Qwen3_5Attention(nn.Module):
         self.q_norm = Qwen3_5RMSNorm(self.head_dim, eps=config.rms_norm_eps)
         self.k_norm = Qwen3_5RMSNorm(self.head_dim, eps=config.rms_norm_eps)
 
-    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None):
+    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool = False):
         input_shape = hidden_states.shape[:-1]
         hidden_shape = (*input_shape, -1, self.head_dim)
 
@@ -207,20 +207,32 @@ class Qwen3_5Attention(nn.Module):
         cos, sin = position_embeddings
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
-        if cache is not None:
-            key_states, value_states = cache.update_kv(self.layer_idx, key_states, value_states)
-
-        q_len, kv_len = query_states.shape[2], key_states.shape[2]
-        key_states = repeat_kv(key_states, self.num_key_value_groups)
-        value_states = repeat_kv(value_states, self.num_key_value_groups)
-        if q_len == kv_len:
-            attn_mask, is_causal = None, True
-        elif q_len == 1:
-            attn_mask, is_causal = None, False  # the new token sees the whole cache
-        else:  # chunked prefill on top of a non-empty cache
-            attn_mask = torch.ones(q_len, kv_len, dtype=torch.bool, device=hidden_states.device)
-            attn_mask = attn_mask.tril(diagonal=kv_len - q_len)
+        if decode:
+            # fixed shapes: write at the device-side position, attend over the whole buffer, mask the unfilled tail
+            position = cache.position
+            cache.keys[self.layer_idx].index_copy_(2, position, key_states)
+            cache.values[self.layer_idx].index_copy_(2, position, value_states)
+            key_states, value_states = cache.keys[self.layer_idx], cache.values[self.layer_idx]
+            max_len = key_states.shape[2]
+            attn_mask = (torch.arange(max_len, device=hidden_states.device) <= position).view(1, 1, 1, max_len)
             is_causal = False
+            key_states = repeat_kv(key_states, self.num_key_value_groups)
+            value_states = repeat_kv(value_states, self.num_key_value_groups)
+        else:
+            if cache is not None:
+                key_states, value_states = cache.update_kv(self.layer_idx, key_states, value_states)
+
+            q_len, kv_len = query_states.shape[2], key_states.shape[2]
+            key_states = repeat_kv(key_states, self.num_key_value_groups)
+            value_states = repeat_kv(value_states, self.num_key_value_groups)
+            if q_len == kv_len:
+                attn_mask, is_causal = None, True
+            elif q_len == 1:
+                attn_mask, is_causal = None, False  # the new token sees the whole cache
+            else:  # chunked prefill on top of a non-empty cache
+                attn_mask = torch.ones(q_len, kv_len, dtype=torch.bool, device=hidden_states.device)
+                attn_mask = attn_mask.tril(diagonal=kv_len - q_len)
+                is_causal = False
         attn_output = F.scaled_dot_product_attention(
             query_states, key_states, value_states, attn_mask=attn_mask, is_causal=is_causal, scale=self.scaling
         )
@@ -384,11 +396,14 @@ class Qwen3_5Cache:
         self.recurrent_states: list[torch.Tensor | None] = [None] * num_layers
         self.seen_tokens = 0
         self.max_seq_len: int | None = None
+        # static caches only: the write index as a device tensor, so a captured graph can advance it
+        self.position: torch.Tensor | None = None
 
     @classmethod
     def allocate(cls, config: Qwen3_5TextConfig, batch_size: int, max_seq_len: int, dtype, device) -> "Qwen3_5Cache":
         cache = cls(config.num_hidden_layers)
         cache.max_seq_len = max_seq_len
+        cache.position = torch.zeros(1, dtype=torch.long, device=device)
         conv_dim = 2 * config.linear_key_head_dim * config.linear_num_key_heads + (
             config.linear_value_head_dim * config.linear_num_value_heads
         )
@@ -415,6 +430,7 @@ class Qwen3_5Cache:
         """Start a new sequence. Static K/V need no clearing (they are only read below ``seen_tokens``)."""
         self.seen_tokens = 0
         if self.is_static:
+            self.position.zero_()
             for t in self.conv_states + self.recurrent_states:
                 if t is not None:
                     t.zero_()
@@ -482,7 +498,7 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         self.in_proj_b = nn.Linear(self.hidden_size, self.num_v_heads, bias=False)
         self.in_proj_a = nn.Linear(self.hidden_size, self.num_v_heads, bias=False)
 
-    def forward(self, hidden_states: torch.Tensor, cache: Qwen3_5Cache | None = None):
+    def forward(self, hidden_states: torch.Tensor, cache: Qwen3_5Cache | None = None, decode: bool = False):
         batch_size, seq_len, _ = hidden_states.shape
         use_fla_conv = self.kernels == "fla"
         use_fla_delta = self.kernels in ("fla", "fla-delta")
@@ -497,7 +513,7 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         # causal depthwise conv + silu; the cache carries the last (kernel - 1) inputs
         weight = self.conv1d.weight.squeeze(1)  # [conv_dim, kernel]
         # an empty cache (seen_tokens == 0) holds all-zero states: pass None instead of reading them
-        fresh = cache is None or cache.seen_tokens == 0
+        fresh = cache is None or (not decode and cache.seen_tokens == 0)
         conv_state = None if fresh else cache.conv_states[self.layer_idx]
         if use_fla_conv:
             # FLA keeps a state of `kernel` inputs; ours holds kernel - 1, so pad one zero column
@@ -578,13 +594,13 @@ class Qwen3_5DecoderLayer(nn.Module):
         self.input_layernorm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
-    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None):
+    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool = False):
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
         if self.block_type == "linear_attention":
-            hidden_states = self.linear_attn(hidden_states, cache)
+            hidden_states = self.linear_attn(hidden_states, cache, decode)
         else:
-            hidden_states = self.self_attn(hidden_states, position_embeddings, cache)
+            hidden_states = self.self_attn(hidden_states, position_embeddings, cache, decode)
         hidden_states = residual + hidden_states
 
         residual = hidden_states
@@ -614,6 +630,19 @@ class Qwen3_5TextModel(nn.Module):
             hidden_states = layer(hidden_states, position_embeddings, cache)
         if cache is not None:
             cache.seen_tokens += input_ids.shape[1]
+            if cache.is_static:
+                cache.position.fill_(cache.seen_tokens)
+        return self.norm(hidden_states)
+
+    def forward_decode(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
+        """One token per sequence with fixed shapes. The position lives on the device (``cache.position``) and
+        is advanced here, so nothing in this function depends on a Python int that changes between steps."""
+        hidden_states = self.embed_tokens(input_ids)
+        position_ids = cache.position.view(1, 1, 1).expand(3, input_ids.shape[0], 1)
+        position_embeddings = self.rotary_emb(hidden_states, position_ids)
+        for layer in self.layers:
+            hidden_states = layer(hidden_states, position_embeddings, cache, decode=True)
+        cache.position.add_(1)
         return self.norm(hidden_states)
 
 
@@ -655,13 +684,40 @@ class Qwen3_5ForCausalLM(nn.Module):
     def forward(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache | None = None) -> torch.Tensor:
         return self.lm_head(self.model.language_model(input_ids, cache))
 
+    def decode_logits(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
+        """Fixed-shape single-token step on a static cache (the function that gets compiled / graph-captured).
+        It does not touch ``cache.seen_tokens``; use :meth:`decode_step` or :class:`FixedShapeDecoder`."""
+        return self.lm_head(self.model.language_model.forward_decode(input_ids, cache))
+
+    @torch.no_grad()
+    def decode_step(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
+        if not cache.is_static:
+            raise ValueError("decode_step needs a static cache: model.new_cache(batch, max_seq_len)")
+        if cache.seen_tokens + 1 > cache.max_seq_len:
+            raise ValueError(f"cache is full: max_seq_len={cache.max_seq_len}")
+        logits = self.decode_logits(input_ids, cache)
+        cache.seen_tokens += 1
+        return logits
+
     @torch.no_grad()
     def generate_greedy(
-        self, input_ids: torch.LongTensor, max_new_tokens: int, use_cache: bool = True, static_cache: bool = False
+        self, input_ids: torch.LongTensor, max_new_tokens: int, use_cache: bool = True, static_cache: bool = False,
+        decode_mode: str | None = None,
     ) -> torch.LongTensor:
         """Greedy decoding. With a cache: one prefill, then one token per step.
         Without: re-runs the full prefix each step (reference for testing the cache).
-        ``static_cache`` preallocates K/V for prompt + new tokens."""
+        ``static_cache`` preallocates K/V for prompt + new tokens. ``decode_mode`` (see
+        :class:`FixedShapeDecoder`) runs the decode steps through the fixed-shape path."""
+        if decode_mode is not None:
+            cache = self.new_cache(input_ids.shape[0], input_ids.shape[1] + max_new_tokens)
+            decoder = FixedShapeDecoder(self, cache, decode_mode)
+            token = self(input_ids, cache)[:, -1].argmax(-1, keepdim=True)
+            decoder.prepare()
+            out = [input_ids, token]
+            for _ in range(max_new_tokens - 1):
+                token = decoder.step(token)[:, -1].argmax(-1, keepdim=True)
+                out.append(token)
+            return torch.cat(out, dim=-1)
         if use_cache:
             max_len = input_ids.shape[1] + max_new_tokens if static_cache else None
             cache = self.new_cache(input_ids.shape[0], max_len)
@@ -703,3 +759,80 @@ class Qwen3_5ForCausalLM(nn.Module):
             raise RuntimeError(f"parameters not loaded: {missing}")
         model.to(device=device, dtype=dtype)
         return model.set_kernels(kernels).eval()
+
+
+DECODE_MODES = ("eager", "compile", "compile-reduce-overhead", "cudagraph")
+
+
+class FixedShapeDecoder:
+    """Runs single-token decode steps on a static cache through the fixed-shape path.
+
+    modes: ``eager`` (no compilation), ``compile`` (torch.compile), ``compile-reduce-overhead``
+    (torch.compile with CUDA graphs) and ``cudagraph`` (one hand-captured CUDA graph).
+    Call :meth:`prepare` once (for ``cudagraph`` it captures the graph) and :meth:`step` per token.
+    ``step`` returns a buffer that the next step overwrites when the mode is ``cudagraph``.
+    """
+
+    def __init__(self, model: Qwen3_5ForCausalLM, cache: Qwen3_5Cache, mode: str = "eager", fullgraph: bool = True):
+        if mode not in DECODE_MODES:
+            raise ValueError(f"mode must be one of {DECODE_MODES}, got {mode!r}")
+        if not cache.is_static:
+            raise ValueError("FixedShapeDecoder needs a static cache")
+        self.model, self.cache, self.mode = model, cache, mode
+        self.batch_size = next(t.shape[0] for t in cache.recurrent_states if t is not None)
+        self.graph = None
+        # every mode feeds the model from this one buffer: callers pass views with ever-changing strides/offsets,
+        # which would otherwise trip torch.compile's tensor guards and force a recompile per distinct view
+        self.static_token = torch.zeros(self.batch_size, 1, dtype=torch.long, device=cache.position.device)
+        self.fn = model.decode_logits
+        if mode.startswith("compile"):
+            for t in self._state_tensors() + [self.static_token]:
+                torch._dynamo.mark_static_address(t)
+            options = {"mode": "reduce-overhead"} if mode == "compile-reduce-overhead" else {}
+            self.fn = torch.compile(model.decode_logits, fullgraph=fullgraph, dynamic=False, **options)
+
+    def _state_tensors(self) -> list[torch.Tensor]:
+        c = self.cache
+        return [t for group in (c.keys, c.values, c.conv_states, c.recurrent_states) for t in group
+                if t is not None] + [c.position]
+
+    @torch.no_grad()
+    def prepare(self) -> None:
+        """Capture the CUDA graph (``cudagraph`` mode). Can run at any time: the warm-up steps scribble on the
+        recurrent/conv state and position, which are restored afterwards (it needs 4 free cache slots)."""
+        if self.mode != "cudagraph":
+            return
+        cache = self.cache
+        if cache.seen_tokens + 4 > cache.max_seq_len:
+            raise ValueError("need 4 free cache slots for the capture warm-up")
+        saved = [t.clone() for t in cache.conv_states + cache.recurrent_states if t is not None]
+        saved_position = cache.position.clone()
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(stream):
+            for _ in range(3):
+                self.model.decode_logits(self.static_token, cache)
+        torch.cuda.current_stream().wait_stream(stream)
+        self.graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(self.graph):
+            self.static_logits = self.model.decode_logits(self.static_token, cache)
+        live = [t for t in cache.conv_states + cache.recurrent_states if t is not None]
+        for dst, src in zip(live, saved):
+            dst.copy_(src)
+        cache.position.copy_(saved_position)
+
+    @torch.no_grad()
+    def step(self, input_ids: torch.LongTensor) -> torch.Tensor:
+        cache = self.cache
+        if cache.seen_tokens + 1 > cache.max_seq_len:
+            raise ValueError(f"cache is full: max_seq_len={cache.max_seq_len}")
+        self.static_token.copy_(input_ids)
+        if self.mode == "cudagraph":
+            if self.graph is None:
+                raise RuntimeError("call prepare() after prefill before stepping a cudagraph decoder")
+            self.graph.replay()
+            logits = self.static_logits
+        else:
+            logits = self.fn(self.static_token, cache)
+        cache.seen_tokens += 1
+        return logits

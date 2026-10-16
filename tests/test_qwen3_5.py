@@ -118,3 +118,63 @@ def test_static_greedy_matches_dynamic_greedy():
     model = make_model()
     ids = torch.randint(0, 97, (1, 9))
     assert torch.equal(model.generate_greedy(ids, 12), model.generate_greedy(ids, 12, static_cache=True))
+
+
+def test_fixed_shape_decode_matches_sliced_decode():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 70))
+    with torch.no_grad():
+        ref_cache = model.new_cache(batch_size=2, max_seq_len=90)
+        fix_cache = model.new_cache(batch_size=2, max_seq_len=90)
+        model(ids[:, :40], ref_cache)
+        model(ids[:, :40], fix_cache)
+        assert fix_cache.position.item() == 40
+        for i in range(40, 70):
+            want = model(ids[:, i : i + 1], ref_cache)
+            got = model.decode_step(ids[:, i : i + 1], fix_cache)
+            assert torch.allclose(want, got, atol=1e-4), i
+    assert fix_cache.position.item() == fix_cache.seen_tokens == 70
+
+
+def test_fixed_shape_decode_after_one_token_prompt_and_reset():
+    model = make_model()
+    cache = model.new_cache(max_seq_len=12)
+    ids = torch.randint(0, 97, (1, 12))
+    with torch.no_grad():
+        first = [model(ids[:, :1], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(1, 12)]
+        cache.reset()
+        assert cache.position.item() == 0
+        second = [model(ids[:, :1], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(1, 12)]
+    assert torch.equal(torch.cat(first, 1), torch.cat(second, 1))
+    full = model(ids)
+    assert torch.allclose(full, torch.cat(first, 1), atol=1e-4)
+
+
+def test_decode_step_requires_static_cache_and_checks_capacity():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 4))
+    with torch.no_grad():
+        dynamic = model.new_cache()
+        model(ids, dynamic)
+        for bad in (lambda: model.decode_step(ids[:, :1], dynamic),):
+            try:
+                bad()
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("expected ValueError for a dynamic cache")
+        cache = model.new_cache(max_seq_len=5)
+        model(ids, cache)
+        model.decode_step(ids[:, :1], cache)
+        try:
+            model.decode_step(ids[:, :1], cache)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("expected a capacity error")
+
+
+def test_generate_with_fixed_shape_decoder_matches_default_generate():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 9))
+    assert torch.equal(model.generate_greedy(ids, 14), model.generate_greedy(ids, 14, decode_mode="eager"))
