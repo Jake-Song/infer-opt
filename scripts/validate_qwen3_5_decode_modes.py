@@ -56,7 +56,6 @@ def main() -> None:
     path = args.weights or snapshot_download(args.repo, allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
     tok = AutoTokenizer.from_pretrained(path)
     hf = AutoModelForCausalLM.from_pretrained(path, dtype=torch.bfloat16).cuda().eval()
-    ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda")
     prompts = build_prompts(tok, (ROOT / "infer_opt" / "qwen3_5.py").read_text())
     if args.prompts:
         prompts = {k: prompts[k] for k in args.prompts.split(",")}
@@ -79,6 +78,8 @@ def main() -> None:
             del full
     del hf
     torch.cuda.empty_cache()
+    # loaded after the HF reference is freed so two copies of a large model never share the GPU
+    ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda")
     print(f"{torch.cuda.get_device_name()} torch {torch.__version__} prompts {list(prompts)}", flush=True)
 
     rows = []
