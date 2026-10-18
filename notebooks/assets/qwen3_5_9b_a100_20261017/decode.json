@@ -1,0 +1,128 @@
+{
+ "args": {
+  "repo": "Qwen/Qwen3.5-9B",
+  "weights": null,
+  "prompt_tokens": 1024,
+  "new_tokens": 128,
+  "check_steps": 48,
+  "batch": 1,
+  "kernels": "torch,fla-delta",
+  "modes": "sliced-eager,eager,compile,compile-reduce-overhead,cudagraph",
+  "warmup": 3,
+  "out": "/content/b9_decode.json"
+ },
+ "device": "NVIDIA A100-SXM4-40GB",
+ "torch": "2.11.0+cu130",
+ "rows": [
+  {
+   "kernels": "torch",
+   "mode": "sliced-eager",
+   "logits_max_abs_diff": 0.0,
+   "argmax_agreement": 1.0,
+   "prepare_s": 3.8679999988744385e-05,
+   "first_step_s": 0.0636073960001795,
+   "ms_per_token": 61.52564142187522
+  },
+  {
+   "kernels": "torch",
+   "mode": "eager",
+   "logits_max_abs_diff": 0.1875,
+   "argmax_agreement": 1.0,
+   "prepare_s": 4.046799995194306e-05,
+   "first_step_s": 0.06267228000001523,
+   "ms_per_token": 61.71702285156222
+  },
+  {
+   "kernels": "torch",
+   "mode": "compile",
+   "logits_max_abs_diff": 0.15625,
+   "argmax_agreement": 1.0,
+   "prepare_s": 3.283599994574615e-05,
+   "first_step_s": 7.679649532999974,
+   "ms_per_token": 16.98269934374963,
+   "dynamo_stats": {
+    "calls_captured": 3852,
+    "unique_graphs": 1
+   },
+   "graph_breaks": 0
+  },
+  {
+   "kernels": "torch",
+   "mode": "compile-reduce-overhead",
+   "logits_max_abs_diff": 0.15625,
+   "argmax_agreement": 1.0,
+   "prepare_s": 3.859799994643254e-05,
+   "first_step_s": 8.347716110999954,
+   "ms_per_token": 16.086047109375556,
+   "dynamo_stats": {
+    "calls_captured": 3852,
+    "unique_graphs": 1
+   },
+   "graph_breaks": 0
+  },
+  {
+   "kernels": "torch",
+   "mode": "cudagraph",
+   "logits_max_abs_diff": 0.1875,
+   "argmax_agreement": 1.0,
+   "prepare_s": 0.25789999199992053,
+   "first_step_s": 0.02029160699999011,
+   "ms_per_token": 19.88772926562632
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "sliced-eager",
+   "logits_max_abs_diff": 0.0,
+   "argmax_agreement": 1.0,
+   "prepare_s": 6.531500002893154e-05,
+   "first_step_s": 0.05738812499998858,
+   "ms_per_token": 55.02245144531237
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "eager",
+   "logits_max_abs_diff": 0.279296875,
+   "argmax_agreement": 1.0,
+   "prepare_s": 4.9915000090550166e-05,
+   "first_step_s": 0.05709081200006949,
+   "ms_per_token": 56.02456356250052
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile",
+   "logits_max_abs_diff": 0.1875,
+   "argmax_agreement": 0.9791666666666666,
+   "prepare_s": 8.811700013211521e-05,
+   "first_step_s": 21.65422163800008,
+   "ms_per_token": 17.02155496093738,
+   "dynamo_stats": {
+    "calls_captured": 3036,
+    "unique_graphs": 1
+   },
+   "graph_breaks": 0
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "logits_max_abs_diff": 0.1875,
+   "argmax_agreement": 0.9791666666666666,
+   "prepare_s": 5.641799998556962e-05,
+   "first_step_s": 21.83051673,
+   "ms_per_token": 15.07840460937615,
+   "dynamo_stats": {
+    "calls_captured": 3036,
+    "unique_graphs": 1
+   },
+   "graph_breaks": 0
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "cudagraph",
+   "logits_max_abs_diff": 0.279296875,
+   "argmax_agreement": 1.0,
+   "prepare_s": 0.23294348499985063,
+   "first_step_s": 0.01865220399986356,
+   "ms_per_token": 18.261309468750042
+  }
+ ]
+}
