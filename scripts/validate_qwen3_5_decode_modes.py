@@ -5,6 +5,12 @@ Same metrics and prompts as validate_qwen3_5_hf.py, but only the decode path is 
   * 192-token greedy generation: first free-run mismatch with HF, and next-token agreement when fed HF's tokens
     (mismatch margins recorded; margin <= 0.5 counts as a near-tie)
 The prompt is always prefilled by the ordinary eager path; the decoder under test only runs the single-token steps.
+A config is ``kernels:mode`` or ``kernels:mode:quant`` with quant in bf16 / int8 / int8+lm_head (weight-only INT8, see
+infer_opt.quant). Quantization is in place and one way, so quant levels must appear in that order. ``--autotune`` runs
+the quantized configs with the options of torch.compile(mode="max-autotune") (max_autotune and coordinate descent
+tuning), without which the int8 -> bf16 conversion is not fused and decode is several times slower than bf16.
+At the end the script evaluates the quantization gate against the bf16 config with the same kernels:mode in this run:
+mean decode KL <= ``--kl-ratio`` x the bf16 mean, and zero strong teacher-forced mismatches.
 ``sliced-eager`` is the original decode path and serves as the baseline in the same run.
 Each (kernels, mode) gets its own cache and decoder (one compile / capture), loops over the prompts, and reports
 torch._dynamo unique graphs so a silent fall-back to eager after too many recompiles would show.
@@ -27,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from infer_opt.quant import quantize_linears  # noqa: E402
 from infer_opt.qwen3_5 import FixedShapeDecoder, Qwen3_5ForCausalLM  # noqa: E402
 from validate_qwen3_5_hf import TIE_MARGIN, build_prompts, kl_and_top1  # noqa: E402
 
@@ -36,6 +43,33 @@ DEFAULT_CONFIGS = (
     "fla:sliced-eager,fla:cudagraph,fla:compile-reduce-overhead"
 )
 
+QUANT_LEVELS = ("bf16", "int8", "int8+lm_head")
+
+
+def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
+    """Per quantized config: mean decode KL against the bf16 config with the same kernels and mode, strong mismatches."""
+    def stats(kernels, mode, quant):
+        mine = [r for r in rows if not r.get("summary") and (r["kernels"], r["mode"], r.get("quant", "bf16")) == (kernels, mode, quant)]
+        kls = [r["decode_kl_vs_hf"] for r in mine if "decode_kl_vs_hf" in r]
+        return {"prompts": len(mine), "mean_kl": sum(kls) / len(kls) if kls else None,
+                "strong_mismatches": sum(r["tf_mismatch_strong"] for r in mine),
+                "near_tie_mismatches": sum(r["tf_mismatch_near_tie"] for r in mine),
+                "free_run_identical": sum(r["gen_first_mismatch"] is None for r in mine)}
+
+    gates = []
+    for kernels, mode, quant in dict.fromkeys((r["kernels"], r["mode"], r.get("quant", "bf16")) for r in rows if not r.get("summary")):
+        if quant == "bf16":
+            continue
+        base, got = stats(kernels, mode, "bf16"), stats(kernels, mode, quant)
+        if base["mean_kl"] is None or got["mean_kl"] is None:
+            gates.append({"config": f"{kernels}:{mode}:{quant}", "error": "no bf16 control with the same kernels:mode"})
+            continue
+        ratio = got["mean_kl"] / base["mean_kl"]
+        gates.append({"config": f"{kernels}:{mode}:{quant}", "bf16": base, "quantized": got, "kl_ratio": ratio,
+                      "pass_kl": ratio <= kl_ratio, "pass_strong": got["strong_mismatches"] == 0,
+                      "pass": ratio <= kl_ratio and got["strong_mismatches"] == 0})
+    return gates
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -44,7 +78,9 @@ def main() -> None:
     parser.add_argument("--new-tokens", type=int, default=192)
     parser.add_argument("--decode-positions", type=int, default=32)
     parser.add_argument("--max-len", type=int, default=2048)
-    parser.add_argument("--configs", default=DEFAULT_CONFIGS, help="comma separated kernels:mode")
+    parser.add_argument("--configs", default=DEFAULT_CONFIGS, help="comma separated kernels:mode[:quant]")
+    parser.add_argument("--autotune", action="store_true", help="max-autotune inductor options for the quantized configs")
+    parser.add_argument("--kl-ratio", type=float, default=2.0, help="gate: quantized mean KL / bf16 mean KL")
     parser.add_argument("--prompts", default=None)
     parser.add_argument("--out", default="decode_modes.json")
     args = parser.parse_args()
@@ -85,13 +121,33 @@ def main() -> None:
     rows = []
     out = Path(args.out)
 
+    quant_done = "bf16"
+    quant_reports = {}
+
     def save():
-        out.write_text(json.dumps({"args": vars(args), "layers": ours.config.layer_summary(), "rows": rows}, indent=1))
+        out.write_text(json.dumps({"args": vars(args), "layers": ours.config.layer_summary(), "quantization": quant_reports,
+                                   "gate": quantization_gate(rows, args.kl_ratio), "rows": rows}, indent=1))
+
+    import torch._inductor.config as inductor_config
 
     for config in args.configs.split(","):
-        kernels, mode = config.split(":")
+        kernels, mode, *rest = config.split(":")
+        quant = rest[0] if rest else "bf16"
+        if quant not in QUANT_LEVELS:
+            raise SystemExit(f"quant must be one of {QUANT_LEVELS}, got {quant!r}")
+        if QUANT_LEVELS.index(quant) < QUANT_LEVELS.index(quant_done):
+            raise SystemExit(f"{config}: the model is already {quant_done}; list configs in order {QUANT_LEVELS}")
+        if quant != quant_done:  # one way, in place; lm_head is the only addition from int8 to int8+lm_head
+            report = quantize_linears(ours, include_lm_head=quant == "int8+lm_head")
+            quant_reports[quant] = {"summary": report.summary(), "replaced": len(report.replaced)}
+            print(quant, report.summary(), flush=True)
+            quant_done = quant
+            torch.cuda.empty_cache()
         torch._dynamo.reset()
         counters.clear()
+        tuned = args.autotune and quant != "bf16"
+        inductor_config.max_autotune = tuned
+        inductor_config.coordinate_descent_tuning = tuned
         ours.set_kernels(kernels)
         cache = ours.new_cache(1, args.max_len)
         t0 = time.time()
@@ -112,7 +168,7 @@ def main() -> None:
                 for name, ref in refs.items():
                     ids, T, split, new_ref = ref["ids"], ref["T"], ref["split"], ref["new_ref"]
                     n_new = new_ref.shape[1]
-                    row = {"kernels": kernels, "mode": mode, "prompt": name, "tokens": T}
+                    row = {"kernels": kernels, "mode": mode, "quant": quant, "prompt": name, "tokens": T}
 
                     if split < T:
                         prefill(ids[:, :split])
@@ -146,11 +202,11 @@ def main() -> None:
                     rows.append(row)
                     print(json.dumps(row), flush=True)
 
-            summary = {"kernels": kernels, "mode": mode, "summary": True, "seconds": time.time() - t0,
+            summary = {"kernels": kernels, "mode": mode, "quant": quant, "summary": True, "seconds": time.time() - t0,
                        "dynamo_unique_graphs": counters["stats"].get("unique_graphs"),
                        "dynamo_graph_breaks": sum(counters["graph_break"].values())}
         except Exception as exc:  # noqa: BLE001 - record and go on with the next config
-            summary = {"kernels": kernels, "mode": mode, "summary": True, "error": f"{type(exc).__name__}: {str(exc)[:500]}"}
+            summary = {"kernels": kernels, "mode": mode, "quant": quant, "summary": True, "error": f"{type(exc).__name__}: {str(exc)[:500]}"}
             print(traceback.format_exc()[-1200:], flush=True)
         rows.append(summary)
         print(json.dumps(summary), flush=True)
