@@ -215,12 +215,12 @@ def hf_generate(prompt: str, max_new_tokens: int) -> tuple[torch.Tensor, list[in
 if RUN_HF:
     print("=== HF bf16 ===")
     hf_ids, hf_out, hf_s = hf_generate(COMPARE_PROMPT, COMPARE_TOKENS)
-    print(f"[{len(hf_out)} tok, {hf_s:.1f} s, prefill 포함 {hf_s / len(hf_out) * 1e3:.1f} ms/token]\n")
+    print(f"[{len(hf_out)} tok, {hf_s:.1f} s, prefill 포함 {hf_s / len(hf_out) * 1e3:.1f} ms/token]\\n")
     print("=== INT8 ===")
     q = generate(COMPARE_PROMPT, max_new_tokens=COMPARE_TOKENS)
     q_out = q["tokens"]
     same = next((i for i, (a, b) in enumerate(zip(hf_out, q_out)) if a != b), min(len(hf_out), len(q_out)))
-    print(f"\n처음 {same} token이 같습니다" + ("" if same == min(len(hf_out), len(q_out)) else
+    print(f"\\n처음 {same} token이 같습니다" + ("" if same == min(len(hf_out), len(q_out)) else
           f": {same}번째에서 HF {tokenizer.decode(hf_out[same])!r} / INT8 {tokenizer.decode(q_out[same])!r}"))
 """),
         md("""### 7.2 decode 속도
