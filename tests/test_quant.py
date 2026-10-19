@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from infer_opt.quant import Int8Linear, quantize_int8, quantize_linears
+from infer_opt.quant import Int8Linear, int8_linear, quantize_int8, quantize_linears
 from tests.test_qwen3_5 import make_model
 
 
@@ -86,3 +86,74 @@ def test_token_by_token_still_matches_full_forward_after_quantization():
 def test_rejects_non_matrix_weight():
     with pytest.raises(ValueError):
         quantize_int8(torch.randn(8))
+
+
+def test_group_wise_scales_cover_each_group_and_beat_per_channel():
+    torch.manual_seed(0)
+    w = torch.randn(24, 256)
+    w[3, 5] = 40.0  # one outlier: per channel it coarsens the whole row, per group only its 64 columns
+    q, scale = quantize_int8(w, group_size=64)
+    assert scale.shape == (24, 4) and q.dtype == torch.int8
+    groups = q.view(24, 4, 64)
+    assert torch.all(groups.abs().amax(-1) == 127)  # every group uses the full range
+    deq = Int8Linear(q, scale).dequantized_weight()
+    err = (deq - w).view(24, 4, 64).abs()
+    assert torch.all(err <= scale.unsqueeze(-1) / 2 + 1e-6)
+    per_channel = Int8Linear(*quantize_int8(w)).dequantized_weight()
+    assert (deq - w)[3, 64:].norm() < (per_channel - w)[3, 64:].norm() / 4  # the groups without the outlier
+    assert (deq - w).norm() < (per_channel - w).norm()
+
+
+def test_group_wise_chunking_matches_unchunked(monkeypatch):
+    torch.manual_seed(0)
+    w = torch.randn(50, 32)
+    expected = quantize_int8(w, group_size=8)
+    monkeypatch.setattr("infer_opt.quant._ROW_CHUNK", 7)
+    got = quantize_int8(w, group_size=8)
+    assert torch.equal(expected[0], got[0]) and torch.equal(expected[1], got[1])
+
+
+def test_group_wise_linear_matches_dequantized_matmul():
+    torch.manual_seed(0)
+    linear = nn.Linear(64, 48, bias=True)
+    q = Int8Linear.from_linear(linear, group_size=16)
+    assert q.group_size == 16 and "group_size=16" in repr(q)
+    x = torch.randn(3, 5, 64)
+    expected = torch.nn.functional.linear(x, q.dequantized_weight(), linear.bias)
+    assert torch.allclose(q(x), expected, atol=1e-5)
+    assert torch.allclose(q(x), linear(x), atol=0.05)
+
+
+def test_group_size_must_divide_in_features():
+    with pytest.raises(ValueError):
+        quantize_int8(torch.randn(8, 48), group_size=32)
+    model = nn.Sequential(nn.Linear(48, 300), nn.Linear(300, 256))
+    report = quantize_linears(model, group_size=32)
+    assert isinstance(model[0], nn.Linear) and "not divisible" in report.skipped["0"]
+    assert isinstance(model[1], nn.Linear) and "not divisible" in report.skipped["1"]  # 300 % 32 != 0
+    report = quantize_linears(model, group_size=16)
+    assert report.replaced == ["0"] and isinstance(model[0], Int8Linear)  # 300 % 16 != 0 -> second kept
+
+
+def test_group_wise_model_is_closer_than_per_channel():
+    ids = torch.randint(0, 97, (1, 40))
+    errors = {}
+    for group_size in (None, 16):
+        model = make_model()
+        with torch.no_grad():
+            reference = model(ids)
+            quantize_linears(model, include_lm_head=True, min_out_features=8, group_size=group_size)
+            errors[group_size] = ((model(ids) - reference).norm() / reference.norm()).item()
+    assert errors[16] < errors[None] < 0.05
+
+
+def test_compiled_one_token_group_wise_path_matches_dequantized_matmul():
+    torch.manual_seed(0)
+    linear = nn.Linear(256, 96, bias=True)
+    q = Int8Linear.from_linear(linear, group_size=64)
+    fn = torch.compile(int8_linear, backend="eager", fullgraph=True)  # traced, so _group_gemv is what runs
+    for shape in ((1, 1, 256), (256,), (2, 3, 256)):
+        x = torch.randn(shape)
+        expected = torch.nn.functional.linear(x, q.dequantized_weight(), linear.bias)
+        got = fn(x, q.weight, q.scale, q.bias)
+        assert got.shape == expected.shape and torch.allclose(got, expected, atol=1e-5)

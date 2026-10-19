@@ -10,6 +10,8 @@ For every distinct Linear shape of a Qwen3.5 model this times, with the weight c
 and reports microseconds, the bandwidth reached on the bytes that variant must read, and the speedup over
 bf16. A fused kernel reads one byte per weight, so its time should approach half the bf16 time on the large
 shapes. If int8-comp stays near or above the bf16 time, inductor did not fuse the conversion.
+``--group-size 128`` times the group-wise variant, whose dequantization (cast and group-scale multiply) has to be
+fused into the matmul's input instead.
 
     python scripts/bench_int8_linear.py --repo Qwen/Qwen3.5-9B --out int8_linear.json
 """
@@ -49,12 +51,13 @@ def graph_time_ms(call, copies: int, iters: int, device: torch.device) -> float:
 
 
 @torch.inference_mode()
-def bench_shape(out_f: int, in_f: int, device, compile_mode: str | None, min_footprint: int, iters: int) -> dict:
+def bench_shape(out_f: int, in_f: int, device, compile_mode: str | None, min_footprint: int, iters: int,
+                group_size: int | None = None) -> dict:
     dtype = torch.bfloat16
     bf16_bytes = out_f * in_f * 2
     copies = max(2, -(-min_footprint // bf16_bytes))
     w = [torch.empty(out_f, in_f, device=device, dtype=dtype).normal_(0, 0.02) for _ in range(copies)]
-    q = [Int8Linear(*quantize_int8(x)) for x in w]
+    q = [Int8Linear(*quantize_int8(x, group_size)) for x in w]
     x = torch.randn(1, 1, in_f, device=device, dtype=dtype)
 
     # numeric check on copy 0: int8 path against the bf16 weight it was made from
@@ -83,6 +86,7 @@ def main() -> None:
     parser.add_argument("--min-footprint-mib", type=int, default=512)
     parser.add_argument("--iters", type=int, default=30)
     parser.add_argument("--skip-below", type=int, default=256, help="ignore shapes with fewer output features")
+    parser.add_argument("--group-size", type=int, default=0, help="0: one scale per output channel")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
@@ -98,17 +102,19 @@ def main() -> None:
     shapes = Counter((m.out_features, m.in_features) for m in model.modules() if isinstance(m, nn.Linear))
     shapes = {k: v for k, v in shapes.items() if k[0] >= args.skip_below}
     info = device_summary(device)
-    print(f"{info['name']}  torch {info['torch']}  compile mode: {args.compile_mode}")
+    group_size = args.group_size or None
+    print(f"{info['name']}  torch {info['torch']}  compile mode: {args.compile_mode}  group size: {group_size}")
 
     header = f"{'out x in':>16}{'n':>5}{'MiB bf16':>10}{'bf16 us':>9}{'i8 eager':>10}{'i8 comp':>9}{'comp GB/s':>10}{'speedup':>9}{'rel err':>9}"
     print(header)
     rows, totals = [], {"bf16": 0.0, "eager": 0.0, "comp": 0.0}
     for (out_f, in_f), count in sorted(shapes.items(), key=lambda kv: -kv[0][0] * kv[0][1] * kv[1]):
-        r = bench_shape(out_f, in_f, device, args.compile_mode, args.min_footprint_mib * MIB, args.iters)
+        r = bench_shape(out_f, in_f, device, args.compile_mode, args.min_footprint_mib * MIB, args.iters, group_size)
         r["count"] = count
         comp = r.get("int8_comp_us")
         if comp:
-            r["int8_comp_gbps"] = out_f * in_f / (comp * 1e-6) / 1e9  # one byte per weight
+            scale_bytes = 2 * out_f * (1 if group_size is None else in_f // group_size)
+            r["int8_comp_gbps"] = (out_f * in_f + scale_bytes) / (comp * 1e-6) / 1e9  # one byte per weight + scales
             r["speedup"] = r["bf16_us"] / comp
         rows.append(r)
         totals["bf16"] += r["bf16_us"] * count
@@ -124,7 +130,7 @@ def main() -> None:
         print(f"-> compiled INT8 is {totals['bf16'] / totals['comp']:.2f}x the bf16 time; fused would be ~1.6-1.9x")
 
     if args.out:
-        Path(args.out).write_text(json.dumps({"repo": args.repo, "device": info, "compile_mode": args.compile_mode,
+        Path(args.out).write_text(json.dumps({"repo": args.repo, "device": info, "compile_mode": args.compile_mode, "group_size": group_size,
                                               "rows": rows, "totals_us": totals}, indent=1))
 
 

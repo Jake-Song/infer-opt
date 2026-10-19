@@ -6,9 +6,9 @@ Same metrics and prompts as validate_qwen3_5_hf.py, but only the decode path is 
     (mismatch margins recorded; margin <= 0.5 counts as a near-tie)
 The prompt is always prefilled by the ordinary eager path; the decoder under test only runs the single-token steps.
 A config is ``kernels:mode`` or ``kernels:mode:quant`` with quant in bf16 / int8 / int8+lm_head (weight-only INT8, see
-infer_opt.quant). Quantization is in place and one way, so quant levels must appear in that order. ``--autotune`` runs
-the quantized configs with the options of torch.compile(mode="max-autotune") (max_autotune and coordinate descent
-tuning), without which the int8 -> bf16 conversion is not fused and decode is several times slower than bf16.
+infer_opt.quant; ``--group-size 128`` for one scale per 128 input columns). Quantization is in place and one way,
+so quant levels must appear in that order. ``--autotune`` runs the quantized configs with the options of
+torch.compile(mode="max-autotune") (max_autotune and coordinate descent tuning), without which the int8 -> bf16 conversion is not fused and decode is several times slower than bf16.
 At the end the script evaluates the quantization gate against the bf16 config with the same kernels:mode in this run:
 mean decode KL <= ``--kl-ratio`` x the bf16 mean, and zero strong teacher-forced mismatches.
 ``sliced-eager`` is the original decode path and serves as the baseline in the same run.
@@ -80,6 +80,7 @@ def main() -> None:
     parser.add_argument("--max-len", type=int, default=2048)
     parser.add_argument("--configs", default=DEFAULT_CONFIGS, help="comma separated kernels:mode[:quant]")
     parser.add_argument("--autotune", action="store_true", help="max-autotune inductor options for the quantized configs")
+    parser.add_argument("--group-size", type=int, default=0, help="INT8 scale per this many input columns; 0: per channel")
     parser.add_argument("--kl-ratio", type=float, default=2.0, help="gate: quantized mean KL / bf16 mean KL")
     parser.add_argument("--prompts", default=None)
     parser.add_argument("--out", default="decode_modes.json")
@@ -138,8 +139,9 @@ def main() -> None:
         if QUANT_LEVELS.index(quant) < QUANT_LEVELS.index(quant_done):
             raise SystemExit(f"{config}: the model is already {quant_done}; list configs in order {QUANT_LEVELS}")
         if quant != quant_done:  # one way, in place; lm_head is the only addition from int8 to int8+lm_head
-            report = quantize_linears(ours, include_lm_head=quant == "int8+lm_head")
-            quant_reports[quant] = {"summary": report.summary(), "replaced": len(report.replaced)}
+            report = quantize_linears(ours, include_lm_head=quant == "int8+lm_head", group_size=args.group_size or None)
+            quant_reports[quant] = {"summary": report.summary(), "replaced": len(report.replaced),
+                                    "group_size": args.group_size or None}
             print(quant, report.summary(), flush=True)
             quant_done = quant
             torch.cuda.empty_cache()
