@@ -101,6 +101,20 @@ Its original scalar fields retain arithmetic-mean semantics; `wall_ms`, `cuda_ms
 and `samples` add distributions and raw observations. Older decode measurements
 included prefill/cache setup and must not be compared directly with v2 results.
 
+### Qwen3.5-9B weight-only INT8 on Colab
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_9b_int8_colab.ipynb)
+
+[`qwen3_5_9b_int8_colab.ipynb`](notebooks/qwen3_5_9b_int8_colab.ipynb) (Korean) downloads
+[`Jakemu/Qwen3.5-9B-int8-g128`](https://huggingface.co/Jakemu/Qwen3.5-9B-int8-g128) -- int8 weights with one bf16
+scale per output channel and 128 input columns, lm_head in bf16 -- loads it with
+`Qwen3_5ForCausalLM.from_quantized_dir`, and generates through the fixed-shape decoder
+(`torch.compile` + CUDA graphs, the one-token matmul in the Triton kernel of `infer_opt/quant_kernels.py`).
+On an A100 runtime it decodes at about 10.7 ms/token against 15.1 for bf16. It needs a GPU with
+compute capability 8.0 or newer. `scripts/quantize_qwen3_5.py` makes such a checkpoint, and
+§5 of [`qwen3_5_9b_benchmark_tables.ipynb`](notebooks/qwen3_5_9b_benchmark_tables.ipynb) has the
+measurements and the accuracy gate.
+
 ### Local A100 result analysis
 
 Open [`04_a100_roofline_analysis.ipynb`](notebooks/04_a100_roofline_analysis.ipynb)

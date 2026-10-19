@@ -11,12 +11,15 @@ from pathlib import Path
 import nbformat
 
 ROOT = Path(__file__).resolve().parents[1]
+COLAB_URL = "https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_9b_int8_colab.ipynb"
 
 
 def cells(ref: str, model_id: str) -> list:
     md, code = nbformat.v4.new_markdown_cell, nbformat.v4.new_code_cell
     return [
         md(f"""# Qwen3.5-9B INT8 (group-128)을 Colab에서 실행하기
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]({COLAB_URL})
 
 [`{model_id}`](https://huggingface.co/{model_id})에 올린 **weight-only INT8 Qwen3.5-9B**로 글을 생성하고 decode 속도를 잽니다.
 
