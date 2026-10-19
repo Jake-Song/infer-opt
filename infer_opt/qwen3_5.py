@@ -770,6 +770,39 @@ class Qwen3_5ForCausalLM(nn.Module):
         model.to(device=device, dtype=dtype)
         return model.set_kernels(kernels).eval()
 
+    @classmethod
+    def from_quantized_dir(cls, path: str | Path, device="cpu", kernels: str = "torch") -> "Qwen3_5ForCausalLM":
+        """Load a checkpoint written by :func:`infer_opt.quant.save_quantized` (``config.json`` next to it).
+
+        Tensors keep the dtypes they were saved with (int8 weights, bf16 scales and the rest) and are read straight
+        onto ``device``.
+        """
+        from safetensors import safe_open
+
+        from infer_opt.quant import QUANTIZATION_FILE, prepare_quantized
+
+        path = Path(path)
+        config = Qwen3_5TextConfig.from_json(path / "config.json")
+        spec = json.loads((path / QUANTIZATION_FILE).read_text())
+        with torch.device("meta"):
+            model = cls(config)
+        prepare_quantized(model, spec)
+        state = {}
+        for shard in sorted(path.glob("model-int8-*.safetensors")):
+            with safe_open(shard, framework="pt", device=str(device)) as f:
+                for key in f.keys():
+                    state[key] = f.get_tensor(key)
+        for name, source in spec["tied"].items():
+            state[name] = state[source]
+        model.load_state_dict(state, strict=True, assign=True)
+        # from_pretrained_dir casts the whole model, the rope buffer included; match it so the logits are the same
+        rotary = Qwen3_5TextRotaryEmbedding(config)
+        rotary.inv_freq = rotary.inv_freq.to(model.model.language_model.embed_tokens.weight.dtype)
+        model.model.language_model.rotary_emb = rotary
+        if config.tie_word_embeddings and not spec["modules"].get("lm_head"):
+            model.lm_head.weight = model.model.language_model.embed_tokens.weight
+        return model.to(device).set_kernels(kernels).eval()
+
 
 DECODE_MODES = ("eager", "compile", "compile-reduce-overhead", "cudagraph")
 

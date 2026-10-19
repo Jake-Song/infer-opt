@@ -162,3 +162,37 @@ def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size):
             assert got.shape == expected.shape and got.dtype == dtype
             assert torch.allclose(got.float(), expected, atol=2e-2, rtol=2e-3)
 
+
+
+def write_hf_config(path, c):
+    """config.json in the layout of the Hugging Face Qwen3.5 checkpoints, which from_json reads."""
+    import dataclasses
+    import json
+
+    text = {f.name: getattr(c, f.name) for f in dataclasses.fields(c)}
+    text["rope_parameters"] = {"rope_theta": text.pop("rope_theta"), "mrope_section": text.pop("mrope_section"),
+                               "partial_rotary_factor": text.pop("partial_rotary_factor")}
+    (path / "config.json").write_text(json.dumps({"text_config": text, "tie_word_embeddings": c.tie_word_embeddings}))
+
+
+@pytest.mark.parametrize("group_size,include_lm_head", [(16, False), (None, True)])
+def test_save_and_load_quantized_round_trip(tmp_path, group_size, include_lm_head):
+    from infer_opt.quant import save_quantized
+    from infer_opt.qwen3_5 import Qwen3_5ForCausalLM
+
+    model = make_model()
+    quantize_linears(model, include_lm_head=include_lm_head, min_out_features=8, group_size=group_size)
+    files = save_quantized(model, tmp_path, shard_bytes=20_000)  # several shards
+    assert len(files) > 1
+    write_hf_config(tmp_path, model.config)
+    loaded = Qwen3_5ForCausalLM.from_quantized_dir(tmp_path)
+    assert isinstance(loaded.model.language_model.layers[0].mlp.gate_proj, Int8Linear)
+    assert loaded.model.language_model.layers[0].mlp.gate_proj.group_size == group_size
+    assert isinstance(loaded.lm_head, Int8Linear) == include_lm_head
+    if not include_lm_head:  # tied embeddings stay tied
+        assert loaded.lm_head.weight is loaded.model.language_model.embed_tokens.weight
+    ids = torch.randint(0, 97, (1, 30))
+    with torch.no_grad():
+        assert torch.equal(loaded(ids), model(ids))
+    for (name, a), (_, b) in zip(model.state_dict().items(), loaded.state_dict().items()):
+        assert a.dtype == b.dtype, name

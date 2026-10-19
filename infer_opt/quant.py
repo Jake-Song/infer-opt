@@ -14,13 +14,18 @@ before the matmul.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
-__all__ = ["Int8Linear", "int8_linear", "quantize_int8", "dequantize_int8", "quantize_linears", "QuantizationReport"]
+__all__ = ["Int8Linear", "int8_linear", "quantize_int8", "dequantize_int8", "quantize_linears", "QuantizationReport",
+           "save_quantized", "prepare_quantized", "QUANTIZATION_FILE"]
+
+QUANTIZATION_FILE = "quantization.json"
 
 INT8_MAX = 127
 _ROW_CHUNK = 16384  # bounds the fp32 temporary when quantizing a vocab-sized matrix
@@ -155,3 +160,56 @@ def quantize_linears(
         report.bytes_before += before
         report.bytes_after += quantized.weight.numel() + quantized.scale.numel() * quantized.scale.element_size()
     return report
+
+
+@torch.no_grad()
+def save_quantized(model: nn.Module, path: str | Path, *, shard_bytes: int = 2 << 30) -> list[Path]:
+    """Write ``model``'s state dict as safetensors shards plus :data:`QUANTIZATION_FILE`, which lists every
+    :class:`Int8Linear` with its shape and group size so :func:`prepare_quantized` can rebuild the module tree.
+
+    A tensor shared between two names (tied embeddings) is stored once, under its first name. Returns the shard paths.
+    """
+    from safetensors.torch import save_file
+
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    modules = {name: {"out_features": m.out_features, "in_features": m.in_features, "group_size": m.group_size,
+                      "bias": m.bias is not None}
+               for name, m in model.named_modules() if isinstance(m, Int8Linear)}
+    seen, tied, shards, current, size = {}, {}, [], {}, 0
+    for name, tensor in model.state_dict().items():
+        key = (tensor.data_ptr(), tensor.dtype, tuple(tensor.shape))
+        if tensor.data_ptr() and key in seen:
+            tied[name] = seen[key]
+            continue
+        seen[key] = name
+        nbytes = tensor.numel() * tensor.element_size()
+        if current and size + nbytes > shard_bytes:
+            shards.append(current)
+            current, size = {}, 0
+        current[name] = tensor.detach().contiguous().cpu()
+        size += nbytes
+    if current:
+        shards.append(current)
+    files = []
+    for i, shard in enumerate(shards, 1):
+        files.append(path / f"model-int8-{i:05d}-of-{len(shards):05d}.safetensors")
+        save_file(shard, str(files[-1]))
+    (path / QUANTIZATION_FILE).write_text(json.dumps({"format": "infer_opt.int8", "modules": modules, "tied": tied},
+                                                     indent=1))
+    return files
+
+
+def prepare_quantized(model: nn.Module, spec: dict) -> None:
+    """Replace the ``nn.Linear`` modules named in ``spec["modules"]`` by empty :class:`Int8Linear` of the same shape
+    (on the Linear's device, typically meta), ready for ``load_state_dict(..., assign=True)``."""
+    for name, m in spec["modules"].items():
+        parent_name, _, child_name = name.rpartition(".")
+        parent = model.get_submodule(parent_name) if parent_name else model
+        device = getattr(parent, child_name).weight.device
+        out_f, in_f, group = m["out_features"], m["in_features"], m["group_size"]
+        weight = torch.empty(out_f, in_f, dtype=torch.int8, device=device)
+        scale_shape = (out_f,) if group is None else (out_f, in_f // group)
+        scale = torch.empty(scale_shape, dtype=torch.bfloat16, device=device)
+        bias = torch.empty(out_f, dtype=torch.bfloat16, device=device) if m["bias"] else None
+        setattr(parent, child_name, Int8Linear(weight, scale, bias))

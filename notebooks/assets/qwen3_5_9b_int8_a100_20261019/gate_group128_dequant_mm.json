@@ -1,0 +1,583 @@
+{
+ "args": {
+  "repo": "Qwen/Qwen3.5-9B",
+  "weights": null,
+  "new_tokens": 192,
+  "decode_positions": 32,
+  "max_len": 2048,
+  "configs": "fla-delta:compile-reduce-overhead,fla-delta:compile-reduce-overhead:int8,fla-delta:compile-reduce-overhead:int8+lm_head",
+  "autotune": true,
+  "group_size": 128,
+  "kl_ratio": 2.0,
+  "prompts": null,
+  "out": "/content/out/gate_g128.json"
+ },
+ "layers": {
+  "num_layers": 32,
+  "linear_attention": 24,
+  "full_attention": 8,
+  "pattern": "LLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLF"
+ },
+ "quantization": {
+  "int8": {
+   "summary": "200 Linear -> Int8Linear, 49 kept; 12.875 GiB -> 6.538 GiB",
+   "replaced": 200,
+   "group_size": 128
+  },
+  "int8+lm_head": {
+   "summary": "1 Linear -> Int8Linear, 48 kept; 1.895 GiB -> 0.962 GiB",
+   "replaced": 1,
+   "group_size": 128
+  }
+ },
+ "gate": [
+  {
+   "config": "fla-delta:compile-reduce-overhead:int8",
+   "bf16": {
+    "prompts": 9,
+    "mean_kl": 0.0004568182193906978,
+    "strong_mismatches": 1,
+    "near_tie_mismatches": 13,
+    "free_run_identical": 2
+   },
+   "quantized": {
+    "prompts": 9,
+    "mean_kl": 0.0007059089366521221,
+    "strong_mismatches": 0,
+    "near_tie_mismatches": 12,
+    "free_run_identical": 5
+   },
+   "kl_ratio": 1.5452731670677682,
+   "pass_kl": true,
+   "pass_strong": true,
+   "pass": true
+  },
+  {
+   "config": "fla-delta:compile-reduce-overhead:int8+lm_head",
+   "bf16": {
+    "prompts": 9,
+    "mean_kl": 0.0004568182193906978,
+    "strong_mismatches": 1,
+    "near_tie_mismatches": 13,
+    "free_run_identical": 2
+   },
+   "quantized": {
+    "prompts": 9,
+    "mean_kl": 0.0007677665507799247,
+    "strong_mismatches": 0,
+    "near_tie_mismatches": 13,
+    "free_run_identical": 5
+   },
+   "kl_ratio": 1.6806828584988762,
+   "pass_kl": true,
+   "pass_strong": true,
+   "pass": true
+  }
+ ],
+ "rows": [
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "short",
+   "tokens": 5,
+   "decode_kl_vs_hf": 0.0005420372472144663,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.21875,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "hello",
+   "tokens": 1,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 48,
+   "tf_mismatch_steps": 4,
+   "tf_mismatch_near_tie": 4,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.0,
+    0.0,
+    0.125,
+    0.0
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "korean",
+   "tokens": 20,
+   "decode_kl_vs_hf": 0.0006012558587826788,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.28125,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 2,
+   "tf_mismatch_steps": 1,
+   "tf_mismatch_near_tie": 1,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.0
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "math",
+   "tokens": 43,
+   "decode_kl_vs_hf": 0.0005235404241830111,
+   "decode_top1_vs_hf": 0.96875,
+   "decode_maxdiff_vs_hf": 0.322265625,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 0,
+   "tf_mismatch_steps": 1,
+   "tf_mismatch_near_tie": 1,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "chat",
+   "tokens": 23,
+   "decode_kl_vs_hf": 0.00025864053168334067,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.65625,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 34,
+   "tf_mismatch_steps": 4,
+   "tf_mismatch_near_tie": 4,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.25,
+    0.125,
+    0.0,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "chat_long",
+   "tokens": 32,
+   "decode_kl_vs_hf": 0.0006250455044209957,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 80,
+   "tf_mismatch_steps": 2,
+   "tf_mismatch_near_tie": 2,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.125,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "prose_1k",
+   "tokens": 1057,
+   "decode_kl_vs_hf": 0.00023199719726108015,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 5.69140625,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 191,
+   "tf_mismatch_steps": 1,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 1,
+   "tf_mismatch_hf_margins": [
+    1.75
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "code_1k",
+   "tokens": 1000,
+   "decode_kl_vs_hf": 0.000532205100171268,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 1.7568359375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 149,
+   "tf_mismatch_steps": 1,
+   "tf_mismatch_near_tie": 1,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "prompt": "code_1_5k",
+   "tokens": 1500,
+   "decode_kl_vs_hf": 0.0003398238914087415,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.40625,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "bf16",
+   "summary": true,
+   "seconds": 107.96034717559814,
+   "dynamo_unique_graphs": 1,
+   "dynamo_graph_breaks": 0
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "short",
+   "tokens": 5,
+   "decode_kl_vs_hf": 0.00067752820905298,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.34375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "hello",
+   "tokens": 1,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 33,
+   "tf_mismatch_steps": 5,
+   "tf_mismatch_near_tie": 5,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.0,
+    0.0,
+    0.0,
+    0.125,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "korean",
+   "tokens": 20,
+   "decode_kl_vs_hf": 0.0008247200748883188,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.4375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 2,
+   "tf_mismatch_steps": 2,
+   "tf_mismatch_near_tie": 2,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.0,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "math",
+   "tokens": 43,
+   "decode_kl_vs_hf": 0.0009785012807697058,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.8125,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "chat",
+   "tokens": 23,
+   "decode_kl_vs_hf": 0.0004933867021463811,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.5272216796875,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 34,
+   "tf_mismatch_steps": 3,
+   "tf_mismatch_near_tie": 3,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.25,
+    0.125,
+    0.0
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "chat_long",
+   "tokens": 32,
+   "decode_kl_vs_hf": 0.0005330633721314371,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.60546875,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 9,
+   "tf_mismatch_steps": 2,
+   "tf_mismatch_near_tie": 2,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.25,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "prose_1k",
+   "tokens": 1057,
+   "decode_kl_vs_hf": 0.00024152465630322695,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 5.984375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "code_1k",
+   "tokens": 1000,
+   "decode_kl_vs_hf": 0.001724659581668675,
+   "decode_top1_vs_hf": 0.96875,
+   "decode_maxdiff_vs_hf": 1.25,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "prompt": "code_1_5k",
+   "tokens": 1500,
+   "decode_kl_vs_hf": 0.00017388761625625193,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.515625,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8",
+   "summary": true,
+   "seconds": 189.93393659591675,
+   "dynamo_unique_graphs": 1,
+   "dynamo_graph_breaks": 0
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "short",
+   "tokens": 5,
+   "decode_kl_vs_hf": 0.0008133871597237885,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.359375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "hello",
+   "tokens": 1,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 33,
+   "tf_mismatch_steps": 5,
+   "tf_mismatch_near_tie": 5,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.0,
+    0.0,
+    0.0,
+    0.125,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "korean",
+   "tokens": 20,
+   "decode_kl_vs_hf": 0.0007811872055754066,
+   "decode_top1_vs_hf": 0.9473684430122375,
+   "decode_maxdiff_vs_hf": 0.375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 2,
+   "tf_mismatch_steps": 2,
+   "tf_mismatch_near_tie": 2,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.0,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "math",
+   "tokens": 43,
+   "decode_kl_vs_hf": 0.0009033959358930588,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.78125,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "chat",
+   "tokens": 23,
+   "decode_kl_vs_hf": 0.00048269721446558833,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.59375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 34,
+   "tf_mismatch_steps": 4,
+   "tf_mismatch_near_tie": 4,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.25,
+    0.125,
+    0.0,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "chat_long",
+   "tokens": 32,
+   "decode_kl_vs_hf": 0.0006603263900615275,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.599609375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": 9,
+   "tf_mismatch_steps": 2,
+   "tf_mismatch_near_tie": 2,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": [
+    0.25,
+    0.125
+   ]
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "prose_1k",
+   "tokens": 1057,
+   "decode_kl_vs_hf": 0.00022970505233388394,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 5.9375,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "code_1k",
+   "tokens": 1000,
+   "decode_kl_vs_hf": 0.001988982316106558,
+   "decode_top1_vs_hf": 0.96875,
+   "decode_maxdiff_vs_hf": 1.1875,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "prompt": "code_1_5k",
+   "tokens": 1500,
+   "decode_kl_vs_hf": 0.0002824511320795864,
+   "decode_top1_vs_hf": 1.0,
+   "decode_maxdiff_vs_hf": 0.53125,
+   "new_tokens_compared": 192,
+   "gen_first_mismatch": null,
+   "tf_mismatch_steps": 0,
+   "tf_mismatch_near_tie": 0,
+   "tf_mismatch_strong": 0,
+   "tf_mismatch_hf_margins": []
+  },
+  {
+   "kernels": "fla-delta",
+   "mode": "compile-reduce-overhead",
+   "quant": "int8+lm_head",
+   "summary": true,
+   "seconds": 163.39046597480774,
+   "dynamo_unique_graphs": 1,
+   "dynamo_graph_breaks": 0
+  }
+ ]
+}
