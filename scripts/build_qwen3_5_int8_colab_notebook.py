@@ -132,7 +132,7 @@ def generate(prompt: str, max_new_tokens: int = 256, stream: bool = True) -> dic
     if stream:
         print(f"\\n\\n[prompt {stats['prompt_tokens']} tok, 생성 {stats['new_tokens']} tok, prefill {stats['prefill_s']:.2f} s, "
               f"decode {stats['decode_ms_per_token']:.1f} ms/token]")
-    return {"text": tokenizer.decode(out, skip_special_tokens=True), **stats}
+    return {"text": tokenizer.decode(out, skip_special_tokens=True), "tokens": out, **stats}
 """),
         md("""## 5. 생성해 보기
 
@@ -167,7 +167,113 @@ ms = bench_decode()
 print(f"{torch.cuda.get_device_name()}: {ms:.2f} ms/token ({1000 / ms:.1f} tok/s), "
       f"peak GPU 메모리 {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB")
 """),
-        md("""## 7. 직접 써 보기
+        md("""## 7. 기존 HF 모델과 비교
+
+원래 모델 [`Qwen/Qwen3.5-9B`](https://huggingface.co/Qwen/Qwen3.5-9B)를 `transformers`로 bf16 그대로 올려서 같은 GPU에서 비교합니다.
+HF 쪽은 기본 설정(동적 cache, `torch.compile` 없음)입니다.
+
+- **7.1 같은 질문**: 같은 chat prompt로 둘 다 greedy 생성하고, 처음 달라지는 token 위치를 봅니다.
+- **7.2 decode 속도**: 저장소의 `scripts/bench_qwen3_5.py`와 같은 방식으로 HF decode를 잽니다.
+  랜덤 1024-token 프롬프트로 `generate(128)`과 `generate(1)`의 시간 차를 127로 나눈 값이고, 각각 3번 중 최솟값입니다.
+  2026-10-17 A100에서 이 방식으로 잰 값은 61.7 ms/token이었습니다.
+- **7.3 정확도**: HF가 생성한 token 열을 두 모델에 그대로 넣고(teacher forcing) 위치마다 다음 token 분포를 비교합니다.
+
+INT8 모델을 둔 채 bf16 모델(약 17.5 GiB)을 더 올리므로 **GPU 메모리가 40 GB 이상**이어야 합니다. 그보다 작으면 이 절은 건너뜁니다.
+다운로드는 약 19 GB입니다."""),
+        code("""from transformers import AutoModelForCausalLM, TextStreamer
+
+total_gib = torch.cuda.get_device_properties(0).total_memory / 2**30
+RUN_HF = total_gib >= 38
+if RUN_HF:
+    t0 = time.perf_counter()
+    hf_path = snapshot_download("Qwen/Qwen3.5-9B", allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
+    hf = AutoModelForCausalLM.from_pretrained(hf_path, dtype=torch.bfloat16).cuda().eval()
+    print(f"HF bf16 모델 준비 {time.perf_counter() - t0:.0f} s, GPU 메모리 {torch.cuda.memory_allocated() / 2**30:.2f} GiB (INT8 모델 포함)")
+else:
+    print(f"GPU 메모리 {total_gib:.0f} GiB: 두 모델을 함께 올릴 수 없어 7절을 건너뜁니다")
+"""),
+        md("""### 7.1 같은 질문
+
+HF는 `generate(do_sample=False)`, INT8은 위의 `generate()`입니다. 둘 다 greedy라서 bf16과 int8의 작은 수치 차이가
+어느 위치에서 1위 token을 바꾸는지가 그대로 보입니다. 달라진 뒤로는 문장이 다르게 이어지는 것이 정상입니다."""),
+        code("""COMPARE_PROMPT = "Explain in three sentences why batch-1 LLM decoding is limited by memory bandwidth."
+COMPARE_TOKENS = 160
+
+
+@torch.no_grad()
+def hf_generate(prompt: str, max_new_tokens: int) -> tuple[torch.Tensor, list[int], float]:
+    text = tokenizer.apply_chat_template([{"role": "user", "content": prompt}], tokenize=False,
+                                         add_generation_prompt=True, enable_thinking=False)
+    ids = tokenizer(text, return_tensors="pt", add_special_tokens=False).input_ids.cuda()
+    torch.cuda.synchronize(); t0 = time.perf_counter()
+    full = hf.generate(ids, max_new_tokens=max_new_tokens, do_sample=False,
+                       streamer=TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True))
+    torch.cuda.synchronize()
+    return ids, full[0, ids.shape[1]:].tolist(), time.perf_counter() - t0
+
+
+if RUN_HF:
+    print("=== HF bf16 ===")
+    hf_ids, hf_out, hf_s = hf_generate(COMPARE_PROMPT, COMPARE_TOKENS)
+    print(f"[{len(hf_out)} tok, {hf_s:.1f} s, prefill 포함 {hf_s / len(hf_out) * 1e3:.1f} ms/token]\n")
+    print("=== INT8 ===")
+    q = generate(COMPARE_PROMPT, max_new_tokens=COMPARE_TOKENS)
+    q_out = q["tokens"]
+    same = next((i for i, (a, b) in enumerate(zip(hf_out, q_out)) if a != b), min(len(hf_out), len(q_out)))
+    print(f"\n처음 {same} token이 같습니다" + ("" if same == min(len(hf_out), len(q_out)) else
+          f": {same}번째에서 HF {tokenizer.decode(hf_out[same])!r} / INT8 {tokenizer.decode(q_out[same])!r}"))
+"""),
+        md("""### 7.2 decode 속도
+
+INT8 숫자는 6절에서 잰 `ms`입니다. HF 쪽은 생성 길이를 고정하려고 `min_new_tokens`를 같이 줍니다."""),
+        code("""@torch.no_grad()
+def hf_decode_ms(prompt_tokens: int = 1024, new_tokens: int = 128, repeats: int = 3) -> float:
+    torch.manual_seed(0)
+    ids = torch.randint(1000, 100000, (1, prompt_tokens), device="cuda")
+
+    def timed(n):
+        best = float("inf")
+        for _ in range(repeats):
+            torch.cuda.synchronize(); t0 = time.perf_counter()
+            hf.generate(ids, max_new_tokens=n, min_new_tokens=n, do_sample=False)
+            torch.cuda.synchronize(); best = min(best, time.perf_counter() - t0)
+        return best
+
+    timed(2)  # warm-up
+    return (timed(new_tokens) - timed(1)) / (new_tokens - 1) * 1e3
+
+
+if RUN_HF:
+    hf_ms = hf_decode_ms()
+    rows = [("HF transformers bf16 (기본 설정)", hf_ms), ("INT8 group-128 + Triton GEMV + CUDA graph", ms)]
+    for label, v in rows:
+        print(f"{label:44s} {v:7.2f} ms/token {1000 / v:7.1f} tok/s  HF 대비 {hf_ms / v:5.2f}×")
+"""),
+        md("""### 7.3 정확도 (teacher forcing)
+
+7.1에서 HF가 만든 token 열(프롬프트 + 생성)을 두 모델에 한 번에 넣고, 생성 구간의 위치마다
+KL(HF ‖ INT8)과 1위 token 일치율을 봅니다. INT8 쪽은 여러 token을 한 번에 처리하므로 Triton GEMV가 아니라
+가중치를 bf16으로 풀어서 곱하는 경로를 씁니다(같은 int8 값과 scale)."""),
+        code("""import torch.nn.functional as F
+
+if RUN_HF:
+    seq = torch.cat([hf_ids, torch.tensor([hf_out], device="cuda")], dim=1)
+    start = hf_ids.shape[1] - 1  # 첫 생성 token을 예측하는 위치부터
+    with torch.no_grad():
+        p_hf = F.log_softmax(hf(input_ids=seq).logits[0, start:-1].float(), -1)
+        p_q = F.log_softmax(model(seq)[0, start:-1].float(), -1)
+    kl = F.kl_div(p_q, p_hf, log_target=True, reduction="none").sum(-1)
+    top1 = (p_hf.argmax(-1) == p_q.argmax(-1)).float()
+    print(f"{len(kl)}개 위치: KL(HF‖INT8) 평균 {kl.mean():.5f}, 최대 {kl.max():.4f}, 1위 token 일치 {top1.mean():.1%}")
+    print("저장소의 정확도 기준(9개 프롬프트)에서는 INT8의 HF 대비 KL이 같은 실행 bf16 구현의 1.55–1.89배였습니다.")
+"""),
+        md("""이 비교가 끝나면 HF 모델을 내려서 메모리를 돌려줍니다."""),
+        code("""if RUN_HF:
+    del hf
+    torch.cuda.empty_cache()
+    print(f"GPU 메모리 {torch.cuda.memory_allocated() / 2**30:.2f} GiB")
+"""),
+        md("""## 8. 직접 써 보기
 
 `PROMPT`를 바꿔서 실행하세요. greedy decoding(항상 가장 확률 높은 token)만 지원합니다."""),
         code("""PROMPT = "Qwen3.5의 linear attention(gated delta rule)이 긴 문맥에서 유리한 이유를 설명해 줘."
