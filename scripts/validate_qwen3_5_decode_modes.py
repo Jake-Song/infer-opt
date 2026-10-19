@@ -86,7 +86,7 @@ def main() -> None:
     out = Path(args.out)
 
     def save():
-        out.write_text(json.dumps({"args": vars(args), "rows": rows}, indent=1))
+        out.write_text(json.dumps({"args": vars(args), "layers": ours.config.layer_summary(), "rows": rows}, indent=1))
 
     for config in args.configs.split(","):
         kernels, mode = config.split(":")

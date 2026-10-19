@@ -149,6 +149,7 @@ def main() -> None:
             rows.append(row)
             print(json.dumps(row), flush=True)
             out.write_text(json.dumps({"args": vars(args), "device": torch.cuda.get_device_name(),
+                                       "layers": model.config.layer_summary(),
                                        "torch": torch.__version__, "rows": rows}, indent=1))
 
 

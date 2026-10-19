@@ -178,3 +178,9 @@ def test_generate_with_fixed_shape_decoder_matches_default_generate():
     model = make_model()
     ids = torch.randint(0, 97, (1, 9))
     assert torch.equal(model.generate_greedy(ids, 14), model.generate_greedy(ids, 14, decode_mode="eager"))
+
+
+def test_layer_summary_describes_layout():
+    assert tiny_config().layer_summary() == {
+        "num_layers": 4, "linear_attention": 3, "full_attention": 1, "pattern": "LLLF",
+    }

@@ -128,7 +128,7 @@ def main() -> None:
     out = Path(args.out)
 
     def save():
-        out.write_text(json.dumps({"args": vars(args), "rows": rows, "batch_rows": batch_rows}, indent=1))
+        out.write_text(json.dumps({"args": vars(args), "layers": ours.config.layer_summary(), "rows": rows, "batch_rows": batch_rows}, indent=1))
 
     with torch.no_grad():
         for name, text in prompts.items():

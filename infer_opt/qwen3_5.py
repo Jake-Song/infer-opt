@@ -61,6 +61,16 @@ class Qwen3_5TextConfig:
     # or "fla-delta" (FLA delta rule only, torch conv)
     kernels: str = "torch"
 
+    def layer_summary(self) -> dict:
+        """Layer layout for result files: counts plus a one-letter-per-layer pattern (L linear, F full)."""
+        code = {"linear_attention": "L", "full_attention": "F"}
+        return {
+            "num_layers": len(self.layer_types),
+            "linear_attention": self.layer_types.count("linear_attention"),
+            "full_attention": self.layer_types.count("full_attention"),
+            "pattern": "".join(code.get(t, "?") for t in self.layer_types),
+        }
+
     @classmethod
     def from_json(cls, path: str | Path) -> "Qwen3_5TextConfig":
         raw = json.loads(Path(path).read_text())
