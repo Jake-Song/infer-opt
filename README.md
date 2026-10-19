@@ -119,7 +119,7 @@ measurements and the accuracy gate.
 
 On a free **T4** runtime, [`qwen3_5_9b_int8_colab_t4.ipynb`](notebooks/qwen3_5_9b_int8_colab_t4.ipynb) loads the same
 checkpoint in fp16 (`from_quantized_dir(..., dtype=torch.float16)`; Turing has no bf16). The bf16 model does not fit in a
-T4's memory; the int8 one decodes at about 42 ms/token there. On an A100, the fp16 run of this checkpoint was as close to
+T4's memory; the int8 one decodes at about 42-44 ms/token there. On an A100, the fp16 run of this checkpoint was as close to
 the Hugging Face bf16 model as the bf16 run (mean decode KL 0.00056 vs 0.00071-0.00077, no confident mismatch).
 
 ### Local A100 result analysis

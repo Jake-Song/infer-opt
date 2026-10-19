@@ -1,6 +1,9 @@
-"""Write notebooks/qwen3_5_9b_int8_colab.ipynb: run the group-128 INT8 Qwen3.5-9B from the Hugging Face Hub on Colab.
+"""Write the Colab notebooks that run the group-128 INT8 Qwen3.5-9B from the Hugging Face Hub.
 
-    uv run --group notebooks python scripts/build_qwen3_5_int8_colab_notebook.py --ref <git commit>
+``--target a100`` (bf16, with a comparison against the original model) writes notebooks/qwen3_5_9b_int8_colab.ipynb;
+``--target t4`` (fp16, for GPUs without bf16) writes notebooks/qwen3_5_9b_int8_colab_t4.ipynb.
+
+    uv run --group notebooks python scripts/build_qwen3_5_int8_colab_notebook.py --ref <git commit> --target t4
 """
 
 from __future__ import annotations
@@ -11,15 +14,53 @@ from pathlib import Path
 import nbformat
 
 ROOT = Path(__file__).resolve().parents[1]
-COLAB_URL = "https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_9b_int8_colab.ipynb"
+COLAB = "https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/"
+
+TARGETS = {
+    "a100": {
+        "file": "qwen3_5_9b_int8_colab.ipynb", "gpu": "A100", "title": "", "dtype": "torch.bfloat16",
+        "kernels": "fla-delta", "min_cap": (8, 0), "hf_compare": True,
+        "pip": '"transformers>=5" flash-linear-attention',
+        "libs": "- `flash-linear-attention`: delta-rule 커널(`fla-delta`).",
+        "speed": "같은 A100에서 잰 값: bf16 15.1 ms/token → 이 모델 **10.8 ms/token**. HF 구현 대비 정확도 기준(같은 실행 bf16 KL의 2배 이하,\n"
+                 "  확신 있는 불일치 없음)을 통과한 구성입니다.",
+        "runtime": "**런타임:** 런타임 → 런타임 유형 변경 → **A100 GPU**. 커널이 bf16을 쓰므로 compute capability 8.0 이상이 필요합니다\n"
+                   "(T4에서는 [T4용 노트북]({colab}qwen3_5_9b_int8_colab_t4.ipynb)을 쓰세요. L4는 될 것으로 보이지만 확인하지 않았습니다).\n"
+                   "GPU 메모리는 약 11 GiB, 다운로드는 약 10 GB입니다.",
+        "cap_msg": "bf16 커널은 compute capability 8.0 이상(A100, L4, H100 등)이 필요합니다. T4는 T4용 노트북을 쓰세요",
+        "recorded": "같은 방식으로 A100-SXM4-40GB에서 잰 값은 bf16 15.09, 이 모델 10.79 ms/token입니다.",
+        "max_len_note": "\n  (A100에서 4096이면 1211보다 약 1.5 ms/token 느렸습니다)",
+        "first_run": "1–3분** 걸립니다(prefill의 Triton·FLA 커널도 처음 쓸 때 컴파일되어 첫 prefill만 수십 초)",
+        "bench_compile": "1–2분",
+        "accuracy_note": "",
+    },
+    "t4": {
+        "file": "qwen3_5_9b_int8_colab_t4.ipynb", "gpu": "T4", "title": " — T4 (fp16)", "dtype": "torch.float16",
+        "kernels": "torch", "min_cap": (7, 5), "hf_compare": False,
+        "pip": '"transformers>=5"',
+        "libs": "- delta-rule은 PyTorch 구현(`torch` kernels)을 씁니다. T4에서 FLA 커널(`fla-delta`)과 decode 속도가 같았고(42.1 vs 41.9 ms/token),\n"
+                "  FLA는 첫 prefill에서 커널 컴파일에 1분 반이 걸려서 설치하지 않습니다.",
+        "speed": "T4에서 잰 값: **약 {t4_ms} ms/token** (A100에서는 10.8). 원래 bf16 모델은 가중치만 16.7 GiB라 T4(약 15 GiB)에 올라가지 않습니다.",
+        "runtime": "**런타임:** 런타임 → 런타임 유형 변경 → **T4 GPU**. T4(Turing, compute capability 7.5)는 bf16을 지원하지 않으므로\n"
+                   "이 노트북은 같은 int8 checkpoint를 **fp16**으로 불러옵니다(int8 가중치는 그대로, scale·embedding·norm·lm_head는 fp16).\n"
+                   "GPU 메모리는 약 12 GiB, 다운로드는 약 10 GB입니다. A100이 있으면 [A100용 노트북]({colab}qwen3_5_9b_int8_colab.ipynb)이 더 빠릅니다.",
+        "cap_msg": "compute capability 7.5 이상(T4 등)이 필요합니다",
+        "recorded": "같은 방식으로 Colab T4에서 잰 값은 {t4_ms} ms/token입니다(A100에서는 10.79).",
+        "max_len_note": "",
+        "first_run": "약 3분** 걸립니다(Colab T4에서 decode 컴파일에 163초)", "bench_compile": "약 3분",
+        "accuracy_note": "\n- {t4_accuracy}",
+    },
+}
 
 
-def cells(ref: str, model_id: str) -> list:
+def cells(ref: str, model_id: str, target: str, t4_ms: str, t4_accuracy: str) -> list:
     md, code = nbformat.v4.new_markdown_cell, nbformat.v4.new_code_cell
-    return [
-        md(f"""# Qwen3.5-9B INT8 (group-128)을 Colab에서 실행하기
+    t = {k: v.format(colab=COLAB, t4_ms=t4_ms, t4_accuracy=t4_accuracy) if isinstance(v, str) else v
+         for k, v in TARGETS[target].items()}
+    head = [
+        md(f"""# Qwen3.5-9B INT8 (group-128)을 Colab에서 실행하기{t["title"]}
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]({COLAB_URL})
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]({COLAB}{t["file"]})
 
 [`{model_id}`](https://huggingface.co/{model_id})에 올린 **weight-only INT8 Qwen3.5-9B**로 글을 생성하고 decode 속도를 잽니다.
 
@@ -27,27 +68,25 @@ def cells(ref: str, model_id: str) -> list:
   가중치가 약 절반이 되어 batch 1 decode가 빨라집니다.
 - 1 token decode의 행렬곱은 [infer-opt](https://github.com/Jake-Song/infer-opt)의 Triton 커널(`infer_opt/quant_kernels.py`)이 처리하고,
   decode step 전체는 `torch.compile` + CUDA graph로 돌립니다.
-- 같은 A100에서 잰 값: bf16 15.1 ms/token → 이 모델 **10.8 ms/token**. HF 구현 대비 정확도 기준(같은 실행 bf16 KL의 2배 이하,
-  확신 있는 불일치 없음)을 통과한 구성입니다.
+- {t["speed"]}
 
-**런타임:** 런타임 → 런타임 유형 변경 → **A100 GPU**. 커널이 bf16 Triton을 쓰므로 compute capability 8.0 이상이 필요합니다
-(T4는 안 됩니다. L4는 될 것으로 보이지만 확인하지 않았습니다). GPU 메모리는 약 11 GiB, 다운로드는 약 10 GB입니다.
+{t["runtime"]}
 
 이 checkpoint는 `transformers` 형식이 아니라서 infer-opt 코드로 읽습니다. 셀을 위에서부터 차례로 실행하세요."""),
         md("## 1. GPU 확인"),
-        code("""import torch
+        code(f"""import torch
 
-assert torch.cuda.is_available(), "GPU 런타임이 아닙니다: 런타임 → 런타임 유형 변경 → A100 GPU"
+assert torch.cuda.is_available(), "GPU 런타임이 아닙니다: 런타임 → 런타임 유형 변경 → {t["gpu"]} GPU"
 name, cap = torch.cuda.get_device_name(), torch.cuda.get_device_capability()
-print(f"{name}, compute capability {cap[0]}.{cap[1]}, torch {torch.__version__}")
-assert cap >= (8, 0), "bf16 Triton 커널은 compute capability 8.0 이상(A100, L4, H100 등)이 필요합니다"
+print(f"{{name}}, compute capability {{cap[0]}}.{{cap[1]}}, torch {{torch.__version__}}")
+assert cap >= {t["min_cap"]}, "{t["cap_msg"]}"
 """),
         md(f"""## 2. 라이브러리와 코드 설치
 
-- `transformers`: tokenizer와 chat template만 씁니다.
-- `flash-linear-attention`: delta-rule 커널(`fla-delta`).
+- `transformers`: tokenizer와 chat template를 씁니다.
+{t["libs"]}
 - infer-opt는 GitHub에서 받아 커밋 `{ref[:12]}`로 고정합니다(이 노트북을 만들 때의 코드)."""),
-        code(f"""!pip install -q -U "transformers>=5" flash-linear-attention
+        code(f"""!pip install -q -U {t["pip"]}
 !rm -rf /content/infer-opt && git clone -q https://github.com/Jake-Song/infer-opt.git /content/infer-opt
 !git -C /content/infer-opt checkout -q {ref} && git -C /content/infer-opt log -1 --format="%h %s"
 
@@ -74,21 +113,21 @@ size = sum(f.stat().st_size for f in path.glob("*.safetensors"))
 print(f"다운로드 {{size / 2**30:.2f}} GiB, {{time.perf_counter() - t0:.0f}} s")
 
 t0 = time.perf_counter()
-model = Qwen3_5ForCausalLM.from_quantized_dir(path, device="cuda", kernels="fla-delta")
+DTYPE = {t["dtype"]}
+model = Qwen3_5ForCausalLM.from_quantized_dir(path, device="cuda", kernels="{t["kernels"]}", dtype=DTYPE)
 tokenizer = AutoTokenizer.from_pretrained(path)
 n_int8 = sum(isinstance(m, Int8Linear) for m in model.modules())
 print(f"불러오기 {{time.perf_counter() - t0:.0f}} s, Int8Linear {{n_int8}}개, GPU 메모리 {{torch.cuda.memory_allocated() / 2**30:.2f}} GiB")
 """),
-        md("""## 4. Decode 준비
+        md(f"""## 4. Decode 준비
 
 - **static cache**: K/V와 delta-rule 상태를 최대 길이(`MAX_LEN`)만큼 미리 잡아 둡니다. 프롬프트가 바뀌면 `reset()`만 합니다.
-  고정 shape 경로의 full attention은 cache 길이 전체를 훑으므로 `MAX_LEN`이 길수록 step이 조금 느려집니다
-  (A100에서 4096이면 1211보다 약 1.5 ms/token 느렸습니다).
+  고정 shape 경로의 full attention은 cache 길이 전체를 훑으므로 `MAX_LEN`이 길수록 step이 조금 느려집니다{t["max_len_note"]}.
 - **`FixedShapeDecoder(..., "compile-reduce-overhead")`**: 1 token decode step을 `torch.compile` + CUDA graph로 돌립니다.
-  처음 step에서 컴파일하므로 **첫 생성은 1–3분** 걸립니다(prefill의 Triton·FLA 커널도 처음 쓸 때 컴파일되어 첫 prefill만 수십 초).
+  처음 step에서 컴파일하므로 **첫 생성은 {t["first_run"]}.
   그 뒤로는 같은 그래프를 재생합니다.
 - inductor의 `max_autotune`과 `coordinate_descent_tuning`은 벤치마크를 잴 때와 같은 설정입니다.
-- prompt(prefill)는 컴파일 없이 한 번에 처리합니다. 이 경로는 int8 가중치를 bf16으로 풀어서 곱하므로 decode보다 메모리를 더 씁니다."""),
+- prompt(prefill)는 컴파일 없이 한 번에 처리합니다. 이 경로는 int8 가중치를 `DTYPE`으로 풀어서 곱하므로 decode보다 메모리를 더 씁니다."""),
         code("""import torch._inductor.config as inductor_config
 
 from infer_opt.qwen3_5 import FixedShapeDecoder
@@ -141,12 +180,12 @@ def generate(prompt: str, max_new_tokens: int = 256, stream: bool = True) -> dic
         code("""_ = generate("Explain in three sentences why batch-1 LLM decoding is limited by memory bandwidth.", max_new_tokens=160)"""),
         code("""_ = generate("가중치를 int8로 양자화하면 언어 모델 추론이 왜 빨라지는지, 정확도는 어떻게 확인하는지 다섯 문장으로 설명해 줘.",
              max_new_tokens=256)"""),
-        md("""## 6. Decode 속도 측정
+        md(f"""## 6. Decode 속도 측정
 
 벤치마크 스크립트(`scripts/bench_qwen3_5_int8_decode.py`)와 같은 방식입니다: 랜덤 1024-token 프롬프트를 prefill하고,
 warm-up 3 step 뒤 128 step을 이어서 돌린 평균 ms/token입니다. 출력도 동기화도 step 사이에 하지 않습니다.
-cache 길이도 그 스크립트와 같게(1211) 따로 잡으므로 decode step을 한 번 더 컴파일합니다(1–2분).
-같은 방식으로 A100-SXM4-40GB에서 잰 값은 bf16 15.09, 이 모델 10.79 ms/token입니다."""),
+cache 길이도 그 스크립트와 같게(1211) 따로 잡으므로 decode step을 한 번 더 컴파일합니다({t["bench_compile"]}).
+{t["recorded"]}"""),
         code("""@torch.no_grad()
 def bench_decode(prompt_tokens: int = 1024, steps: int = 128, warmup: int = 3) -> float:
     bench_cache = model.new_cache(1, prompt_tokens + warmup + steps + 56)  # 1211: 벤치마크 스크립트와 같은 cache 길이
@@ -167,6 +206,8 @@ ms = bench_decode()
 print(f"{torch.cuda.get_device_name()}: {ms:.2f} ms/token ({1000 / ms:.1f} tok/s), "
       f"peak GPU 메모리 {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB")
 """),
+    ]
+    hf = [
         md("""## 7. 기존 HF 모델과 비교
 
 원래 모델 [`Qwen/Qwen3.5-9B`](https://huggingface.co/Qwen/Qwen3.5-9B)를 `transformers`로 bf16 그대로 올려서 같은 GPU에서 비교합니다.
@@ -273,32 +314,45 @@ if RUN_HF:
     torch.cuda.empty_cache()
     print(f"GPU 메모리 {torch.cuda.memory_allocated() / 2**30:.2f} GiB")
 """),
+    ]
+    t4_note = [
+        md("""## 7. HF 모델과의 비교는?
+
+A100용 노트북에는 원래 모델(`transformers`, bf16)과의 비교가 있지만 T4에서는 할 수 없습니다. 원래 모델은 가중치만 16.7 GiB라
+T4(약 15 GiB)에 들어가지 않고, T4는 bf16도 지원하지 않습니다. 이 int8 checkpoint를 fp16으로 돌렸을 때의 정확도는
+저장소의 `worklog.md`(2026-10-20)에 A100에서 HF bf16과 비교한 결과로 적어 두었습니다."""),
+    ]
+    rest = [
         md("""## 8. 직접 써 보기
 
 `PROMPT`를 바꿔서 실행하세요. greedy decoding(항상 가장 확률 높은 token)만 지원합니다."""),
         code("""PROMPT = "Qwen3.5의 linear attention(gated delta rule)이 긴 문맥에서 유리한 이유를 설명해 줘."
 _ = generate(PROMPT, max_new_tokens=300)"""),
-        md("""## 참고
+        md(f"""## 참고
 
 - 정확도 기준과 구현별 속도 비교는 저장소의 `notebooks/qwen3_5_9b_benchmark_tables.ipynb` §5와 `worklog.md`에 있습니다.
-- lm_head까지 int8로 하면 10.15 ms/token으로 조금 더 빠르지만 정확도 기준을 한 번 통과하지 못한 적이 있어 이 모델은 lm_head를 bf16으로 둡니다.
-- 출력 채널마다 scale이 하나인 per-channel int8은 8.9 ms/token으로 더 빠르지만 정확도 기준을 통과하지 못했습니다."""),
+- (A100 기준) lm_head까지 int8로 하면 10.15 ms/token으로 조금 더 빠르지만 정확도 기준을 한 번 통과하지 못한 적이 있어 이 모델은 lm_head를 bf16으로 둡니다.
+- (A100 기준) 출력 채널마다 scale이 하나인 per-channel int8은 8.9 ms/token으로 더 빠르지만 정확도 기준을 통과하지 못했습니다.{t["accuracy_note"]}"""),
     ]
+    return head + (hf if t["hf_compare"] else t4_note) + rest
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ref", required=True, help="infer-opt git commit the notebook checks out")
     parser.add_argument("--model-id", default="Jakemu/Qwen3.5-9B-int8-g128")
-    parser.add_argument("--out", default=str(ROOT / "notebooks" / "qwen3_5_9b_int8_colab.ipynb"))
+    parser.add_argument("--target", default="a100", choices=sorted(TARGETS))
+    parser.add_argument("--t4-ms", default="42", help="decode ms/token measured on a Colab T4, quoted in the T4 notebook")
+    parser.add_argument("--t4-accuracy", default="", help="one line on the fp16 accuracy check, for the T4 notebook")
     args = parser.parse_args()
-    nb = nbformat.v4.new_notebook(cells=cells(args.ref, args.model_id))
+    out = ROOT / "notebooks" / TARGETS[args.target]["file"]
+    nb = nbformat.v4.new_notebook(cells=cells(args.ref, args.model_id, args.target, args.t4_ms, args.t4_accuracy))
     nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
     nb.metadata["accelerator"] = "GPU"
-    nb.metadata["colab"] = {"gpuType": "A100", "provenance": []}
+    nb.metadata["colab"] = {"gpuType": TARGETS[args.target]["gpu"], "provenance": []}
     nbformat.validate(nb)
-    nbformat.write(nb, args.out)
-    print(f"wrote {args.out}")
+    nbformat.write(nb, out)
+    print(f"wrote {out}")
 
 
 if __name__ == "__main__":
