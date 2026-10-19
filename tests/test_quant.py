@@ -147,13 +147,18 @@ def test_group_wise_model_is_closer_than_per_channel():
     assert errors[16] < errors[None] < 0.05
 
 
-def test_compiled_one_token_group_wise_path_matches_dequantized_matmul():
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="Triton GEMV needs CUDA")
+@pytest.mark.parametrize("out_f,in_f,group_size", [(96, 256, 64), (300, 384, 128), (4096, 1024, 128)])
+def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size):
     torch.manual_seed(0)
-    linear = nn.Linear(256, 96, bias=True)
-    q = Int8Linear.from_linear(linear, group_size=64)
-    fn = torch.compile(int8_linear, backend="eager", fullgraph=True)  # traced, so _group_gemv is what runs
-    for shape in ((1, 1, 256), (256,), (2, 3, 256)):
-        x = torch.randn(shape)
-        expected = torch.nn.functional.linear(x, q.dequantized_weight(), linear.bias)
-        got = fn(x, q.weight, q.scale, q.bias)
-        assert got.shape == expected.shape and torch.allclose(got, expected, atol=1e-5)
+    dtype = torch.float16  # bf16 Triton kernels need sm80; the local GPU may be older
+    linear = nn.Linear(in_f, out_f, bias=True, device="cuda", dtype=dtype)
+    q = Int8Linear.from_linear(linear, group_size=group_size)
+    fn = torch.compile(int8_linear, fullgraph=True)
+    for shape in ((1, 1, in_f), (in_f,)):
+        x = torch.randn(shape, device="cuda", dtype=dtype)
+        expected = torch.nn.functional.linear(x.float(), q.dequantized_weight().float(), linear.bias.float())
+        for got in (q(x), fn(x, q.weight, q.scale, q.bias)):
+            assert got.shape == expected.shape and got.dtype == dtype
+            assert torch.allclose(got.float(), expected, atol=2e-2, rtol=2e-3)
+

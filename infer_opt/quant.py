@@ -8,8 +8,8 @@ eagerly it materializes a bf16 copy of the weight on every call and is slower th
 With ``group_size`` the scale is per output channel *and* per ``group_size`` input columns (``scale`` is
 ``[out, in // group_size]``). On Qwen3.5-9B MLP weights a group of 128 has about half the squared weight error of
 one scale per row; one outlier then only coarsens its own 128 columns. The scale can no longer multiply the output:
-a compiled one-token step runs it as a reduction (per-group partial sums, then scaled), anything else dequantizes
-the weight before the matmul.
+one token on CUDA runs the Triton GEMV in :mod:`infer_opt.quant_kernels`, anything else dequantizes the weight
+before the matmul.
 """
 
 from __future__ import annotations
@@ -63,30 +63,19 @@ def int8_linear(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, bias
     """The W8A16 matmul as a pure function of tensors (what ``Int8Linear.forward`` runs, and what gets compiled).
 
     A per-channel scale multiplies the output, so the int8 -> x.dtype cast is the only elementwise work on the
-    weight and can be absorbed into the matmul kernel. A group-wise scale varies along the reduction: for one
-    token under torch.compile it is applied to per-group partial sums (:func:`_group_gemv`), otherwise to the
-    dequantized weight before the matmul (prefill, where the matmul is compute-bound, and eager runs).
+    weight and can be absorbed into the matmul kernel. A group-wise scale varies along the reduction: one token on
+    CUDA goes to the Triton GEMV (inductor's own forms of it were 1.4-2x slower than per-channel on an A100), any
+    other input dequantizes the weight before the matmul (prefill, where the matmul is compute-bound, and CPU).
     """
     if scale.dim() == 1:
         y = F.linear(x, weight.to(x.dtype)) * scale.to(x.dtype)
-    elif x.numel() == x.shape[-1] and torch.compiler.is_compiling():
-        y = _group_gemv(x, weight, scale)
+    elif x.is_cuda and x.numel() == x.shape[-1]:
+        from infer_opt.quant_kernels import w8a16_group_gemv  # imports triton, which a CPU-only install may lack
+
+        y = w8a16_group_gemv(x, weight, scale)
     else:
         y = F.linear(x, dequantize_int8(weight, scale, x.dtype))
     return y if bias is None else y + bias.to(x.dtype)
-
-
-def _group_gemv(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
-    """One-token group-wise matmul as a reduction: per-group partial sums of ``x * q``, then scaled and summed.
-
-    On an A100 inductor turns this into one memory-bound kernel close to the per-channel time, while the
-    dequantize-then-matmul form was 1.5-2x slower (the group scale did not fuse into the mm template). Only for
-    compiled code: run eagerly it would materialize an fp32 ``[out, in]`` product.
-    """
-    out_f, in_f = weight.shape
-    groups = scale.shape[1]
-    prod = x.reshape(1, groups, in_f // groups).float() * weight.view(out_f, groups, in_f // groups).float()
-    return (prod.sum(-1) * scale.float()).sum(-1).to(x.dtype).view(*x.shape[:-1], out_f)
 
 
 class Int8Linear(nn.Module):
