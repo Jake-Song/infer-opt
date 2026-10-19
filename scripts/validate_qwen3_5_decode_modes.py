@@ -9,6 +9,9 @@ A config is ``kernels:mode`` or ``kernels:mode:quant`` with quant in bf16 / int8
 infer_opt.quant; ``--group-size 128`` for one scale per 128 input columns). Quantization is in place and one way,
 so quant levels must appear in that order. ``--autotune`` runs the quantized configs with the options of
 torch.compile(mode="max-autotune") (max_autotune and coordinate descent tuning), without which the int8 -> bf16 conversion is not fused and decode is several times slower than bf16.
+``--dtype float16`` runs our model (control and quantized) in fp16 against the bf16 HF reference, as on GPUs without
+bf16; ``--int8-from`` takes the int8 configs from a checkpoint written by scripts/quantize_qwen3_5.py (a directory or a
+Hub repo) instead of quantizing in place, so the published artifact itself is checked.
 At the end the script evaluates the quantization gate against the bf16 config with the same kernels:mode in this run:
 mean decode KL <= ``--kl-ratio`` x the bf16 mean, and zero strong teacher-forced mismatches.
 ``sliced-eager`` is the original decode path and serves as the baseline in the same run.
@@ -81,6 +84,8 @@ def main() -> None:
     parser.add_argument("--configs", default=DEFAULT_CONFIGS, help="comma separated kernels:mode[:quant]")
     parser.add_argument("--autotune", action="store_true", help="max-autotune inductor options for the quantized configs")
     parser.add_argument("--group-size", type=int, default=0, help="INT8 scale per this many input columns; 0: per channel")
+    parser.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float16"], help="dtype of our model")
+    parser.add_argument("--int8-from", default=None, help="quantized checkpoint dir or Hub repo for the int8 configs")
     parser.add_argument("--kl-ratio", type=float, default=2.0, help="gate: quantized mean KL / bf16 mean KL")
     parser.add_argument("--prompts", default=None)
     parser.add_argument("--out", default="decode_modes.json")
@@ -116,7 +121,8 @@ def main() -> None:
     del hf
     torch.cuda.empty_cache()
     # loaded after the HF reference is freed so two copies of a large model never share the GPU
-    ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda")
+    dtype = getattr(torch, args.dtype)
+    ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=dtype, device="cuda")
     print(f"{torch.cuda.get_device_name()} torch {torch.__version__} prompts {list(prompts)}", flush=True)
 
     rows = []
@@ -138,7 +144,18 @@ def main() -> None:
             raise SystemExit(f"quant must be one of {QUANT_LEVELS}, got {quant!r}")
         if QUANT_LEVELS.index(quant) < QUANT_LEVELS.index(quant_done):
             raise SystemExit(f"{config}: the model is already {quant_done}; list configs in order {QUANT_LEVELS}")
-        if quant != quant_done:  # one way, in place; lm_head is the only addition from int8 to int8+lm_head
+        if quant != quant_done and args.int8_from:
+            if quant != "int8":
+                raise SystemExit("--int8-from provides the int8 config only")
+            kernels_now = ours.config.kernels
+            del ours
+            torch.cuda.empty_cache()
+            src = args.int8_from if Path(args.int8_from).is_dir() else snapshot_download(args.int8_from)
+            ours = Qwen3_5ForCausalLM.from_quantized_dir(src, device="cuda", kernels=kernels_now, dtype=dtype)
+            quant_reports[quant] = {"from": args.int8_from}
+            print(quant, "loaded from", args.int8_from, flush=True)
+            quant_done = quant
+        elif quant != quant_done:  # one way, in place; lm_head is the only addition from int8 to int8+lm_head
             report = quantize_linears(ours, include_lm_head=quant == "int8+lm_head", group_size=args.group_size or None)
             quant_reports[quant] = {"summary": report.summary(), "replaced": len(report.replaced),
                                     "group_size": args.group_size or None}

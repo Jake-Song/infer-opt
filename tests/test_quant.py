@@ -196,3 +196,21 @@ def test_save_and_load_quantized_round_trip(tmp_path, group_size, include_lm_hea
         assert torch.equal(loaded(ids), model(ids))
     for (name, a), (_, b) in zip(model.state_dict().items(), loaded.state_dict().items()):
         assert a.dtype == b.dtype, name
+
+
+def test_load_quantized_with_another_float_dtype(tmp_path):
+    from infer_opt.quant import save_quantized
+    from infer_opt.qwen3_5 import Qwen3_5ForCausalLM
+
+    model = make_model().float()
+    quantize_linears(model, min_out_features=8, group_size=16)
+    save_quantized(model, tmp_path)
+    write_hf_config(tmp_path, model.config)
+    loaded = Qwen3_5ForCausalLM.from_quantized_dir(tmp_path, dtype=torch.float64)
+    gate = loaded.model.language_model.layers[0].mlp.gate_proj
+    assert gate.weight.dtype == torch.int8 and gate.scale.dtype == torch.float64
+    assert loaded.model.language_model.embed_tokens.weight.dtype == torch.float64
+    assert loaded.model.language_model.rotary_emb.inv_freq.dtype == torch.float64
+    ids = torch.randint(0, 97, (1, 20))
+    with torch.no_grad():
+        assert torch.allclose(loaded(ids).float(), model(ids), atol=1e-4)

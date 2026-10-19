@@ -115,6 +115,13 @@ compute capability 8.0 or newer. `scripts/quantize_qwen3_5.py` makes such a chec
 §5 of [`qwen3_5_9b_benchmark_tables.ipynb`](notebooks/qwen3_5_9b_benchmark_tables.ipynb) has the
 measurements and the accuracy gate.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_9b_int8_colab_t4.ipynb)
+
+On a free **T4** runtime, [`qwen3_5_9b_int8_colab_t4.ipynb`](notebooks/qwen3_5_9b_int8_colab_t4.ipynb) loads the same
+checkpoint in fp16 (`from_quantized_dir(..., dtype=torch.float16)`; Turing has no bf16). The bf16 model does not fit in a
+T4's memory; the int8 one decodes at about 42 ms/token there. On an A100, the fp16 run of this checkpoint was as close to
+the Hugging Face bf16 model as the bf16 run (mean decode KL 0.00056 vs 0.00071-0.00077, no confident mismatch).
+
 ### Local A100 result analysis
 
 Open [`04_a100_roofline_analysis.ipynb`](notebooks/04_a100_roofline_analysis.ipynb)

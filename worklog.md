@@ -76,3 +76,19 @@
   [`Jakemu/Qwen3.5-9B-int8-g128`](https://huggingface.co/Jakemu/Qwen3.5-9B-int8-g128)(공개, Apache-2.0, 6 shard 10.34 GiB)에 올렸다.
 - `notebooks/qwen3_5_9b_int8_colab.ipynb`(`scripts/build_qwen3_5_int8_colab_notebook.py`로 생성): Colab A100에서 infer-opt를 고정 커밋으로
   받고 Hub에서 모델을 내려받아 streaming 생성과 decode 속도 측정을 한다.
+
+## 2026-10-20 — T4(fp16)에서 실행
+
+T4(Turing, compute capability 7.5)는 bf16이 없고 메모리가 약 15 GiB다. 원래 bf16 모델은 가중치만 16.7 GiB라 올라가지 않지만,
+int8 checkpoint는 10.34 GiB라 그대로 들어간다. 그래서 새 checkpoint를 만들지 않고 같은 checkpoint를 fp16으로 읽게 했다.
+
+- `from_quantized_dir(..., dtype=torch.float16)`: int8 가중치는 그대로 두고 scale·embedding·norm·lm_head 등 실수 텐서만 바꾼다.
+- **scale 범위:** 5400만 개 중 최소 1.56e-5. fp16 정규 최솟값(6.1e-5)보다 작은 것이 1866개(0.0035%)로 정밀도만 조금 줄고,
+  0이 되는 것은 없다.
+- **정확도(A100, 9개 프롬프트, HF bf16 기준):** `validate_qwen3_5_decode_modes.py --dtype float16 --int8-from Jakemu/Qwen3.5-9B-int8-g128`.
+  올린 checkpoint를 fp16으로 돌린 HF 대비 KL 0.00056, strong 불일치 0. bf16으로 돌렸을 때(0.00071–0.00077)보다 오히려 작다.
+  fp16 대조도 0.00028로 bf16 대조(0.00041)보다 HF에 가깝다(fp16은 가수 비트가 더 많다). KL 비율은 1.98로 기준 2에 가깝지만,
+  이것은 분모(fp16 대조)가 작아졌기 때문이다.
+- **속도(Colab T4):** compile + CUDA graph decode 42.1 ms/token(`torch` kernels), 41.9(`fla-delta`). peak 12.2–12.7 GiB.
+  T4 대역폭(320 GB/s)으로 잡은 하한 약 28 ms의 67%. FLA는 첫 prefill에서 커널 컴파일에 96초가 걸려서 T4 노트북은 `torch` kernels를 쓴다.
+- `notebooks/qwen3_5_9b_int8_colab_t4.ipynb`: 같은 builder(`--target t4`)로 만든다. 원래 모델과의 비교 절은 T4에 들어가지 않아 뺐다.
