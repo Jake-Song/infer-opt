@@ -79,8 +79,11 @@ print(f"불러오기 {{time.perf_counter() - t0:.0f}} s, Int8Linear {{n_int8}}�
         md("""## 4. Decode 준비
 
 - **static cache**: K/V와 delta-rule 상태를 최대 길이(`MAX_LEN`)만큼 미리 잡아 둡니다. 프롬프트가 바뀌면 `reset()`만 합니다.
+  고정 shape 경로의 full attention은 cache 길이 전체를 훑으므로 `MAX_LEN`이 길수록 step이 조금 느려집니다
+  (A100에서 4096이면 1211보다 약 1.5 ms/token 느렸습니다).
 - **`FixedShapeDecoder(..., "compile-reduce-overhead")`**: 1 token decode step을 `torch.compile` + CUDA graph로 돌립니다.
-  처음 step에서 컴파일하므로 **첫 생성은 1–3분** 걸립니다. 그 뒤로는 같은 그래프를 재생합니다.
+  처음 step에서 컴파일하므로 **첫 생성은 1–3분** 걸립니다(prefill의 Triton·FLA 커널도 처음 쓸 때 컴파일되어 첫 prefill만 수십 초).
+  그 뒤로는 같은 그래프를 재생합니다.
 - inductor의 `max_autotune`과 `coordinate_descent_tuning`은 벤치마크를 잴 때와 같은 설정입니다.
 - prompt(prefill)는 컴파일 없이 한 번에 처리합니다. 이 경로는 int8 가중치를 bf16으로 풀어서 곱하므로 decode보다 메모리를 더 씁니다."""),
         code("""import torch._inductor.config as inductor_config
@@ -90,7 +93,7 @@ from infer_opt.qwen3_5 import FixedShapeDecoder
 inductor_config.max_autotune = True
 inductor_config.coordinate_descent_tuning = True
 
-MAX_LEN = 4096
+MAX_LEN = 2048
 cache = model.new_cache(1, MAX_LEN)
 decoder = FixedShapeDecoder(model, cache, "compile-reduce-overhead")
 stop_ids = {tokenizer.eos_token_id, *tokenizer.convert_tokens_to_ids(["<|im_end|>", "<|endoftext|>"])} - {None}
@@ -116,8 +119,9 @@ def generate(prompt: str, max_new_tokens: int = 256, stream: bool = True) -> dic
         out.append(int(token))  # int()이 GPU를 기다리므로 step마다 동기화된다
         if stream:
             now = tokenizer.decode(out, skip_special_tokens=True)
-            print(now[len(shown):], end="", flush=True)
-            shown = now
+            if not now.endswith("\ufffd"):  # 여러 token에 걸친 글자는 다 모일 때까지 기다린다
+                print(now[len(shown):], end="", flush=True)
+                shown = now
     torch.cuda.synchronize(); t2 = time.perf_counter()
     steps = len(out) - 1
     stats = {"prompt_tokens": ids.shape[1], "new_tokens": len(out), "prefill_s": t1 - t0,
@@ -138,18 +142,20 @@ def generate(prompt: str, max_new_tokens: int = 256, stream: bool = True) -> dic
 
 벤치마크 스크립트(`scripts/bench_qwen3_5_int8_decode.py`)와 같은 방식입니다: 랜덤 1024-token 프롬프트를 prefill하고,
 warm-up 3 step 뒤 128 step을 이어서 돌린 평균 ms/token입니다. 출력도 동기화도 step 사이에 하지 않습니다.
+cache 길이도 그 스크립트와 같게(1211) 따로 잡으므로 decode step을 한 번 더 컴파일합니다(1–2분).
 같은 방식으로 A100-SXM4-40GB에서 잰 값은 bf16 15.09, 이 모델 10.79 ms/token입니다."""),
         code("""@torch.no_grad()
 def bench_decode(prompt_tokens: int = 1024, steps: int = 128, warmup: int = 3) -> float:
+    bench_cache = model.new_cache(1, prompt_tokens + warmup + steps + 56)  # 1211: 벤치마크 스크립트와 같은 cache 길이
+    bench_decoder = FixedShapeDecoder(model, bench_cache, "compile-reduce-overhead")
     torch.manual_seed(0)
     ids = torch.randint(1000, 100000, (1, prompt_tokens), device="cuda")
-    cache.reset()
-    token = model(ids, cache)[:, -1].argmax(-1, keepdim=True)
-    for _ in range(warmup):
-        token = decoder.step(token)[:, -1].argmax(-1, keepdim=True)
+    token = model(ids, bench_cache)[:, -1].argmax(-1, keepdim=True)
+    for _ in range(warmup):  # 첫 step에서 컴파일된다
+        token = bench_decoder.step(token)[:, -1].argmax(-1, keepdim=True)
     torch.cuda.synchronize(); t0 = time.perf_counter()
     for _ in range(steps):
-        token = decoder.step(token)[:, -1].argmax(-1, keepdim=True)
+        token = bench_decoder.step(token)[:, -1].argmax(-1, keepdim=True)
     torch.cuda.synchronize()
     return (time.perf_counter() - t0) / steps * 1e3
 
