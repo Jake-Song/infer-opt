@@ -677,7 +677,7 @@ class Qwen3_5ForCausalLM(nn.Module):
         """Dynamic cache by default; pass ``max_seq_len`` for preallocated (static) buffers."""
         if max_seq_len is None:
             return Qwen3_5Cache(self.config.num_hidden_layers)
-        weight = self.lm_head.weight
+        weight = self.model.language_model.embed_tokens.weight  # lm_head may be quantized; the embedding never is
         return Qwen3_5Cache.allocate(self.config, batch_size, max_seq_len, weight.dtype, weight.device)
 
     def set_kernels(self, kernels: str) -> "Qwen3_5ForCausalLM":
