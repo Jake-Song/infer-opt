@@ -142,8 +142,8 @@ The current code decodes the same checkpoint at **20.7 ms/token** (bf16 35.2; in
 - a split-K Triton kernel for one-token attention over grouped query heads (`infer_opt/attention_kernels.py`).
 
 It passed the gate again (KL ratio 0.67-1.07, no confident mismatch). The 9B checkpoint decodes at 7.3 ms/token with
-it. The notebooks still pin the earlier commit. Measurements are in
-`notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`.
+it. The 27B notebook pins this code (24.1 ms/token on an A100 40GB runtime, peak 29.1 GiB); the 9B notebooks still pin
+the earlier commit. Measurements are in `notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`.
 
 ### Local A100 result analysis
 

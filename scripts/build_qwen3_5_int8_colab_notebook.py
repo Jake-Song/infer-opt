@@ -25,7 +25,7 @@ TARGETS = {
     "a100": {
         "file": "qwen3_5_9b_int8_colab.ipynb", "gpu": "A100", "title": "", "dtype": "torch.bfloat16",
         "model": "Qwen3.5-9B", "model_id": "Jakemu/Qwen3.5-9B-int8-g128", "notes": NOTES_9B, "no_hf_note": "",
-        "kernels": "fla-delta", "min_cap": (8, 0), "hf_compare": True,
+        "kernels": "fla-delta", "min_cap": (8, 0), "hf_compare": True, "fuse": False,
         "pip": '"transformers>=5" flash-linear-attention',
         "libs": "- `flash-linear-attention`: delta-rule 커널(`fla-delta`).",
         "speed": "같은 A100에서 잰 값: bf16 15.1 ms/token → 이 모델 **10.8 ms/token**. HF 구현 대비 정확도 기준(같은 실행 bf16 KL의 2배 이하,\n"
@@ -43,15 +43,16 @@ TARGETS = {
     "a100-27b": {
         "file": "qwen3_5_27b_int8_colab.ipynb", "gpu": "A100", "title": "", "dtype": "torch.bfloat16",
         "model": "Qwen3.5-27B", "model_id": "Jakemu/Qwen3.5-27B-int8-g128", "kernels": "fla-delta", "min_cap": (8, 0),
-        "hf_compare": False,
+        "hf_compare": False, "fuse": True,
         "pip": '"transformers>=5" flash-linear-attention',
         "libs": "- `flash-linear-attention`: delta-rule 커널(`fla-delta`).",
-        "speed": "A100 80GB에서 잰 값: bf16 37.7 ms/token → 이 모델 **25.9 ms/token**. HF 구현 대비 정확도 기준(같은 실행 bf16 KL의 2배 이하,\n"
-                 "  확신 있는 불일치 없음)을 네 번 모두 통과한 구성입니다.",
+        "speed": "A100 80GB에서 잰 값: bf16 35.2 ms/token → 이 모델 **20.7 ms/token**. HF 구현 대비 정확도 기준(같은 실행 bf16 KL의 2배 이하,\n"
+                 "  확신 있는 불일치 없음)을 이 코드로 세 번 모두 통과했습니다.",
         "runtime": "**런타임:** 런타임 → 런타임 유형 변경 → **A100 GPU**. 커널이 bf16을 쓰므로 compute capability 8.0 이상이 필요합니다.\n"
                    "GPU 메모리는 약 30 GiB라 A100 40GB에도 들어갑니다(원래 bf16 모델은 가중치만 52 GiB). 다운로드는 약 30 GB입니다.",
         "cap_msg": "bf16 커널은 compute capability 8.0 이상(A100, H100 등)이 필요합니다",
-        "recorded": "같은 방식으로 A100-SXM4-80GB에서 잰 값은 bf16 37.65, 이 모델 25.93 ms/token입니다.",
+        "recorded": "같은 방식으로 A100-SXM4-80GB에서 잰 값은 bf16 35.17, 이 모델 20.72 ms/token입니다(투영을 합치기 전의 코드로는 25.93).\n"
+                    "A100-SXM4-40GB(메모리 대역폭이 약 3/4)에서 이 노트북으로 잰 값은 24.13 ms/token, peak 29.1 GiB였습니다.",
         "max_len_note": "",
         "first_run": "2–4분** 걸립니다(prefill의 Triton·FLA 커널도 처음 쓸 때 컴파일되어 첫 prefill만 수십 초)",
         "bench_compile": "약 2분",
@@ -60,10 +61,12 @@ TARGETS = {
 
 9B용 A100 노트북에는 원래 모델(`transformers`, bf16)과의 비교가 있지만 27B는 할 수 없습니다. 원래 모델은 가중치만 52 GiB라
 이 INT8 모델(약 28 GiB)과 함께 80 GB에도 들어가지 않습니다. HF bf16과 비교한 정확도 기준의 결과는 저장소의
-`worklog.md`(2026-10-20, Qwen3.5-27B)에 적어 두었습니다: 네 번 실행(마지막은 Hub에서 받은 이 checkpoint)에서 HF 대비 KL이 같은 실행 bf16 구현의 0.53–0.95배,
+`worklog.md`(2026-10-20, Qwen3.5-27B와 그 최적화)에 적어 두었습니다: 이 노트북의 코드로 세 번 실행(Hub에서 받은 이 checkpoint 0.86배,
+제자리 양자화 1.07배, lm_head까지 int8 0.67배)에서 HF 대비 KL이 같은 실행 bf16 구현의 0.67–1.07배였고,
 확신 있는 불일치(margin > 0.5)는 없었습니다.""",
-        "notes": """- 측정과 정확도 기준의 원시 결과는 저장소의 `notebooks/assets/qwen3_5_27b_int8_a100_20261020/`와 `worklog.md`에 있습니다.
-- (A100 80GB 기준) lm_head까지 int8로 하면 25.22 ms/token으로 조금 더 빠르고 정확도 기준도 통과했지만, 9B와 같게 lm_head는 bf16으로 둡니다.""",
+        "notes": """- 측정과 정확도 기준의 원시 결과는 저장소의 `notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`(이 코드)와
+  `notebooks/assets/qwen3_5_27b_int8_a100_20261020/`(처음 양자화했을 때), `worklog.md`에 있습니다.
+- (A100 80GB 기준) lm_head까지 int8로 하면 20.31 ms/token으로 조금 더 빠르고 정확도 기준도 통과했지만, 9B와 같게 lm_head는 bf16으로 둡니다.""",
     },
     "t4": {
         "file": "qwen3_5_9b_int8_colab_t4.ipynb", "gpu": "T4", "title": " — T4 (fp16)", "dtype": "torch.float16",
@@ -73,7 +76,7 @@ TARGETS = {
 A100용 노트북에는 원래 모델(`transformers`, bf16)과의 비교가 있지만 T4에서는 할 수 없습니다. 원래 모델은 가중치만 16.7 GiB라
 T4(약 15 GiB)에 들어가지 않고, T4는 bf16도 지원하지 않습니다. 이 int8 checkpoint를 fp16으로 돌렸을 때의 정확도는
 저장소의 `worklog.md`(2026-10-20)에 A100에서 HF bf16과 비교한 결과로 적어 두었습니다.""",
-        "kernels": "torch", "min_cap": (7, 5), "hf_compare": False,
+        "kernels": "torch", "min_cap": (7, 5), "hf_compare": False, "fuse": False,
         "pip": '"transformers>=5"',
         "libs": "- delta-rule은 PyTorch 구현(`torch` kernels)을 씁니다. T4에서 FLA 커널(`fla-delta`)과 decode 속도가 같았고(42.1 vs 41.9 ms/token),\n"
                 "  FLA는 첫 prefill에서 커널 컴파일에 1분 반이 걸려서 설치하지 않습니다.",
@@ -94,6 +97,10 @@ def cells(ref: str, model_id: str, target: str, t4_ms: str, t4_accuracy: str) ->
     md, code = nbformat.v4.new_markdown_cell, nbformat.v4.new_code_cell
     t = {k: v.format(colab=COLAB, t4_ms=t4_ms, t4_accuracy=t4_accuracy) if isinstance(v, str) else v
          for k, v in TARGETS[target].items()}
+    fuse_md = ("\n`fuse_projections()`는 같은 입력을 읽는 투영(gate+up, q+k+v, in_proj_qkv+in_proj_z)의 int8 행렬과 scale을 행으로 쌓아\n"
+               "decode step의 행렬곱을 하나씩으로 줄입니다. 읽는 바이트는 같고 kernel 실행이 줄어 빨라집니다(checkpoint는 그대로)."
+               if t["fuse"] else "")
+    fuse_code = 'print("합친 투영 묶음", model.fuse_projections())\n' if t["fuse"] else ""
     head = [
         md(f"""# {t["model"]} INT8 (group-128)을 Colab에서 실행하기{t["title"]}
 
@@ -133,7 +140,7 @@ sys.path.insert(0, "/content/infer-opt")
         md(f"""## 3. 모델 받기와 불러오기
 
 Hub에서 int8 checkpoint(safetensors shard와 `quantization.json`)를 받고, `from_quantized_dir`로 GPU에 바로 올립니다.
-`quantization.json`에는 어떤 Linear가 int8인지와 group 크기가 들어 있습니다."""),
+`quantization.json`에는 어떤 Linear가 int8인지와 group 크기가 들어 있습니다.{fuse_md}"""),
         code(f"""import time
 from pathlib import Path
 
@@ -153,7 +160,7 @@ t0 = time.perf_counter()
 DTYPE = {t["dtype"]}
 model = Qwen3_5ForCausalLM.from_quantized_dir(path, device="cuda", kernels="{t["kernels"]}", dtype=DTYPE)
 tokenizer = AutoTokenizer.from_pretrained(path)
-n_int8 = sum(isinstance(m, Int8Linear) for m in model.modules())
+{fuse_code}n_int8 = sum(isinstance(m, Int8Linear) for m in model.modules())
 print(f"불러오기 {{time.perf_counter() - t0:.0f}} s, Int8Linear {{n_int8}}개, GPU 메모리 {{torch.cuda.memory_allocated() / 2**30:.2f}} GiB")
 """),
         md(f"""## 4. Decode 준비

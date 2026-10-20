@@ -222,4 +222,6 @@ CUDA graph로 돌리면 GPU가 step 시간의 99%를 kernel로 채운다(26.07 /
 
 - norm(5120 폭 한 행): inductor의 persistent reduction 기준(1024)을 넘어 loop 두 번짜리 reduction이 된다. 층당 2개, 6–12 µs씩 약 0.8 ms.
 - in_proj_a/b(48행 bf16)가 norm과 합쳐진 reduction kernel(15 µs, 16개).
-- Colab 노트북은 아직 9e5c3bd를 고정하고 있고 `fuse_projections()`를 부르지 않는다. 새 kernel은 T4에서 재 보지 않았다.
+- 9B Colab 노트북은 아직 04af44f를 고정하고 있다. 새 kernel은 T4에서 재 보지 않았다.
+- 27B 노트북은 661f694를 고정하고 `fuse_projections()`를 부르게 다시 만들었다. Colab A100-SXM4-40GB에서 끝까지 실행했고
+  decode 24.13 ms/token, peak 29.1 GiB였다(80GB의 20.72와 대역폭 비율로 맞는다).
