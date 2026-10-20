@@ -1,0 +1,68 @@
+{
+ "repo": "Qwen/Qwen3.5-27B",
+ "context": 1024,
+ "layers": {
+  "num_layers": 64,
+  "linear_attention": 48,
+  "full_attention": 16,
+  "pattern": "LLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLFLLLF"
+ },
+ "total_params": 26895998464,
+ "groups": {
+  "embed_tokens": {
+   "params": 1271398400,
+   "quantizable": false,
+   "bytes": 2542796800.0
+  },
+  "norms_and_small": {
+   "params": 679424,
+   "quantizable": false,
+   "bytes": 1358848.0
+  },
+  "conv1d": {
+   "params": 1966080,
+   "quantizable": false,
+   "bytes": 3932160.0
+  },
+  "linear_attn_proj": {
+   "params": 5560074240,
+   "quantizable": true,
+   "bytes": 11120148480.0
+  },
+  "mlp": {
+   "params": 17112760320,
+   "quantizable": true,
+   "bytes": 34225520640.0
+  },
+  "full_attn_proj": {
+   "params": 1677721600,
+   "quantizable": true,
+   "bytes": 3355443200.0
+  },
+  "lm_head": {
+   "params": 1271398400,
+   "quantizable": true,
+   "bytes": 2542796800.0
+  }
+ },
+ "read_bytes": {
+  "weights": 51249210368.0,
+  "kv": 67108864,
+  "recurrent_state": 301989888,
+  "conv_state": 5898240,
+  "total": 51624207360.0
+ },
+ "quantizable_bytes": 51243909120.0,
+ "lower_bound_ms": {
+  "1555.0": {
+   "bf16_ms": 33.19884717684887,
+   "int8_ms": 16.721705980707398,
+   "int4+scale_ms": 8.998046045016077
+  },
+  "2039.0": {
+   "bf16_ms": 25.31839497793036,
+   "int8_ms": 12.752453555664541,
+   "int4+scale_ms": 6.86216851397744
+  }
+ }
+}

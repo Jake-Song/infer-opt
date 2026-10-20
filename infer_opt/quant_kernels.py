@@ -30,15 +30,17 @@ LAUNCH_CONFIGS: dict[tuple[int, int, int], tuple[int, int, int, int]] = {}
 def launch_config(n: int, k: int, group: int) -> tuple[int, int, int, int]:
     """``(BLOCK_N, UNROLL, num_warps, num_stages)`` for an ``[n, k]`` weight.
 
-    From a sweep over every Linear shape of Qwen3.5-9B on an A100 (scripts/tune_qwen3_5_group_gemv.py): 8 warps
-    always, stages irrelevant, and the best BLOCK_N keeps the grid at roughly 256-512 programs (a few per SM). The
-    rule gives the measured best for five of the six shapes, each within about 5% of the per-channel INT8 time
-    (measured separately).
+    From sweeps over every Linear shape of Qwen3.5-9B (A100 40GB) and Qwen3.5-27B (A100 80GB) with
+    scripts/tune_qwen3_5_group_gemv.py: 8 warps always, stages irrelevant, and the good tiles are (BLOCK_N, UNROLL) =
+    (8, 1 or 8), (16, 2) or (32, 4); (16, 4) was never among them (on the 27B's 5120 x 17408 down_proj it took 104 us
+    against 72 for (8, 1)). BLOCK_N grows with the rows: 8 up to 5120, 16 up to 10240, 32 above, which keeps the grid
+    at roughly 400-650 programs below the vocab-sized lm_head. The rule gives the measured best for all six 9B shapes
+    and is within 3.5% of it for the eight 27B shapes.
     """
     if (n, k, group) in LAUNCH_CONFIGS:
         return LAUNCH_CONFIGS[n, k, group]
-    block_n = min(max(triton.next_power_of_2(triton.cdiv(n, 512)), 4), 32)
-    return block_n, (4 if block_n >= 16 else 8), 8, 3
+    block_n = min(max(triton.next_power_of_2(triton.cdiv(n, 640)), 4), 32)
+    return block_n, {16: 2, 32: 4}.get(block_n, 8), 8, 3
 
 
 @triton.jit

@@ -122,6 +122,17 @@ checkpoint in fp16 (`from_quantized_dir(..., dtype=torch.float16)`; Turing has n
 T4's memory; the int8 one decodes at about 42-44 ms/token there. On an A100, the fp16 run of this checkpoint was as close to
 the Hugging Face bf16 model as the bf16 run (mean decode KL 0.00056 vs 0.00071-0.00077, no confident mismatch).
 
+### Qwen3.5-27B weight-only INT8 on Colab
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_int8_colab.ipynb)
+
+The same recipe applied to the largest dense Qwen3.5. [`qwen3_5_27b_int8_colab.ipynb`](notebooks/qwen3_5_27b_int8_colab.ipynb)
+(Korean) runs [`Jakemu/Qwen3.5-27B-int8-g128`](https://huggingface.co/Jakemu/Qwen3.5-27B-int8-g128) (27.8 GiB; the bf16
+original is 51.7 GiB). On an A100-SXM4-80GB it decodes at 25.9 ms/token against 37.7 for bf16, and it fits on an A100 40GB.
+It passed the accuracy gate in four runs, the last on the checkpoint downloaded from the Hub (mean decode KL
+0.53-0.95x the bf16 control's, no confident mismatch). The GEMV launch rule in `infer_opt/quant_kernels.py` was refit
+on both models' shapes; see `worklog.md` (2026-10-20).
+
 ### Local A100 result analysis
 
 Open [`04_a100_roofline_analysis.ipynb`](notebooks/04_a100_roofline_analysis.ipynb)

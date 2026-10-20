@@ -1,7 +1,8 @@
-"""Write the Colab notebooks that run the group-128 INT8 Qwen3.5-9B from the Hugging Face Hub.
+"""Write the Colab notebooks that run a group-128 INT8 Qwen3.5 (9B or 27B) from the Hugging Face Hub.
 
-``--target a100`` (bf16, with a comparison against the original model) writes notebooks/qwen3_5_9b_int8_colab.ipynb;
-``--target t4`` (fp16, for GPUs without bf16) writes notebooks/qwen3_5_9b_int8_colab_t4.ipynb.
+``--target a100`` (9B, bf16, with a comparison against the original model) writes notebooks/qwen3_5_9b_int8_colab.ipynb;
+``--target t4`` (9B, fp16, for GPUs without bf16) writes notebooks/qwen3_5_9b_int8_colab_t4.ipynb;
+``--target a100-27b`` (27B, bf16; the original model does not fit next to it) writes notebooks/qwen3_5_27b_int8_colab.ipynb.
 
     uv run --group notebooks python scripts/build_qwen3_5_int8_colab_notebook.py --ref <git commit> --target t4
 """
@@ -16,9 +17,14 @@ import nbformat
 ROOT = Path(__file__).resolve().parents[1]
 COLAB = "https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/"
 
+NOTES_9B = """- 정확도 기준과 구현별 속도 비교는 저장소의 `notebooks/qwen3_5_9b_benchmark_tables.ipynb` §5와 `worklog.md`에 있습니다.
+- (A100 기준) lm_head까지 int8로 하면 10.15 ms/token으로 조금 더 빠르지만 정확도 기준을 한 번 통과하지 못한 적이 있어 이 모델은 lm_head를 bf16으로 둡니다.
+- (A100 기준) 출력 채널마다 scale이 하나인 per-channel int8은 8.9 ms/token으로 더 빠르지만 정확도 기준을 통과하지 못했습니다."""
+
 TARGETS = {
     "a100": {
         "file": "qwen3_5_9b_int8_colab.ipynb", "gpu": "A100", "title": "", "dtype": "torch.bfloat16",
+        "model": "Qwen3.5-9B", "model_id": "Jakemu/Qwen3.5-9B-int8-g128", "notes": NOTES_9B, "no_hf_note": "",
         "kernels": "fla-delta", "min_cap": (8, 0), "hf_compare": True,
         "pip": '"transformers>=5" flash-linear-attention',
         "libs": "- `flash-linear-attention`: delta-rule 커널(`fla-delta`).",
@@ -34,8 +40,39 @@ TARGETS = {
         "bench_compile": "1–2분",
         "accuracy_note": "",
     },
+    "a100-27b": {
+        "file": "qwen3_5_27b_int8_colab.ipynb", "gpu": "A100", "title": "", "dtype": "torch.bfloat16",
+        "model": "Qwen3.5-27B", "model_id": "Jakemu/Qwen3.5-27B-int8-g128", "kernels": "fla-delta", "min_cap": (8, 0),
+        "hf_compare": False,
+        "pip": '"transformers>=5" flash-linear-attention',
+        "libs": "- `flash-linear-attention`: delta-rule 커널(`fla-delta`).",
+        "speed": "A100 80GB에서 잰 값: bf16 37.7 ms/token → 이 모델 **25.9 ms/token**. HF 구현 대비 정확도 기준(같은 실행 bf16 KL의 2배 이하,\n"
+                 "  확신 있는 불일치 없음)을 네 번 모두 통과한 구성입니다.",
+        "runtime": "**런타임:** 런타임 → 런타임 유형 변경 → **A100 GPU**. 커널이 bf16을 쓰므로 compute capability 8.0 이상이 필요합니다.\n"
+                   "GPU 메모리는 약 30 GiB라 A100 40GB에도 들어갑니다(원래 bf16 모델은 가중치만 52 GiB). 다운로드는 약 30 GB입니다.",
+        "cap_msg": "bf16 커널은 compute capability 8.0 이상(A100, H100 등)이 필요합니다",
+        "recorded": "같은 방식으로 A100-SXM4-80GB에서 잰 값은 bf16 37.65, 이 모델 25.93 ms/token입니다.",
+        "max_len_note": "",
+        "first_run": "2–4분** 걸립니다(prefill의 Triton·FLA 커널도 처음 쓸 때 컴파일되어 첫 prefill만 수십 초)",
+        "bench_compile": "약 2분",
+        "accuracy_note": "",
+        "no_hf_note": """## 7. HF 모델과의 비교는?
+
+9B용 A100 노트북에는 원래 모델(`transformers`, bf16)과의 비교가 있지만 27B는 할 수 없습니다. 원래 모델은 가중치만 52 GiB라
+이 INT8 모델(약 28 GiB)과 함께 80 GB에도 들어가지 않습니다. HF bf16과 비교한 정확도 기준의 결과는 저장소의
+`worklog.md`(2026-10-20, Qwen3.5-27B)에 적어 두었습니다: 네 번 실행(마지막은 Hub에서 받은 이 checkpoint)에서 HF 대비 KL이 같은 실행 bf16 구현의 0.53–0.95배,
+확신 있는 불일치(margin > 0.5)는 없었습니다.""",
+        "notes": """- 측정과 정확도 기준의 원시 결과는 저장소의 `notebooks/assets/qwen3_5_27b_int8_a100_20261020/`와 `worklog.md`에 있습니다.
+- (A100 80GB 기준) lm_head까지 int8로 하면 25.22 ms/token으로 조금 더 빠르고 정확도 기준도 통과했지만, 9B와 같게 lm_head는 bf16으로 둡니다.""",
+    },
     "t4": {
         "file": "qwen3_5_9b_int8_colab_t4.ipynb", "gpu": "T4", "title": " — T4 (fp16)", "dtype": "torch.float16",
+        "model": "Qwen3.5-9B", "model_id": "Jakemu/Qwen3.5-9B-int8-g128", "notes": NOTES_9B,
+        "no_hf_note": """## 7. HF 모델과의 비교는?
+
+A100용 노트북에는 원래 모델(`transformers`, bf16)과의 비교가 있지만 T4에서는 할 수 없습니다. 원래 모델은 가중치만 16.7 GiB라
+T4(약 15 GiB)에 들어가지 않고, T4는 bf16도 지원하지 않습니다. 이 int8 checkpoint를 fp16으로 돌렸을 때의 정확도는
+저장소의 `worklog.md`(2026-10-20)에 A100에서 HF bf16과 비교한 결과로 적어 두었습니다.""",
         "kernels": "torch", "min_cap": (7, 5), "hf_compare": False,
         "pip": '"transformers>=5"',
         "libs": "- delta-rule은 PyTorch 구현(`torch` kernels)을 씁니다. T4에서 FLA 커널(`fla-delta`)과 decode 속도가 같았고(42.1 vs 41.9 ms/token),\n"
@@ -58,11 +95,11 @@ def cells(ref: str, model_id: str, target: str, t4_ms: str, t4_accuracy: str) ->
     t = {k: v.format(colab=COLAB, t4_ms=t4_ms, t4_accuracy=t4_accuracy) if isinstance(v, str) else v
          for k, v in TARGETS[target].items()}
     head = [
-        md(f"""# Qwen3.5-9B INT8 (group-128)을 Colab에서 실행하기{t["title"]}
+        md(f"""# {t["model"]} INT8 (group-128)을 Colab에서 실행하기{t["title"]}
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]({COLAB}{t["file"]})
 
-[`{model_id}`](https://huggingface.co/{model_id})에 올린 **weight-only INT8 Qwen3.5-9B**로 글을 생성하고 decode 속도를 잽니다.
+[`{model_id}`](https://huggingface.co/{model_id})에 올린 **weight-only INT8 {t["model"]}**로 글을 생성하고 decode 속도를 잽니다.
 
 - Linear 가중치(lm_head와 출력 32개짜리 delta-rule gate 제외)를 int8로 저장하고, 출력 채널마다·입력 128열마다 bf16 scale을 둡니다.
   가중치가 약 절반이 되어 batch 1 decode가 빨라집니다.
@@ -315,13 +352,7 @@ if RUN_HF:
     print(f"GPU 메모리 {torch.cuda.memory_allocated() / 2**30:.2f} GiB")
 """),
     ]
-    t4_note = [
-        md("""## 7. HF 모델과의 비교는?
-
-A100용 노트북에는 원래 모델(`transformers`, bf16)과의 비교가 있지만 T4에서는 할 수 없습니다. 원래 모델은 가중치만 16.7 GiB라
-T4(약 15 GiB)에 들어가지 않고, T4는 bf16도 지원하지 않습니다. 이 int8 checkpoint를 fp16으로 돌렸을 때의 정확도는
-저장소의 `worklog.md`(2026-10-20)에 A100에서 HF bf16과 비교한 결과로 적어 두었습니다."""),
-    ]
+    no_hf = [md(t["no_hf_note"])]
     rest = [
         md("""## 8. 직접 써 보기
 
@@ -330,23 +361,21 @@ T4(약 15 GiB)에 들어가지 않고, T4는 bf16도 지원하지 않습니다. 
 _ = generate(PROMPT, max_new_tokens=300)"""),
         md(f"""## 참고
 
-- 정확도 기준과 구현별 속도 비교는 저장소의 `notebooks/qwen3_5_9b_benchmark_tables.ipynb` §5와 `worklog.md`에 있습니다.
-- (A100 기준) lm_head까지 int8로 하면 10.15 ms/token으로 조금 더 빠르지만 정확도 기준을 한 번 통과하지 못한 적이 있어 이 모델은 lm_head를 bf16으로 둡니다.
-- (A100 기준) 출력 채널마다 scale이 하나인 per-channel int8은 8.9 ms/token으로 더 빠르지만 정확도 기준을 통과하지 못했습니다.{t["accuracy_note"]}"""),
+{t["notes"]}{t["accuracy_note"]}"""),
     ]
-    return head + (hf if t["hf_compare"] else t4_note) + rest
+    return head + (hf if t["hf_compare"] else no_hf) + rest
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ref", required=True, help="infer-opt git commit the notebook checks out")
-    parser.add_argument("--model-id", default="Jakemu/Qwen3.5-9B-int8-g128")
+    parser.add_argument("--model-id", default=None, help="Hub repo of the int8 checkpoint (default: the target's)")
     parser.add_argument("--target", default="a100", choices=sorted(TARGETS))
     parser.add_argument("--t4-ms", default="42", help="decode ms/token measured on a Colab T4, quoted in the T4 notebook")
     parser.add_argument("--t4-accuracy", default="", help="one line on the fp16 accuracy check, for the T4 notebook")
     args = parser.parse_args()
     out = ROOT / "notebooks" / TARGETS[args.target]["file"]
-    nb = nbformat.v4.new_notebook(cells=cells(args.ref, args.model_id, args.target, args.t4_ms, args.t4_accuracy))
+    nb = nbformat.v4.new_notebook(cells=cells(args.ref, args.model_id or TARGETS[args.target]["model_id"], args.target, args.t4_ms, args.t4_accuracy))
     nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
     nb.metadata["accelerator"] = "GPU"
     nb.metadata["colab"] = {"gpuType": TARGETS[args.target]["gpu"], "provenance": []}

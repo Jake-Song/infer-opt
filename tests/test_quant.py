@@ -148,7 +148,8 @@ def test_group_wise_model_is_closer_than_per_channel():
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="Triton GEMV needs CUDA")
-@pytest.mark.parametrize("out_f,in_f,group_size", [(96, 256, 64), (300, 384, 128), (4096, 1024, 128)])
+@pytest.mark.parametrize("out_f,in_f,group_size", [(96, 256, 64), (300, 384, 128), (4096, 1024, 128),
+                                                  (640, 17408, 128)])  # few rows, long K: the 27B down_proj
 def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size):
     torch.manual_seed(0)
     dtype = torch.float16  # bf16 Triton kernels need sm80; the local GPU may be older
@@ -173,6 +174,29 @@ def write_hf_config(path, c):
     text["rope_parameters"] = {"rope_theta": text.pop("rope_theta"), "mrope_section": text.pop("mrope_section"),
                                "partial_rotary_factor": text.pop("partial_rotary_factor")}
     (path / "config.json").write_text(json.dumps({"text_config": text, "tie_word_embeddings": c.tie_word_embeddings}))
+
+
+@pytest.mark.parametrize("tied", [True, False])  # 9B ties lm_head to the embedding, 27B does not
+def test_load_hf_checkpoint_dir(tmp_path, tied):
+    import dataclasses
+
+    from safetensors.torch import save_file
+
+    from infer_opt.qwen3_5 import Qwen3_5ForCausalLM
+
+    torch.manual_seed(0)
+    model = Qwen3_5ForCausalLM(dataclasses.replace(make_model().config, tie_word_embeddings=tied)).eval()
+    state = {k: v.contiguous() for k, v in model.state_dict().items() if not (tied and k == "lm_head.weight")}
+    state["model.visual.patch_embed.weight"] = torch.zeros(2, 2)  # skipped: not part of the text model
+    names = sorted(state)
+    save_file({k: state[k] for k in names[::2]}, str(tmp_path / "model-00001-of-00002.safetensors"))
+    save_file({k: state[k] for k in names[1::2]}, str(tmp_path / "model-00002-of-00002.safetensors"))
+    write_hf_config(tmp_path, model.config)
+    loaded = Qwen3_5ForCausalLM.from_pretrained_dir(tmp_path, dtype=torch.float32)
+    assert (loaded.lm_head.weight is loaded.model.language_model.embed_tokens.weight) == tied
+    ids = torch.randint(0, 97, (1, 20))
+    with torch.no_grad():
+        assert torch.equal(loaded(ids), model(ids))
 
 
 @pytest.mark.parametrize("group_size,include_lm_head", [(16, False), (None, True)])

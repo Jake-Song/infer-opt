@@ -19,6 +19,7 @@ max |dlogit|, argmax agreement and the mean KL(bf16 || quantized) over the check
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import sys
 import time
@@ -120,6 +121,9 @@ def main() -> None:
     for label, kwargs in (("int8", {}), ("int8+lm_head", {"include_lm_head": True})):
         if label not in wanted:
             continue
+        torch._dynamo.reset()  # the compiled step references the bf16 weights; drop it so they are freed when replaced
+        gc.collect()
+        torch.cuda.empty_cache()
         t0 = time.perf_counter()
         report = quantize_linears(model, group_size=args.group_size or None, **kwargs)
         sync()

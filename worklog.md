@@ -92,3 +92,56 @@ int8 checkpoint는 10.34 GiB라 그대로 들어간다. 그래서 새 checkpoint
 - **속도(Colab T4):** compile + CUDA graph decode 42.1 ms/token(`torch` kernels), 41.9(`fla-delta`); 노트북으로 다시 돌렸을 때 44.3. peak 12.2–12.7 GiB.
   T4 대역폭(320 GB/s)으로 잡은 하한 약 28 ms의 67%. FLA는 첫 prefill에서 커널 컴파일에 96초가 걸려서 T4 노트북은 `torch` kernels를 쓴다.
 - `notebooks/qwen3_5_9b_int8_colab_t4.ipynb`: 같은 builder(`--target t4`)로 만든다. 원래 모델과의 비교 절은 T4에 들어가지 않아 뺐다.
+
+## 2026-10-20 — Qwen3.5-27B weight-only INT8
+
+**목표:** 9B와 같은 방법(group-128 INT8, lm_head bf16, Triton GEMV, `fla-delta:compile-reduce-overhead`)을 Qwen3.5-27B에 적용한다.
+Qwen3.5에는 32B가 없고 dense 모델은 27B가 가장 크다(35B-A3B는 MoE라 따로 구현이 필요하다). 구조는 9B와 같아서 모델 코드는
+바꾸지 않았다: hidden 5120, intermediate 17408, 64층(linear 48 / full 16), linear attention head k 16 / v 48, vocab 248320,
+lm_head가 embedding과 **묶여 있지 않다**(9B는 묶여 있다). bf16 checkpoint는 51.7 GiB다.
+
+숫자는 모두 Colab **A100-SXM4-80GB**(high-mem 런타임, RAM 167 GiB), torch 2.11, transformers 5.20.2, 1024-token 프롬프트, decode 128 step
+평균이다. 원시 결과는 `experiments/qwen3_5_27b_int8/a100_80gb_20261020/`(git 제외), 노트북용 사본은 `notebooks/assets/qwen3_5_27b_int8_a100_20261020/`.
+
+### 결과
+
+| | ms/token | peak GiB | KL vs bf16 |
+|---|---:|---:|---:|
+| bf16 | 37.65 | 50.9 | – |
+| group-128 int8, lm_head bf16 | **25.93** | 28.6 | 0.00038 |
+| group-128 int8 + lm_head | 25.22 | 31.7 | 0.00036 |
+
+- bf16 대비 1.45배(9B는 1.40배). 대역폭 하한(`count_qwen3_5_bytes.py`, 2039 GB/s)은 bf16 25.3, int8 lm_head bf16 13.6 ms다.
+- **gate 통과(4/4):** HF 대비 평균 decode KL이 같은 실행 bf16의 0.85 / 0.53배(제자리 양자화 두 번), 저장한 checkpoint를 다시 읽은
+  실행에서 0.72배, Hub에서 다시 받은 checkpoint로 0.95배. strong 불일치 0. `int8+lm_head`도 0.67 / 1.00배로 통과했다.
+- checkpoint: 14 shard 27.80 GiB, 다시 읽은 logits가 완전히 같다. [`Jakemu/Qwen3.5-27B-int8-g128`](https://huggingface.co/Jakemu/Qwen3.5-27B-int8-g128)에 올렸다.
+  int8 모델은 약 29 GiB라 A100 40GB에도 들어간다.
+
+### 바꾼 것
+
+- **GEMV 실행 설정 규칙(`launch_config`):** 9B에서 만든 규칙이 27B shape에서 나빴다. sweep(`tune_qwen3_5_group_gemv.py`)에서
+  규칙 설정의 decode는 28.1 ms/token, shape별 최적은 24.8(lm_head 포함 int8). 특히 down_proj(5120 × 17408)가 (16, 4)로 104 µs, (8, 1)로 72 µs.
+  두 모델의 sweep을 보면 좋은 타일은 (BLOCK_N, UNROLL) = (8, 1|8), (16, 2), (32, 4)뿐이고 (16, 4)는 한 번도 없다. BLOCK_N 경계를
+  `cdiv(n, 640)`으로 늦추고 BLOCK_N 16에는 UNROLL 2를 쓰게 바꿨다. 9B 여섯 shape 모두 측정 최적과 같고, 27B 여덟 shape는 최적의 3.5% 안이다.
+- **`from_pretrained_dir`:** shard를 CPU를 거치지 않고 `device`로 바로 읽는다(52 GiB를 host RAM에 올리지 않는다).
+- **제자리 양자화의 GPU 메모리 부족(9B에서는 드러나지 않았다):**
+  - compile된 bf16 decode step이 bf16 가중치를 참조하고 있어서, 양자화가 Linear를 바꿔도 bf16 가중치가 풀리지 않았다(52 + 24 GiB).
+    `bench_qwen3_5_int8_decode.py`와 `validate_qwen3_5_decode_modes.py`에서 양자화 전에 `torch._dynamo.reset()`을 부른다.
+  - gate 스크립트의 HF 기준값 `full[:, split:T]`가 view라서 프롬프트마다 전체 logits(fp32, 1 token에 약 1 MB)가 남아 있었다. `.clone()`으로 바꿨다.
+- model card의 측정 절을 `--repo`별 dict(`MEASURED`)로 옮기고, 남겨 두는 delta-rule gate 폭을 config에서 읽는다(9B 32, 27B 48).
+- Colab 노트북 builder에 `--target a100-27b`(`notebooks/qwen3_5_27b_int8_colab.ipynb`). 원래 모델과의 비교 절은 52 + 28 GiB가 80 GB에
+  들어가지 않아서 뺐다.
+
+### 알게 된 것
+
+- **gate 평균은 프롬프트 하나(`code_1k`)가 정한다.** bf16 대조의 KL 자체가 0.0106으로 다른 프롬프트(0.0002–0.002)보다 한 자릿수 크고,
+  int8은 실행마다 0.0038–0.0089로 움직인다. 이 프롬프트를 빼면 int8/bf16 비율은 0.86–0.94다(제자리 양자화 두 번). 이번에는 bf16 대조가 실행마다 같았다(0.00187).
+- 27B decode에서 GEMV는 약 19.3 ms(shape별 최적 기준)이고 나머지 약 5.5 ms는 GEMV 밖이다. 층당 약 86 µs로 9B와 같다.
+  64층이라 비중이 커졌다(약 22%).
+- GEMV 대역폭은 큰 shape에서 1.25–1.46 TB/s, lm_head만 1.72 TB/s다. MLP(GEMV 시간의 약 65%)를 lm_head 수준으로 올리면 약 2.5 ms가 줄어든다.
+
+### 남은 일
+
+- GEMV 밖의 층당 약 86 µs(norm, conv, delta rule, attention과 작은 kernel들): 27B에서는 decode의 약 22%다.
+- MLP GEMV 대역폭(gate/up 1.45, down 1.25 TB/s). gate_proj와 up_proj를 GEMV 하나로 합치는 것도 후보다.
+- 노트북을 Colab A100에서 끝까지 실행해 기록 속도를 확인한다.

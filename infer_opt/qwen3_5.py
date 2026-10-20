@@ -744,7 +744,10 @@ class Qwen3_5ForCausalLM(nn.Module):
     def from_pretrained_dir(
         cls, path: str | Path, dtype=torch.bfloat16, device="cpu", kernels: str = "torch"
     ) -> "Qwen3_5ForCausalLM":
-        """Load safetensors shards from a local HF checkpoint dir; keys are used as-is."""
+        """Load safetensors shards from a local HF checkpoint dir; keys are used as-is.
+
+        Tensors are read straight onto ``device``, so a large checkpoint (52 GiB for Qwen3.5-27B) is not staged in host
+        memory first."""
         from safetensors import safe_open
 
         path = Path(path)
@@ -753,7 +756,7 @@ class Qwen3_5ForCausalLM(nn.Module):
             model = cls(config)
         state = {}
         for shard in sorted(path.glob("*.safetensors")):
-            with safe_open(shard, framework="pt", device="cpu") as f:
+            with safe_open(shard, framework="pt", device=str(device)) as f:
                 for key in f.keys():
                     # vision tower and multi-token-prediction head are not part of the text model
                     if key.startswith(("model.visual.", "mtp.")):

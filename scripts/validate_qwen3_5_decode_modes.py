@@ -24,6 +24,7 @@ torch._dynamo unique graphs so a silent fall-back to eager after too many recomp
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import sys
 import time
@@ -114,7 +115,7 @@ def main() -> None:
             top2 = full[0, T - 1 : -1].topk(2, -1).values
             refs[name] = {
                 "ids": ids, "T": T, "split": split, "new_ref": hf_gen[:, T:],
-                "hf_decode_logits": full[:, split:T] if split < T else None,
+                "hf_decode_logits": full[:, split:T].clone() if split < T else None,  # a view would keep all of full alive
                 "margins": (top2[:, 0] - top2[:, 1]).cpu(),
             }
             del full
@@ -144,6 +145,12 @@ def main() -> None:
             raise SystemExit(f"quant must be one of {QUANT_LEVELS}, got {quant!r}")
         if QUANT_LEVELS.index(quant) < QUANT_LEVELS.index(quant_done):
             raise SystemExit(f"{config}: the model is already {quant_done}; list configs in order {QUANT_LEVELS}")
+        if quant != quant_done:
+            # the compiled steps of the previous config reference its weights: drop them first, or the old weights
+            # stay alive next to the new ones (27B: 52 GiB bf16 + 24 GiB int8 does not fit in 80 GB)
+            torch._dynamo.reset()
+            gc.collect()
+            torch.cuda.empty_cache()
         if quant != quant_done and args.int8_from:
             if quant != "int8":
                 raise SystemExit("--int8-from provides the int8 config only")

@@ -1,6 +1,6 @@
 """Quantize a Qwen3.5 checkpoint to weight-only INT8 and save it for Qwen3_5ForCausalLM.from_quantized_dir.
 
-Loads the bf16 Hugging Face checkpoint on the GPU, quantizes every Linear except the 32-wide delta-rule gates
+Loads the bf16 Hugging Face checkpoint on the GPU, quantizes every Linear except the small delta-rule gates
 (group-wise scales by default; lm_head stays bf16 unless --lm-head), writes safetensors shards and
 quantization.json, and copies config.json and the tokenizer files next to them. It then reloads the directory and
 checks that the logits of a short prompt are identical to those of the in-memory quantized model. With
@@ -58,7 +58,13 @@ model = Qwen3_5ForCausalLM.from_quantized_dir(snapshot_download("{repo_id}"), de
 
 {summary}
 
-## Measured (Qwen3.5-9B, A100-SXM4-40GB, batch 1)
+{measured}License: Apache-2.0, as the original model (see `LICENSE`).
+"""
+
+
+# model card section per source repo (left out for others): measured with this repository's scripts
+MEASURED = {
+    "Qwen/Qwen3.5-9B": """## Measured (Qwen3.5-9B, A100-SXM4-40GB, batch 1)
 
 Decode with torch.compile + CUDA graphs (`fla-delta:compile-reduce-overhead`), 1024-token prompt, mean of 128 steps.
 KL is against the bf16 model, teacher-forced over 48 steps.
@@ -74,8 +80,25 @@ Against Hugging Face `transformers` on 9 prompts, the mean decode KL of this con
 the bf16 model in the same run, with no confident (margin > 0.5) teacher-forced mismatch. Per-channel INT8 was 2.14x
 with one. These are single runs; see the repository's notebook `qwen3_5_9b_benchmark_tables.ipynb` (§5).
 
-License: Apache-2.0, as the original model (see `LICENSE`).
-"""
+""",
+    "Qwen/Qwen3.5-27B": """## Measured (Qwen3.5-27B, A100-SXM4-80GB, batch 1)
+
+Decode with torch.compile + CUDA graphs (`fla-delta:compile-reduce-overhead`), 1024-token prompt, mean of 128 steps.
+KL is against the bf16 model, teacher-forced over 48 steps.
+
+| | ms/token | peak GiB | KL vs bf16 |
+|---|---:|---:|---:|
+| bf16 | 37.65 | 50.9 | – |
+| group-128 int8, lm_head bf16 (this repo) | 25.93 | 28.6 | 0.00038 |
+| group-128 int8 incl. lm_head | 25.22 | 31.7 | 0.00036 |
+
+Against Hugging Face `transformers` on 9 prompts, the mean decode KL of this configuration was 0.53-0.85x that of
+the bf16 model in the same run (three runs, one of them on this saved checkpoint), with no confident (margin > 0.5)
+teacher-forced mismatch. The mean is dominated by one code prompt whose KL is high for bf16 too. The int8 weights
+need about 29 GiB, so it also runs on a 40 GB GPU. See the repository's `worklog.md` (2026-10-20).
+
+""",
+}
 
 
 def main() -> None:
@@ -128,13 +151,14 @@ def main() -> None:
         from huggingface_hub import HfApi
 
         group = args.group_size or None
+        gates = loaded.config.linear_num_value_heads  # in_proj_a / in_proj_b: too small to quantize
         (out / "README.md").write_text(CARD.format(
             source=args.repo, name=args.push_to_hub.split("/")[-1], repo_id=args.push_to_hub,
-            kept_note="lm_head and the 32-wide delta-rule gate projections" if not args.lm_head
-            else "the 32-wide delta-rule gate projections",
+            kept_note=f"lm_head and the {gates}-wide delta-rule gate projections" if not args.lm_head
+            else f"the {gates}-wide delta-rule gate projections",
             scale_note=f"one bf16 scale per output channel and {group} input columns" if group
             else "one bf16 scale per output channel",
-            summary=f"Quantization: {report.summary()}."))
+            summary=f"Quantization: {report.summary()}.", measured=MEASURED.get(args.repo, "")))
         api = HfApi()
         api.create_repo(args.push_to_hub, repo_type="model", private=False, exist_ok=True)
         commit = api.upload_folder(repo_id=args.push_to_hub, folder_path=str(out), repo_type="model",
