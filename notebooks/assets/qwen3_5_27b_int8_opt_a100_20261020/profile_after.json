@@ -1,0 +1,282 @@
+{
+ "compile-reduce-overhead": {
+  "wall_ms_per_token": 20.62248825000097,
+  "kernels_per_step": 1159.0,
+  "busy_ms_per_step": 20.699623900000102,
+  "span_ms_per_step": 21.2360874,
+  "by_category_us_per_step": {
+   "gemv_int8": {
+    "n": 256.0,
+    "us": 15989.884700000028
+   },
+   "triton_fused": {
+    "n": 836.0,
+    "us": 4232.937500000032
+   },
+   "fla_recurrent": {
+    "n": 48.0,
+    "us": 337.9383000000354
+   },
+   "attention": {
+    "n": 16.0,
+    "us": 124.2393000000091
+   },
+   "copy/fill": {
+    "n": 1.0,
+    "us": 11.011199999999736
+   },
+   "other": {
+    "n": 2.0,
+    "us": 3.638600000000133
+   }
+  },
+  "top_kernels_us_per_step": [
+   {
+    "name": "_w8a16_group_gemv_kernel",
+    "n": 256.0,
+    "us": 15989.884700000028,
+    "cat": "gemv_int8"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_34",
+    "n": 1.0,
+    "us": 1395.0989999999983,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "fused_recurrent_gated_delta_rule_fwd_kernel",
+    "n": 48.0,
+    "us": 337.9383000000354,
+    "cat": "fla_recurrent"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_31",
+    "n": 31.0,
+    "us": 255.63780000000952,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_view_15",
+    "n": 16.0,
+    "us": 237.88430000000045,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_17",
+    "n": 31.0,
+    "us": 220.26160000001073,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_19",
+    "n": 31.0,
+    "us": 218.13470000000743,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_cat_copy_copy__slice_split_with_sizes_transpose_8",
+    "n": 48.0,
+    "us": 216.57140000001073,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_vi",
+    "n": 31.0,
+    "us": 199.1301000000025,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_20",
+    "n": 31.0,
+    "us": 178.96859999997997,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_copy__9",
+    "n": 48.0,
+    "us": 166.71779999999526,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_3",
+    "n": 48.0,
+    "us": 146.07240000000402,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "_decode_attention_kernel",
+    "n": 16.0,
+    "us": 124.2393000000091,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_poi_fused_mul_silu_split_13",
+    "n": 64.0,
+    "us": 111.50359999997545,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_empty_like_mean_mul_pow_rsqrt_silu_split_with_sizes_view_11",
+    "n": 48.0,
+    "us": 91.33400000000547,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_empty_like_mean_pow_view_10",
+    "n": 48.0,
+    "us": 88.36299999999338,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_6",
+    "n": 48.0,
+    "us": 87.23340000000708,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_cat_copy_slice_split_with_sizes_transpose_7",
+    "n": 48.0,
+    "us": 86.88830000000107,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_4",
+    "n": 48.0,
+    "us": 84.56179999999094,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_5",
+    "n": 48.0,
+    "us": 78.81960000004001,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy__unsafe_view_clone_div_exp_mul_sigmoid_split_split_with_sizes_sub_sum_transpose_unsqueeze_view_30",
+    "n": 16.0,
+    "us": 74.51829999998445,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused_amax_exp_mul_sub_sum_29",
+    "n": 16.0,
+    "us": 32.75609999999479,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_with_sizes_transpose_unsqueeze_view_24",
+    "n": 16.0,
+    "us": 32.31050000000378,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_unsqueeze_view_27",
+    "n": 16.0,
+    "us": 31.37319999998981,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_unsqueeze_view_28",
+    "n": 16.0,
+    "us": 28.75830000000342,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_mean_pow_split_split_with_sizes_view_23",
+    "n": 16.0,
+    "us": 28.53070000000571,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_with_sizes_transpose_unsqueeze_view_25",
+    "n": 16.0,
+    "us": 28.26639999999943,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_mean_pow_split_with_sizes_view_22",
+    "n": 16.0,
+    "us": 27.8428000000069,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_index_copy_split_with_sizes_transpose_view_21",
+    "n": 16.0,
+    "us": 26.946700000009876,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_index_copy_26",
+    "n": 16.0,
+    "us": 24.984900000004927,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, 4, 4> >(at::native::ReduceOp<c10::B",
+    "n": 1.0,
+    "us": 11.011199999999736,
+    "cat": "copy/fill"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_embedding_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_un",
+    "n": 1.0,
+    "us": 9.766200000001572,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_1",
+    "n": 1.0,
+    "us": 4.783899999998903,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_14",
+    "n": 1.0,
+    "us": 4.396700000000147,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_16",
+    "n": 1.0,
+    "us": 3.9295999999969355,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_12",
+    "n": 1.0,
+    "us": 3.92649999999594,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_cos_expand_mul_select_sin_slice_unsqueeze_view_0",
+    "n": 1.0,
+    "us": 2.9437999999939164,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_pow_33",
+    "n": 1.0,
+    "us": 2.300600000004124,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "Memcpy DtoD (Device -> Device)",
+    "n": 1.0,
+    "us": 2.0639999999987593,
+    "cat": "other"
+   },
+   {
+    "name": "Memset (Device)",
+    "n": 1.0,
+    "us": 1.5746000000013738,
+    "cat": "other"
+   },
+   {
+    "name": "triton_poi_fused_add_copy__32",
+    "n": 1.0,
+    "us": 1.4209000000046217,
+    "cat": "triton_fused"
+   }
+  ]
+ }
+}

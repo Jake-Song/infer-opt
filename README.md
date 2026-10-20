@@ -133,6 +133,18 @@ It passed the accuracy gate in four runs, the last on the checkpoint downloaded 
 0.53-0.95x the bf16 control's, no confident mismatch). The GEMV launch rule in `infer_opt/quant_kernels.py` was refit
 on both models' shapes; see `worklog.md` (2026-10-20).
 
+The current code decodes the same checkpoint at **20.7 ms/token** (bf16 35.2; int8 + lm_head 20.3) after
+`model.fuse_projections()`:
+
+- a GEMV kernel that sums 16 int8 weights of a group in registers and scales once, at the speed of a kernel that
+  only reads the weights;
+- the projections that share an input (gate+up, q+k+v, in_proj_qkv+z) stacked into one GEMV each at load time;
+- a split-K Triton kernel for one-token attention over grouped query heads (`infer_opt/attention_kernels.py`).
+
+It passed the gate again (KL ratio 0.67-1.07, no confident mismatch). The 9B checkpoint decodes at 7.3 ms/token with
+it. The notebooks still pin the earlier commit. Measurements are in
+`notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`.
+
 ### Local A100 result analysis
 
 Open [`04_a100_roofline_analysis.ipynb`](notebooks/04_a100_roofline_analysis.ipynb)

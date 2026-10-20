@@ -1,16 +1,21 @@
 """Triton kernel for the one-token group-wise W8A16 matmul (a GEMV: weight matrix times one activation vector).
 
 ``y[n] = sum_k x[k] * q[n, k] * scale[n, k // group_size]`` with int8 ``q`` and fp32 accumulation. Batch-1 decode
-reads every weight byte once, so the kernel only has to stream ``q`` at full HBM bandwidth: each program owns
-``BLOCK_N`` output rows and walks ``K`` one group at a time (``UNROLL`` groups per loop iteration), accumulating a
-``[BLOCK_N, group_size]`` tile that is reduced once at the end. Each step loads the group's scale once per row and
-multiplies it into ``x``. Reading the scale per element (``scale[n, k // group_size]`` for every ``k``) was L1 hits
-but cost enough instructions to cap an A100 at ~580 GB/s, about the bf16 time; this layout reaches ~1.1 TB/s.
+reads every weight byte once, so the kernel only has to stream ``q`` at full HBM bandwidth. Each program owns
+``BLOCK_N`` output rows and walks ``K`` in ``BLOCK_K`` steps over a ``[BLOCK_N, BLOCK_K // VEC, VEC]`` tile: every
+thread loads ``VEC`` (16) contiguous int8 of one group in one 16-byte load, sums ``q * x`` over them in registers and
+multiplies that partial sum by the group's scale, so the scale costs one load and one multiply per 16 weights.
+``x`` and the scales are loaded through pointers of the same 3-D shape as ``q`` (stride 0 where they repeat), which
+gives the three loads one register layout; with 2-D ``x``/scale loads Triton moved the partial sums through shared
+memory every step. On an A100 this runs at the speed of a kernel that only reads ``q`` (within 2-8% on every
+Qwen3.5-27B shape) and as fast as a per-channel-scale kernel. The previous form, ``acc += q * (x * scale)`` on a
+``[BLOCK_N, group_size]`` tile, multiplied by the scale per element and was 10-25% slower. Building the fp32 values
+with bit tricks instead of int-to-float conversions was slower in both forms.
 
 Registered with ``torch.library.triton_op`` so torch.compile keeps it as one kernel (nothing is fused into it) and
 CUDA graphs can capture it. The launch parameters are chosen from the shape (:func:`launch_config`), not by
-``triton.autotune``: autotuned inside the compiled Qwen3.5-9B decode step it picked configurations that made decode
-slower than bf16 (25 ms/token against 15), while these fixed ones give 10.2 ms/token.
+``triton.autotune``: autotuned inside the compiled Qwen3.5-9B decode step an earlier kernel picked configurations that
+made decode slower than bf16 (25 ms/token against 15).
 """
 
 from __future__ import annotations
@@ -23,47 +28,52 @@ from torch.library import triton_op, wrap_triton
 __all__ = ["w8a16_group_gemv"]
 
 
-# (BLOCK_N, UNROLL, num_warps, num_stages) by (N, K, group); overrides launch_config, e.g. for a tuning sweep
-LAUNCH_CONFIGS: dict[tuple[int, int, int], tuple[int, int, int, int]] = {}
+# (BLOCK_N, BLOCK_K, num_warps) by (N, K, group); overrides launch_config, e.g. for a tuning sweep
+LAUNCH_CONFIGS: dict[tuple[int, int, int], tuple[int, int, int]] = {}
 
 
-def launch_config(n: int, k: int, group: int) -> tuple[int, int, int, int]:
-    """``(BLOCK_N, UNROLL, num_warps, num_stages)`` for an ``[n, k]`` weight.
+def _pow2_divisor(n: int, cap: int) -> int:
+    """The largest power of two that divides ``n``, at most ``cap``."""
+    return min(n & -n, cap)
 
-    From sweeps over every Linear shape of Qwen3.5-9B (A100 40GB) and Qwen3.5-27B (A100 80GB) with
-    scripts/tune_qwen3_5_group_gemv.py: 8 warps always, stages irrelevant, and the good tiles are (BLOCK_N, UNROLL) =
-    (8, 1 or 8), (16, 2) or (32, 4); (16, 4) was never among them (on the 27B's 5120 x 17408 down_proj it took 104 us
-    against 72 for (8, 1)). BLOCK_N grows with the rows: 8 up to 5120, 16 up to 10240, 32 above, which keeps the grid
-    at roughly 400-650 programs below the vocab-sized lm_head. The rule gives the measured best for all six 9B shapes
-    and is within 3.5% of it for the eight 27B shapes.
+
+def launch_config(n: int, k: int, group: int) -> tuple[int, int, int]:
+    """``(BLOCK_N, BLOCK_K, num_warps)`` for an ``[n, k]`` weight.
+
+    A sweep over every Linear shape of Qwen3.5-27B on an A100 80GB (fused projections included: 1024-34816 rows,
+    K 5120-17408; BLOCK_N 1-16, BLOCK_K 128-1024, 2-8 warps) put (1, 1024, 2) first for all of them but the 1024-row
+    k/v projections (4 warps there, 7.3 against 7.9 us). ``BLOCK_K`` falls back to the largest power of two dividing
+    ``k`` when 1024 does not.
     """
     if (n, k, group) in LAUNCH_CONFIGS:
         return LAUNCH_CONFIGS[n, k, group]
-    block_n = min(max(triton.next_power_of_2(triton.cdiv(n, 640)), 4), 32)
-    return block_n, {16: 2, 32: 4}.get(block_n, 8), 8, 3
+    return 1, _pow2_divisor(k, 1024), 2
 
 
 @triton.jit
 def _w8a16_group_gemv_kernel(x_ptr, q_ptr, s_ptr, y_ptr, N, K, GROUP: tl.constexpr,
-                             BLOCK_N: tl.constexpr, UNROLL: tl.constexpr):
+                             BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr, VEC: tl.constexpr):
+    NV: tl.constexpr = BLOCK_K // VEC
     pid = tl.program_id(0)
     rows = pid * BLOCK_N + tl.arange(0, BLOCK_N)
     row_ok = rows < N
-    cols = tl.arange(0, GROUP)
+    jv = tl.arange(0, NV)
+    cols = jv[None, :, None] * VEC + tl.arange(0, VEC)[None, None, :]  # [1, NV, VEC]
     groups = K // GROUP
-    q_row = q_ptr + rows[:, None].to(tl.int64) * K
-    s_row = s_ptr + rows * groups
-    acc = tl.zeros((BLOCK_N, GROUP), dtype=tl.float32)
-    for g0 in range(0, groups, UNROLL):
-        for u in tl.static_range(UNROLL):
-            g = g0 + u
-            ok = g < groups
-            k = g * GROUP + cols
-            x = tl.load(x_ptr + k, mask=ok, other=0.0).to(tl.float32)
-            q = tl.load(q_row + k[None, :], mask=row_ok[:, None] & ok, other=0,
-                        eviction_policy="evict_first").to(tl.float32)
-            s = tl.load(s_row + g, mask=row_ok & ok, other=0.0).to(tl.float32)
-            acc += q * (x[None, :] * s[:, None])
+    q_ptrs = q_ptr + rows[:, None, None].to(tl.int64) * K + cols
+    x_ptrs = x_ptr + rows[:, None, None] * 0 + cols  # q's shape, so x gets q's layout
+    s_row = s_ptr + rows[:, None, None] * groups  # [BLOCK_N, 1, 1]
+    s_step = (jv * VEC // GROUP)[None, :, None]  # [1, NV, 1]: one scale per VEC weights, when GROUP divides BLOCK_K
+    acc = tl.zeros((BLOCK_N, NV), dtype=tl.float32)
+    for k0 in range(0, K, BLOCK_K):
+        x = tl.load(x_ptrs + k0).to(tl.float32)
+        q = tl.load(q_ptrs + k0, mask=row_ok[:, None, None], other=0, eviction_policy="evict_first").to(tl.float32)
+        if BLOCK_K % GROUP == 0:  # hoisted offsets: recomputing them every step was 13% slower on a 9B shape
+            s_ptrs = s_row + k0 // GROUP + s_step
+        else:
+            s_ptrs = s_row + ((k0 + jv * VEC) // GROUP)[None, :, None]
+        s = tl.sum(tl.load(s_ptrs, mask=row_ok[:, None, None], other=0.0).to(tl.float32), axis=2)
+        acc += tl.sum(q * x, axis=2) * s
     tl.store(y_ptr + rows, tl.sum(acc, axis=1).to(y_ptr.dtype.element_ty), mask=row_ok)
 
 
@@ -74,7 +84,9 @@ def w8a16_group_gemv(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor)
     n, k = (int(d) for d in weight.shape)  # specializes the shapes: the launch configuration depends on them
     group = k // int(scale.shape[1])
     y = torch.empty(*x.shape[:-1], n, dtype=x.dtype, device=x.device)
-    block_n, unroll, warps, stages = launch_config(n, k, group)
+    block_n, block_k, warps = launch_config(n, k, group)
+    vec = _pow2_divisor(group, 16)  # one thread's contiguous weights must lie in one group
     wrap_triton(_w8a16_group_gemv_kernel)[(triton.cdiv(n, block_n),)](
-        x.contiguous(), weight, scale, y, n, k, group, BLOCK_N=block_n, UNROLL=unroll, num_warps=warps, num_stages=stages)
+        x.contiguous(), weight, scale, y, n, k, group, BLOCK_N=block_n, BLOCK_K=max(block_k, vec), VEC=vec,
+        num_warps=warps, num_stages=2)
     return y

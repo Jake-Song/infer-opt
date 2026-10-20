@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from infer_opt.qwen3_5 import Qwen3_5ForCausalLM, Qwen3_5TextConfig
@@ -134,6 +135,52 @@ def test_fixed_shape_decode_matches_sliced_decode():
             got = model.decode_step(ids[:, i : i + 1], fix_cache)
             assert torch.allclose(want, got, atol=1e-4), i
     assert fix_cache.position.item() == fix_cache.seen_tokens == 70
+
+
+def test_fused_projections_give_the_same_logits():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 50))
+    with torch.no_grad():
+        cache = model.new_cache(batch_size=2, max_seq_len=60)
+        want = torch.cat([model(ids[:, :40], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(40, 50)], 1)
+        assert model.fuse_projections() == 8  # 4 MLPs, 3 GatedDeltaNets, 1 attention: one group each
+        assert model.fuse_projections() == 0  # nothing left to fuse
+        layer = model.model.language_model.layers[3]
+        assert layer.mlp.gate_up_proj.out_features == 2 * 96 and not hasattr(layer.mlp, "gate_proj")
+        cache = model.new_cache(batch_size=2, max_seq_len=60)
+        got = torch.cat([model(ids[:, :40], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(40, 50)], 1)
+    assert torch.allclose(want, got, atol=1e-10)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="the Triton decode attention needs CUDA")
+@pytest.mark.parametrize("position", [0, 37, 89])  # empty cache, partly filled, last slot
+def test_cuda_decode_attention_matches_fp32_reference(position):
+    from infer_opt.attention_kernels import decode_attention
+
+    torch.manual_seed(0)
+    q = torch.randn(2, 4, 6, 256, device="cuda", dtype=torch.float16)  # 27B layout: 6 query heads per KV head
+    k, v = (torch.randn(2, 4, 90, 256, device="cuda", dtype=torch.float16) for _ in range(2))  # 2 slices of 64
+    pos = torch.tensor([position], device="cuda")
+    scores = (q.float().unsqueeze(-2) * k.float().unsqueeze(2)).sum(-1) / 16
+    scores = scores.masked_fill(torch.arange(90, device="cuda") > pos, float("-inf"))
+    expected = (scores.softmax(-1).unsqueeze(-1) * v.float().unsqueeze(2)).sum(-2)
+    for fn in (decode_attention, torch.compile(decode_attention, fullgraph=True)):
+        got = fn(q, k, v, pos, 1 / 16)
+        assert got.dtype == torch.float16 and torch.allclose(got.float(), expected, atol=2e-3)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA decode path")
+def test_cuda_fixed_shape_decode_matches_sliced_decode():
+    model = make_model().half().cuda()
+    ids = torch.randint(0, 97, (1, 60), device="cuda")
+    with torch.no_grad():
+        ref_cache, fix_cache = model.new_cache(1, 70), model.new_cache(1, 70)
+        model(ids[:, :40], ref_cache)
+        model(ids[:, :40], fix_cache)
+        for i in range(40, 60):  # sliced: SDPA over the filled cache; fixed shape: Triton kernel over the buffer
+            want = model(ids[:, i : i + 1], ref_cache)
+            got = model.decode_step(ids[:, i : i + 1], fix_cache)
+            assert torch.allclose(want.float(), got.float(), atol=2e-2, rtol=1e-2), i
 
 
 def test_fixed_shape_decode_after_one_token_prompt_and_reset():

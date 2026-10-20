@@ -14,6 +14,7 @@ bf16; ``--int8-from`` takes the int8 configs from a checkpoint written by script
 Hub repo) instead of quantizing in place, so the published artifact itself is checked.
 At the end the script evaluates the quantization gate against the bf16 config with the same kernels:mode in this run:
 mean decode KL <= ``--kl-ratio`` x the bf16 mean, and zero strong teacher-forced mismatches.
+``--fuse`` stacks the projections that share an input (``Qwen3_5ForCausalLM.fuse_projections``) in every config.
 ``sliced-eager`` is the original decode path and serves as the baseline in the same run.
 Each (kernels, mode) gets its own cache and decoder (one compile / capture), loops over the prompts, and reports
 torch._dynamo unique graphs so a silent fall-back to eager after too many recompiles would show.
@@ -87,6 +88,7 @@ def main() -> None:
     parser.add_argument("--group-size", type=int, default=0, help="INT8 scale per this many input columns; 0: per channel")
     parser.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float16"], help="dtype of our model")
     parser.add_argument("--int8-from", default=None, help="quantized checkpoint dir or Hub repo for the int8 configs")
+    parser.add_argument("--fuse", action="store_true", help="model.fuse_projections() for every config (bf16 too)")
     parser.add_argument("--kl-ratio", type=float, default=2.0, help="gate: quantized mean KL / bf16 mean KL")
     parser.add_argument("--prompts", default=None)
     parser.add_argument("--out", default="decode_modes.json")
@@ -169,6 +171,8 @@ def main() -> None:
             print(quant, report.summary(), flush=True)
             quant_done = quant
             torch.cuda.empty_cache()
+        if args.fuse:
+            ours.fuse_projections()  # no-op where already fused; a freshly loaded checkpoint gets fused here
         torch._dynamo.reset()
         counters.clear()
         tuned = args.autotune and quant != "bf16"

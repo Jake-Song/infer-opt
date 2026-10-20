@@ -83,6 +83,28 @@ def test_token_by_token_still_matches_full_forward_after_quantization():
     assert torch.allclose(full, torch.cat(steps, dim=1), atol=1e-4)
 
 
+@pytest.mark.parametrize("group_size", [None, 16])
+def test_fusing_quantized_projections_gives_the_same_logits(group_size):
+    model = make_model()
+    quantize_linears(model, min_out_features=8, group_size=group_size)
+    ids = torch.randint(0, 97, (1, 50))
+    with torch.no_grad():
+        want = model(ids)
+        assert model.fuse_projections() == 8  # 4 MLPs, 3 GatedDeltaNets, 1 attention (the 4-wide gates stay out)
+        fused = model.model.language_model.layers[0].linear_attn.in_proj_qkvz
+        assert isinstance(fused, Int8Linear) and fused.group_size == group_size
+        assert torch.allclose(model(ids), want, atol=1e-10)
+
+
+def test_fusion_skips_mixed_int8_and_float_parts():
+    model = make_model()
+    quantize_linears(model, min_out_features=40)  # k_proj, v_proj and in_proj_z (32 wide) stay float
+    assert model.fuse_projections() == 4  # the MLPs only
+    attn = model.model.language_model.layers[3].self_attn
+    assert attn.qkv_proj is None and isinstance(attn.q_proj, Int8Linear)
+    assert model.model.language_model.layers[0].linear_attn.in_proj_qkvz is None
+
+
 def test_rejects_non_matrix_weight():
     with pytest.raises(ValueError):
         quantize_int8(torch.randn(8))
@@ -149,12 +171,14 @@ def test_group_wise_model_is_closer_than_per_channel():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="Triton GEMV needs CUDA")
 @pytest.mark.parametrize("out_f,in_f,group_size", [(96, 256, 64), (300, 384, 128), (4096, 1024, 128),
-                                                  (640, 17408, 128)])  # few rows, long K: the 27B down_proj
+                                                  (640, 17408, 128),  # few rows, long K: the 27B down_proj
+                                                  (200, 384, 48), (64, 96, 8)])  # BLOCK_K 128 / 32, VEC 16 / 8
 def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size):
     torch.manual_seed(0)
     dtype = torch.float16  # bf16 Triton kernels need sm80; the local GPU may be older
     linear = nn.Linear(in_f, out_f, bias=True, device="cuda", dtype=dtype)
     q = Int8Linear.from_linear(linear, group_size=group_size)
+    torch._dynamo.reset()  # two compiles per case (two input ranks) would pass dynamo's recompile limit across cases
     fn = torch.compile(int8_linear, fullgraph=True)
     for shape in ((1, 1, in_f), (in_f,)):
         x = torch.randn(shape, device="cuda", dtype=dtype)

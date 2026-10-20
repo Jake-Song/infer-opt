@@ -1,0 +1,562 @@
+{
+ "compile-reduce-overhead": {
+  "wall_ms_per_token": 26.219135750000078,
+  "kernels_per_step": 1319.0,
+  "busy_ms_per_step": 26.06876340000001,
+  "span_ms_per_step": 26.6655995,
+  "by_category_us_per_step": {
+   "gemv_int8": {
+    "n": 400.0,
+    "us": 20079.985500000043
+   },
+   "triton_fused": {
+    "n": 756.0,
+    "us": 3686.7103999999963
+   },
+   "attention": {
+    "n": 64.0,
+    "us": 1746.3676999999964
+   },
+   "fla_recurrent": {
+    "n": 48.0,
+    "us": 338.3808999999709
+   },
+   "copy/fill": {
+    "n": 49.0,
+    "us": 216.17389999999168
+   },
+   "other": {
+    "n": 2.0,
+    "us": 3.6896000000045204
+   }
+  },
+  "top_kernels_us_per_step": [
+   {
+    "name": "_w8a16_group_gemv_kernel",
+    "n": 400.0,
+    "us": 20079.985500000043,
+    "cat": "gemv_int8"
+   },
+   {
+    "name": "fmha_cutlassF_bf16_aligned_32x128_gmem_sm80(PyTorchMemEffAttention::AttentionKernel<cutlass::bfloat16_t, cutlass::arch::Sm80, true, 32, 128, 65536, true, true>:",
+    "n": 16.0,
+    "us": 1393.1767999999952,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_33",
+    "n": 1.0,
+    "us": 1378.299399999997,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "fused_recurrent_gated_delta_rule_fwd_kernel",
+    "n": 48.0,
+    "us": 338.3808999999709,
+    "cat": "fla_recurrent"
+   },
+   {
+    "name": "triton_poi_fused__scaled_dot_product_efficient_attention__unsafe_view_arange_clone_expand_le_scalar_tensor_unsqueeze_view_where_28",
+    "n": 32.0,
+    "us": 326.93479999998743,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_19",
+    "n": 31.0,
+    "us": 242.75489999998044,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_17",
+    "n": 31.0,
+    "us": 233.2925000000172,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "void at::native::(anonymous namespace)::conv_depthwise2d_forward_kernel_generic<c10::BFloat16, int>(torch::headeronly::detail::GenericPackedTensorAccessor<torch",
+    "n": 48.0,
+    "us": 205.31329999999534,
+    "cat": "copy/fill"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_view_15",
+    "n": 16.0,
+    "us": 195.65440000000035,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_30",
+    "n": 31.0,
+    "us": 177.5269000000253,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_copy__9",
+    "n": 48.0,
+    "us": 162.7992999999804,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_20",
+    "n": 31.0,
+    "us": 158.80879999999325,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_vi",
+    "n": 31.0,
+    "us": 132.64830000002294,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_mul_silu_13",
+    "n": 64.0,
+    "us": 120.72989999999345,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_cat_transpose_4",
+    "n": 48.0,
+    "us": 97.57740000001213,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_empty_like_mean_mul_pow_rsqrt_silu_view_11",
+    "n": 48.0,
+    "us": 89.43029999998899,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_copy_copy__slice_5",
+    "n": 48.0,
+    "us": 88.86409999997632,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_empty_like_mean_pow_view_10",
+    "n": 48.0,
+    "us": 85.5165000000081,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_8",
+    "n": 48.0,
+    "us": 80.97489999995204,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_7",
+    "n": 48.0,
+    "us": 80.79629999998224,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_6",
+    "n": 48.0,
+    "us": 79.37330000000921,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_transpose_unsqueeze_view_26",
+    "n": 16.0,
+    "us": 38.72300000001869,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__unsafe_view_clone_mul_sigmoid_split_transpose_view_29",
+    "n": 16.0,
+    "us": 32.39760000000879,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_expand_index_copy_mean_mul_pow_rsqrt_select_sin_slice_transpose_unsqueeze_view_25",
+    "n": 16.0,
+    "us": 31.155000000019935,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_slice_transpose_unsqueeze_view_24",
+    "n": 16.0,
+    "us": 30.64910000000782,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_mean_pow_split_view_23",
+    "n": 16.0,
+    "us": 29.503700000001846,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_transpose_unsqueeze_view_27",
+    "n": 16.0,
+    "us": 28.696699999992234,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_mean_pow_view_22",
+    "n": 16.0,
+    "us": 27.62879999998695,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_index_copy_transpose_view_21",
+    "n": 16.0,
+    "us": 27.31530000001676,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__scaled_dot_product_efficient_attention__unsafe_view_arange_clone_expand_le_scalar_tensor_unsqueeze_view_where_1",
+    "n": 16.0,
+    "us": 26.256100000013703,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_16",
+    "n": 1.0,
+    "us": 11.238299999999436,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, 4, 4> >(at::native::ReduceOp<c10::B",
+    "n": 1.0,
+    "us": 10.860599999996339,
+    "cat": "copy/fill"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_embedding_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_un",
+    "n": 1.0,
+    "us": 5.344099999999526,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_2",
+    "n": 1.0,
+    "us": 4.931100000001061,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_14",
+    "n": 1.0,
+    "us": 3.8975999999986017,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_12",
+    "n": 1.0,
+    "us": 3.488400000004731,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_cos_expand_mul_select_sin_slice_unsqueeze_view_0",
+    "n": 1.0,
+    "us": 3.056100000004517,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_pow_32",
+    "n": 1.0,
+    "us": 2.169700000000739,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "Memcpy DtoD (Device -> Device)",
+    "n": 1.0,
+    "us": 2.0958000000065113,
+    "cat": "other"
+   },
+   {
+    "name": "Memset (Device)",
+    "n": 1.0,
+    "us": 1.5937999999980093,
+    "cat": "other"
+   },
+   {
+    "name": "triton_poi_fused_add_copy__31",
+    "n": 1.0,
+    "us": 1.4686999999958061,
+    "cat": "triton_fused"
+   }
+  ]
+ },
+ "compile": {
+  "wall_ms_per_token": 35.93144875000007,
+  "kernels_per_step": 1319.0,
+  "busy_ms_per_step": 26.79284149999961,
+  "span_ms_per_step": 57.3202216,
+  "by_category_us_per_step": {
+   "gemv_int8": {
+    "n": 400.0,
+    "us": 20134.231600000116
+   },
+   "triton_fused": {
+    "n": 756.0,
+    "us": 4281.184599999616
+   },
+   "attention": {
+    "n": 64.0,
+    "us": 1749.296399999967
+   },
+   "fla_recurrent": {
+    "n": 48.0,
+    "us": 383.89749999993984
+   },
+   "copy/fill": {
+    "n": 49.0,
+    "us": 241.639799999985
+   },
+   "other": {
+    "n": 2.0,
+    "us": 2.5915999999834414
+   }
+  },
+  "top_kernels_us_per_step": [
+   {
+    "name": "_w8a16_group_gemv_kernel",
+    "n": 400.0,
+    "us": 20134.231600000116,
+    "cat": "gemv_int8"
+   },
+   {
+    "name": "fmha_cutlassF_bf16_aligned_32x128_gmem_sm80(PyTorchMemEffAttention::AttentionKernel<cutlass::bfloat16_t, cutlass::arch::Sm80, true, 32, 128, 65536, true, true>:",
+    "n": 16.0,
+    "us": 1406.215299999957,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_33",
+    "n": 1.0,
+    "us": 1377.7842000000005,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "fused_recurrent_gated_delta_rule_fwd_kernel",
+    "n": 48.0,
+    "us": 383.89749999993984,
+    "cat": "fla_recurrent"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_19",
+    "n": 31.0,
+    "us": 367.11719999994204,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_17",
+    "n": 31.0,
+    "us": 359.7092000000148,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__scaled_dot_product_efficient_attention__unsafe_view_arange_clone_expand_le_scalar_tensor_unsqueeze_view_where_28",
+    "n": 32.0,
+    "us": 314.49269999998324,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_30",
+    "n": 31.0,
+    "us": 285.06739999995335,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "void at::native::(anonymous namespace)::conv_depthwise2d_forward_kernel_generic<c10::BFloat16, int>(torch::headeronly::detail::GenericPackedTensorAccessor<torch",
+    "n": 48.0,
+    "us": 231.02569999998832,
+    "cat": "copy/fill"
+   },
+   {
+    "name": "triton_poi_fused_copy__9",
+    "n": 48.0,
+    "us": 188.16289999997298,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_20",
+    "n": 31.0,
+    "us": 179.69840000002168,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_view_15",
+    "n": 16.0,
+    "us": 167.7145000000316,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_vi",
+    "n": 31.0,
+    "us": 150.57289999998358,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_mul_silu_13",
+    "n": 64.0,
+    "us": 147.74609999994763,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_cat_transpose_4",
+    "n": 48.0,
+    "us": 113.41469999995734,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_copy_copy__slice_5",
+    "n": 48.0,
+    "us": 109.7308999999912,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_empty_like_mean_pow_view_10",
+    "n": 48.0,
+    "us": 108.0253999999616,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_empty_like_mean_mul_pow_rsqrt_silu_view_11",
+    "n": 48.0,
+    "us": 106.34640000002119,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_7",
+    "n": 48.0,
+    "us": 105.76920000002346,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_8",
+    "n": 48.0,
+    "us": 99.99649999993017,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_6",
+    "n": 48.0,
+    "us": 97.6535999999367,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__unsafe_view_clone_mul_sigmoid_split_transpose_view_29",
+    "n": 16.0,
+    "us": 40.64539999998269,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_transpose_unsqueeze_view_26",
+    "n": 16.0,
+    "us": 36.87310000003872,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_mean_pow_split_view_23",
+    "n": 16.0,
+    "us": 35.99700000000794,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_expand_index_copy_mean_mul_pow_rsqrt_select_sin_slice_transpose_unsqueeze_view_25",
+    "n": 16.0,
+    "us": 35.711699999981285,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_per_fused__to_copy_mean_pow_view_22",
+    "n": 16.0,
+    "us": 34.65509999998649,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_transpose_unsqueeze_view_27",
+    "n": 16.0,
+    "us": 33.50709999997107,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_index_copy_transpose_view_21",
+    "n": 16.0,
+    "us": 32.10209999998224,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_slice_transpose_unsqueeze_view_24",
+    "n": 16.0,
+    "us": 31.849799999974856,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__scaled_dot_product_efficient_attention__unsafe_view_arange_clone_expand_le_scalar_tensor_unsqueeze_view_where_1",
+    "n": 16.0,
+    "us": 28.588400000026468,
+    "cat": "attention"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_16",
+    "n": 1.0,
+    "us": 11.077999999993699,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, 4, 4> >(at::native::ReduceOp<c10::B",
+    "n": 1.0,
+    "us": 10.614099999996688,
+    "cat": "copy/fill"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_2",
+    "n": 1.0,
+    "us": 5.107300000001397,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy__unsafe_view_add_clone_embedding_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_un",
+    "n": 1.0,
+    "us": 4.956700000003093,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_14",
+    "n": 1.0,
+    "us": 4.10240000000149,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_12",
+    "n": 1.0,
+    "us": 3.699200000008568,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused__to_copy_cos_expand_mul_select_sin_slice_unsqueeze_view_0",
+    "n": 1.0,
+    "us": 2.5374999999959074,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_red_fused__to_copy_add_mean_pow_32",
+    "n": 1.0,
+    "us": 2.300599999998667,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "triton_poi_fused_add_copy__31",
+    "n": 1.0,
+    "us": 1.5520999999978813,
+    "cat": "triton_fused"
+   },
+   {
+    "name": "Memcpy DtoD (Device -> Device)",
+    "n": 1.0,
+    "us": 1.5326999999878126,
+    "cat": "other"
+   },
+   {
+    "name": "Memset (Device)",
+    "n": 1.0,
+    "us": 1.0588999999956286,
+    "cat": "other"
+   }
+  ]
+ }
+}

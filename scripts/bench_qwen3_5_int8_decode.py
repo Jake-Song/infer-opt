@@ -11,7 +11,8 @@ the options of torch.compile(mode="max-autotune"): max_autotune and coordinate_d
 measured the fused int8 kernel under that mode; with max_autotune alone the int8 decode was 5x slower than bf16).
 Numerics are teacher-forced against the bf16 sliced-eager logits that are recorded before anything is quantized:
 max |dlogit|, argmax agreement and the mean KL(bf16 || quantized) over the checked steps.
-``--group-size 128`` quantizes with one scale per 128 input columns instead of one per output channel.
+``--group-size 128`` quantizes with one scale per 128 input columns instead of one per output channel. ``--fuse`` stacks
+gate+up, q+k+v and in_proj_qkv+z before measuring (quantizing the stacked Linears gives the same int8 values and scales).
 
     python scripts/bench_qwen3_5_int8_decode.py --repo Qwen/Qwen3.5-9B --kernels fla-delta --autotune --out int8_decode.json
 """
@@ -90,6 +91,7 @@ def main() -> None:
     parser.add_argument("--bf16-autotune", action="store_true", help="also measure bf16 with max_autotune")
     parser.add_argument("--group-size", type=int, default=0, help="INT8 scale per this many input columns; 0: per channel")
     parser.add_argument("--configs", default="bf16,int8,int8+lm_head")
+    parser.add_argument("--fuse", action="store_true", help="model.fuse_projections() before every config")
     parser.add_argument("--out", default="int8_decode.json")
     args = parser.parse_args()
 
@@ -112,6 +114,8 @@ def main() -> None:
         out.write_text(json.dumps({"args": vars(args), "device": torch.cuda.get_device_name(), "torch": torch.__version__,
                                    "layers": model.config.layer_summary(), "quantization": reports, "rows": rows}, indent=1))
 
+    if args.fuse:
+        model.fuse_projections()
     if "bf16" in wanted:
         rows.append(measure(model, "bf16", args, ids, max_len, fed, ref_logits, autotune=False))
         save()

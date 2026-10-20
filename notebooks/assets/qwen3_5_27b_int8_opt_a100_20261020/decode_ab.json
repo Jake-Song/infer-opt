@@ -1,0 +1,159 @@
+{
+ "note": "decode ms/token of the Hub int8 27B checkpoint (and the 9B one), same harness, separate processes on one A100-80GB",
+ "27B": {
+  "before (9a67d8d)": [
+   {
+    "label": "unfused",
+    "first_step_s": 215.93237906600007,
+    "ms_per_token_runs": [
+     26.28943294999999,
+     26.31983644999991,
+     26.318778375002694
+    ],
+    "ms_per_token": 26.318778375002694,
+    "peak_mem_gib": 28.709941387176514
+   }
+  ],
+  "attention+conv": [
+   {
+    "label": "unfused",
+    "first_step_s": 236.82823369099992,
+    "ms_per_token_runs": [
+     24.68534149999755,
+     24.678740650000464,
+     24.677661900000203
+    ],
+    "ms_per_token": 24.678740650000464,
+    "peak_mem_gib": 28.709941387176514
+   },
+   {
+    "label": "fused",
+    "first_step_s": 204.51010108800006,
+    "ms_per_token_runs": [
+     23.313413200003197,
+     23.32533272499404,
+     23.321281899995938
+    ],
+    "ms_per_token": 23.321281899995938,
+    "peak_mem_gib": 28.81581449508667
+   }
+  ],
+  "+ new GEMV kernel": [
+   {
+    "label": "unfused",
+    "first_step_s": 182.0509217409999,
+    "ms_per_token_runs": [
+     21.28065677500217,
+     21.308984849997614,
+     21.306905200003712
+    ],
+    "ms_per_token": 21.306905200003712,
+    "peak_mem_gib": 28.709941387176514
+   },
+   {
+    "label": "fused",
+    "first_step_s": 155.14442418999988,
+    "ms_per_token_runs": [
+     20.71686874999159,
+     20.73840527499442,
+     20.740242875001513
+    ],
+    "ms_per_token": 20.73840527499442,
+    "peak_mem_gib": 28.81581449508667
+   }
+  ],
+  "+ Triton decode attention": [
+   {
+    "label": "unfused",
+    "first_step_s": 173.94153875600023,
+    "ms_per_token_runs": [
+     20.93225399999028,
+     20.97169030000714,
+     20.97158097499232
+    ],
+    "ms_per_token": 20.97158097499232,
+    "peak_mem_gib": 28.709941387176514
+   },
+   {
+    "label": "fused",
+    "first_step_s": 150.9109076169998,
+    "ms_per_token_runs": [
+     20.65585479999754,
+     20.689741024989416,
+     20.688033724991328
+    ],
+    "ms_per_token": 20.688033724991328,
+    "peak_mem_gib": 28.81581449508667
+   }
+  ]
+ },
+ "9B": {
+  "before (9a67d8d)": [
+   {
+    "label": "unfused",
+    "first_step_s": 142.0637193470002,
+    "ms_per_token_runs": [
+     9.425659425005506,
+     9.456034274990088,
+     9.45460712498516
+    ],
+    "ms_per_token": 9.45460712498516,
+    "peak_mem_gib": 10.918149471282959
+   }
+  ],
+  "+ new GEMV kernel": [
+   {
+    "label": "unfused",
+    "first_step_s": 125.83329949800009,
+    "ms_per_token_runs": [
+     7.675845475000642,
+     7.703908999997111,
+     7.708827474993996
+    ],
+    "ms_per_token": 7.703908999997111,
+    "peak_mem_gib": 10.918149471282959
+   },
+   {
+    "label": "fused",
+    "first_step_s": 97.7422213180007,
+    "ms_per_token_runs": [
+     7.415857025011974,
+     7.445686024993847,
+     7.445133974988494
+    ],
+    "ms_per_token": 7.445133974988494,
+    "peak_mem_gib": 10.925839900970459
+   }
+  ],
+  "+ Triton decode attention": [
+   {
+    "label": "unfused",
+    "first_step_s": 100.89524153800085,
+    "ms_per_token_runs": [
+     7.534675174997574,
+     7.564409225005875,
+     7.56534382501286
+    ],
+    "ms_per_token": 7.564409225005875,
+    "peak_mem_gib": 10.918149471282959
+   },
+   {
+    "label": "fused",
+    "first_step_s": 86.20747231000041,
+    "ms_per_token_runs": [
+     7.306447199994182,
+     7.336224475011477,
+     7.335013074998642
+    ],
+    "ms_per_token": 7.335013074998642,
+    "peak_mem_gib": 10.925839900970459
+   }
+  ]
+ },
+ "logit_comparisons": {
+  "B_compare.log": "/content/runs/B/new_unfused.pt: max|dlogit| 0.0938  argmax agree 1.000  KL(base||this) mean 6.25e-05 max 4.37e-04\n/content/runs/B/new_fused.pt: max|dlogit| 0.1250  argmax agree 1.000  KL(base||this) mean 7.71e-05 max 1.16e-03\n",
+  "D_compare.log": "/content/runs/D/new_unfused.pt: max|dlogit| 0.0747  argmax agree 1.000  KL(base||this) mean 5.86e-05 max 4.05e-04\n/content/runs/D/new_fused.pt: max|dlogit| 0.0781  argmax agree 0.979  KL(base||this) mean 5.98e-05 max 4.57e-04\n",
+  "F_compare.log": "/content/runs/F/new2_fused.pt: max|dlogit| 0.0664  argmax agree 1.000  KL(base||this) mean 5.80e-05 max 3.79e-04\n/content/runs/D/new_fused.pt: max|dlogit| 0.0781  argmax agree 0.979  KL(base||this) mean 5.98e-05 max 4.57e-04\n",
+  "E_compare9.log": "/content/runs/E/new9_unfused.pt: max|dlogit| 0.1250  argmax agree 0.979  KL(base||this) mean 1.18e-04 max 1.67e-03\n/content/runs/E/new9_fused.pt: max|dlogit| 0.1250  argmax agree 0.979  KL(base||this) mean 1.12e-04 max 1.78e-03\n"
+ }
+}

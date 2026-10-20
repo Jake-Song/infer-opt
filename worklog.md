@@ -145,3 +145,81 @@ lm_head가 embedding과 **묶여 있지 않다**(9B는 묶여 있다). bf16 chec
 - GEMV 밖의 층당 약 86 µs(norm, conv, delta rule, attention과 작은 kernel들): 27B에서는 decode의 약 22%다.
 - MLP GEMV 대역폭(gate/up 1.45, down 1.25 TB/s). gate_proj와 up_proj를 GEMV 하나로 합치는 것도 후보다.
 - 노트북을 Colab A100에서 끝까지 실행해 기록 속도를 확인한다.
+
+## 2026-10-20 — Qwen3.5-27B INT8 decode 최적화: GEMV kernel, 투영 합치기, decode attention
+
+**목표:** 27B int8 decode(25.93 ms/token)와 대역폭 하한(lm_head bf16 13.6 ms)의 차이를 줄인다. 체크포인트(`Jakemu/Qwen3.5-27B-int8-g128`)는
+바꾸지 않는다.
+
+숫자는 모두 Colab A100-SXM4-80GB, torch 2.11, `fla-delta:compile-reduce-overhead`, inductor max-autotune, 1024-token 프롬프트다.
+원시 결과는 `experiments/qwen3_5_27b_int8/a100_80gb_20261020_opt/`(git 제외), 노트북용 사본은
+`notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`.
+
+### 결과
+
+`bench_qwen3_5_int8_decode.py --fuse`(128 step 평균, 같은 실행의 bf16 포함):
+
+| | 이전 ms/token | 이후 ms/token | peak GiB | KL vs bf16 |
+|---|---:|---:|---:|---:|
+| bf16 | 37.65 | 35.17 | 50.9 | – |
+| group-128 int8, lm_head bf16 | 25.93 | **20.72** | 28.8 | 0.00030 |
+| group-128 int8 + lm_head | 25.22 | 20.31 | 31.7 | 0.00033 |
+
+- int8은 bf16 대비 1.70배(이전 1.45배). 하한 13.6 ms의 1.52배다(이전 1.91배).
+- 단계별(같은 하니스, Hub checkpoint, `decode_ab.json`): 26.32 → attention·conv 24.68 → 투영 합치기 23.32 → 새 GEMV kernel 20.56
+  → Triton decode attention 20.69(실행 간 차이 ±0.15 ms 안. profile의 busy 시간으로는 20.90 → 20.70).
+
+- 9B(`Jakemu/Qwen3.5-9B-int8-g128`, 같은 하니스)도 같은 코드로 9.45 → 7.34 ms/token이다. 9B gate는 다시 돌리지 않았다
+  (옛 코드와의 teacher-forced KL 1.1e-4).
+- **gate 통과(3/3, 고정한 프롬프트):** Hub checkpoint int8 KL 비율 0.86, 제자리 양자화 int8 1.07 / int8+lm_head 0.67.
+  strong 불일치 0. bf16 대조 평균 KL 0.00193(이전 0.00187).
+
+### 어디에 시간을 썼나 (profile, CUDA graph 안 kernel 시간의 합)
+
+CUDA graph로 돌리면 GPU가 step 시간의 99%를 kernel로 채운다(26.07 / 26.2 ms). 그래서 kernel 시간의 합이 곧 ms/token이다.
+
+| | 이전 | 이후 |
+|---|---:|---:|
+| int8 GEMV | 20.08 ms (400개) | 15.99 ms (256개) |
+| lm_head (bf16, inductor) | 1.38 | 1.39 |
+| full attention 16층 | 1.75 | 0.23 |
+| 나머지 (norm, delta rule, 작은 kernel) | 2.9 | 3.1 |
+| 합 (busy) | 26.07 | 20.70 |
+
+### 바꾼 것
+
+- **GEMV kernel (`infer_opt/quant_kernels.py`):** 타일을 `[BLOCK_N, BLOCK_K/16, 16]`로 바꿨다. thread 하나가 한 group 안의 int8 16개를
+  16-byte load 한 번으로 읽고 `q * x`를 register에서 더한 뒤 group scale을 한 번 곱한다(이전에는 원소마다 `x * scale`을 곱했다).
+  `x`와 scale의 pointer도 `q`와 같은 3차원 모양으로 만들어야 세 load가 같은 layout을 쓴다. 2차원으로 읽으면 Triton이 매 step 부분합을
+  shared memory로 옮겼다(`bar.sync`). 실행 설정은 모든 27B shape에서 (BLOCK_N 1, BLOCK_K 1024, 2 warps)가 최적이라 규칙이 상수가 됐다.
+  - 27B shape에서 weight만 읽는 kernel(대역폭 천장)의 2–8% 안이고, per-channel scale kernel만큼 빠르다:
+    gate+up(합침) 113.7 → 106.5 µs(천장 102.6), down 73.6 → 59.1(54.3), out_proj 28.2 → 22.5(21.0).
+  - scale index는 GROUP이 BLOCK_K를 나눌 때 loop 밖에서 계산한다. 매 step 계산하면 9B gate+up에서 13% 느렸다.
+- **투영 합치기 (`Qwen3_5ForCausalLM.fuse_projections`):** 같은 입력을 읽는 Linear를 행으로 쌓는다. gate+up(MLP), q+k+v(full attention),
+  in_proj_qkv+in_proj_z(GatedDeltaNet). group scale은 행마다라서 int8도 그대로 쌓인다. 로드 뒤에 하는 변환이라 체크포인트 형식은
+  같고 state-dict 키만 바뀐다(합친 뒤에는 저장하지 않는다). launch, ramp, tail이 줄어 gate+up 두 GEMV 139 µs가 113 µs가 됐다.
+  bench/gate 스크립트에 `--fuse`를 추가했다.
+- **decode attention:** `repeat_kv`가 cache를 query head마다 복사하고, SDPA kernel은 query 행(1개)으로 병렬화해 층당 ~110 µs였다
+  (4.5 MB cache). query head를 KV head별로 묶어
+  - CPU/기타: fp32 reduction (inductor kernel 3개, 층당 39 µs),
+  - CUDA: split-K Triton kernel(`infer_opt/attention_kernels.py`, 64 key씩, online softmax 부분합을 PyTorch로 합친다). kernel 7.8 µs, 합치기 ~7 µs.
+- **decode conv:** 한 token의 depthwise conv를 kernel 폭 4의 내적으로 바꿨다(`F.conv1d` kernel 대신 inductor가 합친다).
+- **gate 프롬프트 고정:** `code_1k`, `code_1_5k` 프롬프트를 살아 있는 `infer_opt/qwen3_5.py`에서 잘라 쓰고 있었다. 이번에 그 파일의
+  docstring을 고치자 프롬프트가 바뀌어 bf16 대조 KL이 0.0106 → 0.154로 뛰었다(모델 문제가 아니다). 9e5c3bd의 텍스트를
+  `scripts/code_prompt_source.txt`로 고정했다(앞 12 000자는 32c1509부터 같아서 이전 INT8 gate 실행과 같은 프롬프트다).
+  `D_gate_hub_fused.*`는 바뀐 프롬프트로 돈 실행이라 비교에 쓰지 않는다.
+
+### 알게 된 것
+
+- **I2F 변환은 병목이 아니었다.** int8 → fp32를 bit trick(`0x4B000000 | (q ^ 0x80)` − 8388736)으로 바꾼 kernel은 두 형태 모두 더 느렸다.
+  비용은 원소마다의 scale 곱과 shared memory 왕복이었다.
+- **scale group을 키우는 것(group 256, per-channel)은 새 kernel에서 이득이 없다.** 옛 kernel에서는 per-channel이 12–20% 빨랐고 group 256은
+  ±5%였다. 새 kernel에서는 group 128이 둘과 같은 속도라 정확도만 잃는다. scale 바이트는 weight의 1.6%다.
+- weight만 읽는 kernel도 이 접근 방식으로는 ~1.6 TB/s(89 MB shape)라, GEMV는 이제 천장(15.0 ms)에 가깝다. 하한 12.1 ms와의 차이는 kernel마다의
+  ramp/tail이다.
+
+### 남은 일
+
+- norm(5120 폭 한 행): inductor의 persistent reduction 기준(1024)을 넘어 loop 두 번짜리 reduction이 된다. 층당 2개, 6–12 µs씩 약 0.8 ms.
+- in_proj_a/b(48행 bf16)가 norm과 합쳐진 reduction kernel(15 µs, 16개).
+- Colab 노트북은 아직 9e5c3bd를 고정하고 있고 `fuse_projections()`를 부르지 않는다. 새 kernel은 T4에서 재 보지 않았다.

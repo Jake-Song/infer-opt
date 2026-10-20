@@ -2,7 +2,7 @@
 
 For every Int8Linear shape (group-wise quantization, lm_head included), one CUDA graph calls the kernel on every
 module of that shape in turn, so the weights together exceed L2 as in a decode step, for each candidate
-``(BLOCK_N, UNROLL, num_warps, num_stages)``. Prints the best configuration per shape next to the one
+``(BLOCK_N, BLOCK_K, num_warps)``. Prints the best configuration per shape next to the one
 ``infer_opt.quant_kernels.launch_config`` picks, then decode ms/token (fixed-shape decoder, inductor max-autotune)
 with the rule and with the measured best configurations.
 
@@ -29,7 +29,7 @@ from infer_opt import quant_kernels  # noqa: E402
 from infer_opt.quant import Int8Linear, quantize_linears  # noqa: E402
 from infer_opt.qwen3_5 import Qwen3_5ForCausalLM  # noqa: E402
 
-GRID = list(itertools.product((2, 4, 8, 16, 32), (1, 2, 4, 8), (4, 8), (2, 3)))
+GRID = list(itertools.product((1, 2, 4, 8, 16), (128, 256, 512, 1024), (2, 4, 8)))
 
 
 def main() -> None:
@@ -41,6 +41,7 @@ def main() -> None:
     parser.add_argument("--iters", type=int, default=10)
     parser.add_argument("--prompt-tokens", type=int, default=1024)
     parser.add_argument("--new-tokens", type=int, default=128)
+    parser.add_argument("--fuse", action="store_true", help="stack gate+up, q+k+v and in_proj_qkv+z first")
     parser.add_argument("--out", default="group_gemv_tune.json")
     args = parser.parse_args()
 
@@ -49,6 +50,8 @@ def main() -> None:
     path = args.weights or snapshot_download(args.repo, allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
     model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels)
     print(quantize_linears(model, include_lm_head=True, group_size=args.group_size).summary(), flush=True)
+    if args.fuse:
+        print("fused groups", model.fuse_projections(), flush=True)
     torch.cuda.empty_cache()
     device = torch.device("cuda")
 
@@ -71,8 +74,8 @@ def main() -> None:
             rule = quant_kernels.launch_config(n, k, group)
             times = {}
             for config in dict.fromkeys([rule, *GRID]):
-                block_n, unroll, _, _ = config
-                if block_n * unroll * group > 16384:
+                block_n, block_k, warps = config
+                if k % block_k or block_n * block_k < 256 * warps:  # fewer than 8 weights per thread
                     continue
                 quant_kernels.LAUNCH_CONFIGS[key] = config
                 try:

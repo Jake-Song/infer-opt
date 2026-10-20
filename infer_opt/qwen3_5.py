@@ -6,7 +6,9 @@ Only the transformers dependencies were removed; the math is unchanged:
     ``set_kernels("fla")`` switches GatedDeltaNet to flash-linear-attention Triton kernels
   * the cache is a plain Qwen3_5Cache (KV for full attention, conv + recurrent state for
     GatedDeltaNet), dynamic or preallocated (static); attention-mask utilities (padding), vision tower and MTP head are not included
-  * attention uses torch SDPA with is_causal=True (inputs are unpadded)
+  * attention uses torch SDPA with is_causal=True (inputs are unpadded); the fixed-shape decode step attends with
+    plain fp32 reductions over the grouped query heads instead (no repeat_kv)
+  * ``fuse_projections()`` optionally stacks the projections that share an input (gate+up, q+k+v, in_proj_qkv+z)
 
 Module names follow the checkpoint (``model.language_model.*``, tied ``lm_head``),
 so ``load_state_dict`` takes the safetensors keys as they are.
@@ -185,6 +187,32 @@ def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
     return hidden_states.reshape(batch, num_key_value_heads * n_rep, slen, head_dim)
 
 
+def _fuse_into(module: nn.Module, fused_name: str, names: tuple[str, ...]) -> bool:
+    """Replace the Linears ``names`` of ``module`` (same input, no bias) by one Linear ``fused_name`` whose output is
+    theirs side by side: the weight rows (and int8 scales) stacked. One batch-1 GEMV over the stacked matrix streams
+    the same bytes as the separate ones with one launch, ramp and tail instead of several. Returns whether it fused:
+    the parts must be all ``nn.Linear`` of one dtype, or all :class:`~infer_opt.quant.Int8Linear` of one group size."""
+    from infer_opt.quant import Int8Linear
+
+    if getattr(module, fused_name) is not None:
+        return False
+    parts = [getattr(module, name) for name in names]
+    if any(p.bias is not None for p in parts):
+        return False
+    if all(isinstance(p, Int8Linear) for p in parts) and len({(p.group_size, p.scale.dtype) for p in parts}) == 1:
+        fused = Int8Linear(torch.cat([p.weight for p in parts]), torch.cat([p.scale for p in parts]))
+    elif all(type(p) is nn.Linear for p in parts) and len({p.weight.dtype for p in parts}) == 1:
+        weight = torch.cat([p.weight.detach() for p in parts])
+        fused = nn.Linear(weight.shape[1], weight.shape[0], bias=False, device="meta")
+        fused.weight = nn.Parameter(weight, requires_grad=parts[0].weight.requires_grad)
+    else:
+        return False
+    for name in names:
+        delattr(module, name)
+    setattr(module, fused_name, fused)
+    return True
+
+
 class Qwen3_5Attention(nn.Module):
     """Full attention with output gate (q_proj emits query and gate)."""
 
@@ -200,19 +228,26 @@ class Qwen3_5Attention(nn.Module):
         self.o_proj = nn.Linear(config.num_attention_heads * self.head_dim, config.hidden_size, bias=False)
         self.q_norm = Qwen3_5RMSNorm(self.head_dim, eps=config.rms_norm_eps)
         self.k_norm = Qwen3_5RMSNorm(self.head_dim, eps=config.rms_norm_eps)
+        self.qkv_proj = None  # q_proj, k_proj and v_proj stacked, after fuse_projections()
+        self.qkv_sizes = [self.q_proj.out_features, self.k_proj.out_features, self.v_proj.out_features]
+
+    def fuse_projections(self) -> bool:
+        return _fuse_into(self, "qkv_proj", ("q_proj", "k_proj", "v_proj"))
 
     def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool = False):
         input_shape = hidden_states.shape[:-1]
         hidden_shape = (*input_shape, -1, self.head_dim)
 
-        query_states, gate = torch.chunk(
-            self.q_proj(hidden_states).view(*input_shape, -1, self.head_dim * 2), 2, dim=-1
-        )
+        if self.qkv_proj is not None:
+            q_out, k_out, v_out = self.qkv_proj(hidden_states).split(self.qkv_sizes, dim=-1)
+        else:
+            q_out, k_out, v_out = self.q_proj(hidden_states), self.k_proj(hidden_states), self.v_proj(hidden_states)
+        query_states, gate = torch.chunk(q_out.view(*input_shape, -1, self.head_dim * 2), 2, dim=-1)
         gate = gate.reshape(*input_shape, -1)
 
         query_states = self.q_norm(query_states.view(hidden_shape)).transpose(1, 2)
-        key_states = self.k_norm(self.k_proj(hidden_states).view(hidden_shape)).transpose(1, 2)
-        value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
+        key_states = self.k_norm(k_out.view(hidden_shape)).transpose(1, 2)
+        value_states = v_out.view(hidden_shape).transpose(1, 2)
 
         cos, sin = position_embeddings
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
@@ -224,10 +259,24 @@ class Qwen3_5Attention(nn.Module):
             cache.values[self.layer_idx].index_copy_(2, position, value_states)
             key_states, value_states = cache.keys[self.layer_idx], cache.values[self.layer_idx]
             max_len = key_states.shape[2]
-            attn_mask = (torch.arange(max_len, device=hidden_states.device) <= position).view(1, 1, 1, max_len)
-            is_causal = False
-            key_states = repeat_kv(key_states, self.num_key_value_groups)
-            value_states = repeat_kv(value_states, self.num_key_value_groups)
+            # One query row per head: group the query heads by their KV head, so the cache is read once per KV head.
+            # repeat_kv would copy the cache once per query head, and SDPA's kernels parallelize over query rows (one
+            # here): on the 27B (24 query / 4 KV heads, head_dim 256) that path took ~110 us per layer for a 4.5 MB cache.
+            # On CUDA a split-K Triton kernel; elsewhere the same math as fp32 reductions.
+            batch, heads, _, dim = query_states.shape
+            if query_states.is_cuda and dim & (dim - 1) == 0:
+                from infer_opt.attention_kernels import decode_attention
+
+                query = query_states.reshape(batch, -1, self.num_key_value_groups, dim)
+                attn_output = decode_attention(query, key_states, value_states, position, self.scaling)
+            else:
+                query = query_states.reshape(batch, -1, self.num_key_value_groups, 1, dim).float()
+                scores = (query * key_states.unsqueeze(2).float()).sum(-1) * self.scaling  # [B, KV heads, groups, L]
+                unfilled = torch.arange(max_len, device=hidden_states.device) > position
+                probs = scores.masked_fill(unfilled, float("-inf")).softmax(-1)
+                attn_output = (probs.unsqueeze(-1) * value_states.unsqueeze(2).float()).sum(-2)  # [B, KV heads, groups, D]
+                attn_output = attn_output.to(value_states.dtype)
+            attn_output = attn_output.view(batch, heads, 1, dim)
         else:
             if cache is not None:
                 key_states, value_states = cache.update_kv(self.layer_idx, key_states, value_states)
@@ -243,9 +292,9 @@ class Qwen3_5Attention(nn.Module):
                 attn_mask = torch.ones(q_len, kv_len, dtype=torch.bool, device=hidden_states.device)
                 attn_mask = attn_mask.tril(diagonal=kv_len - q_len)
                 is_causal = False
-        attn_output = F.scaled_dot_product_attention(
-            query_states, key_states, value_states, attn_mask=attn_mask, is_causal=is_causal, scale=self.scaling
-        )
+            attn_output = F.scaled_dot_product_attention(
+                query_states, key_states, value_states, attn_mask=attn_mask, is_causal=is_causal, scale=self.scaling
+            )
         attn_output = attn_output.transpose(1, 2).contiguous()
 
         attn_output = attn_output.reshape(*input_shape, -1).contiguous()
@@ -507,6 +556,10 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         self.in_proj_z = nn.Linear(self.hidden_size, self.value_dim, bias=False)
         self.in_proj_b = nn.Linear(self.hidden_size, self.num_v_heads, bias=False)
         self.in_proj_a = nn.Linear(self.hidden_size, self.num_v_heads, bias=False)
+        self.in_proj_qkvz = None  # in_proj_qkv and in_proj_z stacked, after fuse_projections()
+
+    def fuse_projections(self) -> bool:
+        return _fuse_into(self, "in_proj_qkvz", ("in_proj_qkv", "in_proj_z"))
 
     def forward(self, hidden_states: torch.Tensor, cache: Qwen3_5Cache | None = None, decode: bool = False):
         batch_size, seq_len, _ = hidden_states.shape
@@ -515,8 +568,11 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         if use_fla_conv or use_fla_delta:
             fla_conv, fla_chunk, fla_recurrent = _load_fla()
 
-        mixed_qkv = self.in_proj_qkv(hidden_states)  # [B, T, conv_dim]
-        z = self.in_proj_z(hidden_states).reshape(batch_size, seq_len, -1, self.head_v_dim)
+        if self.in_proj_qkvz is not None:
+            mixed_qkv, z = self.in_proj_qkvz(hidden_states).split([self.conv_dim, self.value_dim], dim=-1)
+        else:
+            mixed_qkv, z = self.in_proj_qkv(hidden_states), self.in_proj_z(hidden_states)  # [B, T, conv_dim], [B, T, value_dim]
+        z = z.reshape(batch_size, seq_len, -1, self.head_v_dim)
         b = self.in_proj_b(hidden_states)
         a = self.in_proj_a(hidden_states)
 
@@ -541,9 +597,11 @@ class Qwen3_5GatedDeltaNet(nn.Module):
             conv_input = torch.cat([conv_state, x], dim=-1)
             if cache is not None:
                 cache.set_state(cache.conv_states, self.layer_idx, conv_input[:, :, -(self.conv_kernel_size - 1):])
-            mixed_qkv = F.silu(
-                F.conv1d(conv_input.to(weight.dtype), weight=weight.unsqueeze(1), bias=None, groups=self.conv_dim)
-            ).to(hidden_states.dtype).transpose(1, 2)
+            if seq_len == 1:  # one output per channel: a dot product over the kernel window, which inductor can fuse
+                conv_out = (conv_input.float() * weight.float()).sum(-1, keepdim=True).to(weight.dtype)
+            else:
+                conv_out = F.conv1d(conv_input.to(weight.dtype), weight=weight.unsqueeze(1), bias=None, groups=self.conv_dim)
+            mixed_qkv = F.silu(conv_out).to(hidden_states.dtype).transpose(1, 2)
 
         query, key, value = torch.split(mixed_qkv, [self.key_dim, self.key_dim, self.value_dim], dim=-1)
         query = query.reshape(batch_size, seq_len, -1, self.head_k_dim)
@@ -585,9 +643,17 @@ class Qwen3_5MLP(nn.Module):
         self.gate_proj = nn.Linear(config.hidden_size, config.intermediate_size, bias=False)
         self.up_proj = nn.Linear(config.hidden_size, config.intermediate_size, bias=False)
         self.down_proj = nn.Linear(config.intermediate_size, config.hidden_size, bias=False)
+        self.gate_up_proj = None  # gate_proj and up_proj stacked, after fuse_projections()
+
+    def fuse_projections(self) -> bool:
+        return _fuse_into(self, "gate_up_proj", ("gate_proj", "up_proj"))
 
     def forward(self, x):
-        return self.down_proj(F.silu(self.gate_proj(x)) * self.up_proj(x))
+        if self.gate_up_proj is not None:
+            gate, up = self.gate_up_proj(x).chunk(2, dim=-1)
+        else:
+            gate, up = self.gate_proj(x), self.up_proj(x)
+        return self.down_proj(F.silu(gate) * up)
 
 
 class Qwen3_5DecoderLayer(nn.Module):
@@ -690,6 +756,16 @@ class Qwen3_5ForCausalLM(nn.Module):
             if isinstance(module, Qwen3_5GatedDeltaNet):
                 module.kernels = kernels
         return self
+
+    @torch.no_grad()
+    def fuse_projections(self) -> int:
+        """Stack the projections that read the same input into one Linear each: gate+up (MLP), q+k+v (full attention)
+        and in_proj_qkv+in_proj_z (GatedDeltaNet). Works before or after :func:`~infer_opt.quant.quantize_linears`
+        (group-wise scales are per row, so they stack too). Decoding the int8 Qwen3.5-27B, gate+up alone saves
+        ~26 us of the 140 us its two GEMVs take. The state-dict keys change: save checkpoints before fusing.
+        Returns the number of fused groups."""
+        return sum(m.fuse_projections() for m in self.modules()
+                   if isinstance(m, (Qwen3_5MLP, Qwen3_5Attention, Qwen3_5GatedDeltaNet)))
 
     def forward(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache | None = None) -> torch.Tensor:
         return self.lm_head(self.model.language_model(input_ids, cache))
