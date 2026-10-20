@@ -39,7 +39,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from infer_opt.quant import quantize_linears  # noqa: E402
 from infer_opt.qwen3_5 import FixedShapeDecoder, Qwen3_5ForCausalLM  # noqa: E402
-from validate_qwen3_5_hf import TIE_MARGIN, build_prompts, kl_and_top1  # noqa: E402
+from validate_qwen3_5_hf import CODE_PROMPT_SOURCE, TIE_MARGIN, build_prompts, kl_and_top1  # noqa: E402
 
 DEFAULT_CONFIGS = (
     "torch:sliced-eager,torch:eager,torch:compile,torch:compile-reduce-overhead,torch:cudagraph,"
@@ -99,7 +99,7 @@ def main() -> None:
     path = args.weights or snapshot_download(args.repo, allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
     tok = AutoTokenizer.from_pretrained(path)
     hf = AutoModelForCausalLM.from_pretrained(path, dtype=torch.bfloat16).cuda().eval()
-    prompts = build_prompts(tok, (ROOT / "infer_opt" / "qwen3_5.py").read_text())
+    prompts = build_prompts(tok, CODE_PROMPT_SOURCE.read_text())
     if args.prompts:
         prompts = {k: prompts[k] for k in args.prompts.split(",")}
 

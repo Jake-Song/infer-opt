@@ -44,6 +44,12 @@ PROSE = (
 )
 
 
+# The code prompts are cut from this frozen copy of infer_opt/qwen3_5.py (its text as of 9e5c3bd; the first 12 000
+# characters, which hold both prompts, are unchanged since 32c1509). They used to be cut from the live file, so editing
+# the model's docstring changed code_1k and code_1_5k and with them the gate's mean KL.
+CODE_PROMPT_SOURCE = Path(__file__).resolve().with_name("code_prompt_source.txt")
+
+
 def build_prompts(tok, source_text: str) -> dict[str, str]:
     code_ids = tok(source_text, return_tensors="pt").input_ids[0]
     return {
@@ -116,8 +122,7 @@ def main() -> None:
     hf = AutoModelForCausalLM.from_pretrained(path, dtype=torch.bfloat16).cuda().eval()
     ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda")
     ref32 = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.float32, device="cuda")  # kernels="torch"
-    source = (ROOT / "infer_opt" / "qwen3_5.py").read_text()
-    prompts = build_prompts(tok, source)
+    prompts = build_prompts(tok, CODE_PROMPT_SOURCE.read_text())
     if args.prompts:
         prompts = {k: prompts[k] for k in args.prompts.split(",")}
     configs = list(itertools.product(("torch", "fla-delta", "fla"), (False, True)))
