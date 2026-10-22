@@ -1,0 +1,1068 @@
+------------------ -------------------------------------------------------------------------------
+Kernel Name        ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_64x3_nn                    
+------------------ -------------------------------------------------------------------------------
+Address            Source                                                                         
+0x7a9607509700           MOV R2, RZ                                                               
+0x7a9607509710           MOV R161, c[0x0][0x1e4]                                                  
+0x7a9607509720           S2R R160, SR_CTAID.Z                                                     
+0x7a9607509730           S2R R153, SR_TID.X                                                       
+0x7a9607509740           S2R R158, SR_CTAID.X                                                     
+0x7a9607509750           S2R R159, SR_CTAID.Y                                                     
+0x7a9607509760           ISETP.NE.AND P0, PT, RZ, c[0x0][0x200], PT                               
+0x7a9607509770           LOP3.LUT R3, R161, 0xf00, RZ, 0xc0, !PT                                  
+0x7a9607509780           LOP3.LUT P5, RZ, R161, 0x1000, RZ, 0xc0, !PT                             
+0x7a9607509790           SHF.R.U32.HI R3, RZ, 0x8, R3                                             
+0x7a96075097a0           BMSK R4, R3, 0x1                                                         
+0x7a96075097b0           BMSK R5, RZ, R3                                                          
+0x7a96075097c0           PLOP3.LUT P4, PT, PT, PT, PT, 0x2, 0x20                                  
+0x7a96075097d0           LOP3.LUT R6, R159, R5, RZ, 0xfc, !PT                                     
+0x7a96075097e0           ISETP.EQ.AND P3, PT, R5, 0x3, PT                                         
+0x7a96075097f0           ISETP.LT.AND P2, PT, R6, c[0x0][0x10], PT                                
+0x7a9607509800           LOP3.LUT R7, R159, R5, RZ, 0xc0, !PT                                     
+0x7a9607509810           LOP3.LUT R10, R159, R4, RZ, 0xc0, !PT                                    
+0x7a9607509820           ISETP.EQ.AND P3, PT, R6, c[0x0][0x10], P3                                
+0x7a9607509830           LOP3.LUT R8, R159, R5, RZ, 0x30, !PT                                     
+0x7a9607509840           IMAD.U32 R9, R7, c[0x0][0xc], R158                                       
+0x7a9607509850     @P5   ISETP.EQ.XOR P4, PT, R10, R4, P4                                         
+0x7a9607509860           SHF.R.U32.HI R4, RZ, 0x1, R4                                             
+0x7a9607509870     @P2   BRA 0x7a9607509910                                                       
+0x7a9607509880     @!P3  SHF.R.U32.HI R5, RZ, 0x1, R5                                             
+0x7a9607509890     @!P3  IADD3 R3, R3, -0x1, RZ                                                   
+0x7a96075098a0     @!P3  BRA 0x7a96075097d0                                                       
+0x7a96075098b0           IMAD.WIDE.U32 R12, R9, 0x55555556, RZ                                    
+0x7a96075098c0           IADD3 R159, R8, R9, RZ                                                   
+0x7a96075098d0           IMAD.U32 R159, R13, -0x3, R159                                           
+0x7a96075098e0     @!P4  MOV R158, R13                                                            
+0x7a96075098f0     @P4   IADD3.X R158, ~R13, c[0x0][0xc], RZ, !PT, !PT                            
+0x7a9607509900           BRA 0x7a9607509940                                                       
+0x7a9607509910           SHF.R.U32.HI R158, RZ, R3, R9                                            
+0x7a9607509920           LOP3.LUT R159, R8, R9, R5, 0xf8, !PT                                     
+0x7a9607509930     @P4   IADD3.X R158, ~R158, c[0x0][0xc], RZ, !PT, !PT                           
+0x7a9607509940           MOV R162, c[0x0][0x1f0]                                                  
+0x7a9607509950           MOV R163, c[0x0][0x1f4]                                                  
+0x7a9607509960           LOP3.LUT P3, RZ, R161, 0x4, RZ, 0xc0, !PT                                
+0x7a9607509970           IMAD.U32 R3, R160, c[0x0][0x1e0], RZ                                     
+0x7a9607509980           IADD3 R3, -R3, c[0x0][0x1d0], RZ                                         
+0x7a9607509990           MOV R152, c[0x0][0x1d0]                                                  
+0x7a96075099a0           ISETP.LT.AND P4, PT, R3, c[0x0][0x1e0], P3                               
+0x7a96075099b0     @P3   MOV R152, c[0x0][0x1e0]                                                  
+0x7a96075099c0     @P4   MOV R152, R3                                                             
+0x7a96075099d0     @P0   LDG.E.LTC128B.CONSTANT R128, [R162]                                      
+0x7a96075099e0     @!P0  MOV R128, c[0x0][0x1fc]                                                  
+0x7a96075099f0           MOV R7, RZ                                                               
+0x7a9607509a00           LOP3.LUT R3, R153, 0x7, RZ, 0xc0, !PT                                    
+0x7a9607509a10           SHF.R.U32.HI R4, RZ, 0x3, R153                                           
+0x7a9607509a20           MOV R9, RZ                                                               
+0x7a9607509a30           SHF.L.U32 R8, R3, 0x3, RZ                                                
+0x7a9607509a40           LEA R6, R158, R8, 0x8                                                    
+0x7a9607509a50           IADD3 R5, R6, -c[0x0][0x1c8], RZ                                         
+0x7a9607509a60           IMAD.WIDE.U32 R6, R4, c[0x0][0x1b8], R6                                  
+0x7a9607509a70           SHF.R.S32.HI R11, RZ, 0x3, R153                                          
+0x7a9607509a80           LOP3.LUT R10, R153, 0x7, RZ, 0xc0, !PT                                   
+0x7a9607509a90           SHF.L.U32 R12, R11, 0x7, RZ                                              
+0x7a9607509aa0           LOP3.LUT R10, R10, R11, RZ, 0x3c, !PT                                    
+0x7a9607509ab0           LOP3.LUT R10, R10, 0x7, RZ, 0xc0, !PT                                    
+0x7a9607509ac0           LEA R129, R10, R12, 0x4                                                  
+0x7a9607509ad0           MOV R11, RZ                                                              
+0x7a9607509ae0           MOV R15, RZ                                                              
+0x7a9607509af0           LOP3.LUT R10, R153, 0x7, RZ, 0xc0, !PT                                   
+0x7a9607509b00           SHF.R.U32.HI R12, RZ, 0x3, R153                                          
+0x7a9607509b10           MOV R17, RZ                                                              
+0x7a9607509b20           SHF.L.U32 R16, R10, 0x3, RZ                                              
+0x7a9607509b30           LEA R14, R159, R12, 0x7                                                  
+0x7a9607509b40           IADD3 R13, R14, -c[0x0][0x1cc], RZ                                       
+0x7a9607509b50           IMAD.WIDE.U32 R14, R14, c[0x0][0x1bc], R16                               
+0x7a9607509b60           SHF.R.S32.HI R19, RZ, 0x3, R153                                          
+0x7a9607509b70           LOP3.LUT R18, R153, 0x7, RZ, 0xc0, !PT                                   
+0x7a9607509b80           SHF.L.U32 R20, R19, 0x7, RZ                                              
+0x7a9607509b90           LOP3.LUT R18, R18, R19, RZ, 0x3c, !PT                                    
+0x7a9607509ba0           LOP3.LUT R18, R18, 0x7, RZ, 0xc0, !PT                                    
+0x7a9607509bb0           LEA R142, R18, R20, 0x4                                                  
+0x7a9607509bc0           IADD3 R142, R142, 0x8000, RZ                                             
+0x7a9607509bd0           LOP3.LUT P2, R18, R161, 0x7, RZ, 0xc0, !PT                               
+0x7a9607509be0           MOV R130, c[0x0][0x160]                                                  
+0x7a9607509bf0           MOV R131, c[0x0][0x164]                                                  
+0x7a9607509c00     @!P2  BRA.U 0x7a9607509cb0                                                     
+0x7a9607509c10           ISETP.EQ.AND P2, PT, R18, 0x2, PT                                        
+0x7a9607509c20     @!P2  BRA.U 0x7a9607509c70                                                     
+0x7a9607509c30           LEA R130, P2, R160, c[0x0][0x160], 0x3                                   
+0x7a9607509c40           LEA.HI.X R131, R160, c[0x0][0x164], RZ, 0x3, P2                          
+0x7a9607509c50           LDG.E.LTC128B.64.CONSTANT R130, [R130]                                   
+0x7a9607509c60           BRA.U 0x7a9607509cb0                                                     
+0x7a9607509c70           IMAD.WIDE.U32 R20, R160, c[0x0][0x198], RZ                               
+0x7a9607509c80           IMAD.U32 R21, R160, c[0x0][0x19c], R21                                   
+0x7a9607509c90           LEA R130, P2, R20, c[0x0][0x160], 0x1                                    
+0x7a9607509ca0           LEA.HI.X R131, R20, c[0x0][0x164], R21, 0x1, P2                          
+0x7a9607509cb0           LEA R130, P2, R6, R130, 0x1                                              
+0x7a9607509cc0           LEA.HI.X R131, R6, R131, R7, 0x1, P2                                     
+0x7a9607509cd0           LOP3.LUT P2, R18, R161, 0x7, RZ, 0xc0, !PT                               
+0x7a9607509ce0           MOV R134, c[0x0][0x168]                                                  
+0x7a9607509cf0           MOV R135, c[0x0][0x16c]                                                  
+0x7a9607509d00     @!P2  BRA.U 0x7a9607509db0                                                     
+0x7a9607509d10           ISETP.EQ.AND P2, PT, R18, 0x2, PT                                        
+0x7a9607509d20     @!P2  BRA.U 0x7a9607509d70                                                     
+0x7a9607509d30           LEA R134, P2, R160, c[0x0][0x168], 0x3                                   
+0x7a9607509d40           LEA.HI.X R135, R160, c[0x0][0x16c], RZ, 0x3, P2                          
+0x7a9607509d50           LDG.E.LTC128B.64.CONSTANT R134, [R134]                                   
+0x7a9607509d60           BRA.U 0x7a9607509db0                                                     
+0x7a9607509d70           IMAD.WIDE.U32 R20, R160, c[0x0][0x1a0], RZ                               
+0x7a9607509d80           IMAD.U32 R21, R160, c[0x0][0x1a4], R21                                   
+0x7a9607509d90           LEA R134, P2, R20, c[0x0][0x168], 0x1                                    
+0x7a9607509da0           LEA.HI.X R135, R20, c[0x0][0x16c], R21, 0x1, P2                          
+0x7a9607509db0           LEA R134, P2, R14, R134, 0x1                                             
+0x7a9607509dc0           LEA.HI.X R135, R14, R135, R15, 0x1, P2                                   
+0x7a9607509dd0           SHF.R.S32.HI R1, RZ, 0x6, R152                                           
+0x7a9607509de0           SHF.L.U32 R1, R1, 0x6, RZ                                                
+0x7a9607509df0           IADD3 R1, R152, -R1, RZ                                                  
+0x7a9607509e00           ISETP.GT.AND P0, PT, R1, RZ, PT                                          
+0x7a9607509e10     @!P0  BRA.U 0x7a9607509f50                                                     
+0x7a9607509e20           IADD3 R18, R4, -R1, RZ                                                   
+0x7a9607509e30           ISETP.LT.AND P0, PT, R18, 0x0, PT                                        
+0x7a9607509e40           ISETP.LT.AND P3, PT, R5, 0x0, P0                                         
+0x7a9607509e50           ISETP.LT.AND P4, PT, R5, -0x40, P0                                       
+0x7a9607509e60           ISETP.LT.AND P5, PT, R5, -0x80, P0                                       
+0x7a9607509e70           ISETP.LT.AND P6, PT, R5, -0xc0, P0                                       
+0x7a9607509e80           P2R R0, PR, RZ, 0x78                                                     
+0x7a9607509e90           ISETP.LT.AND P0, PT, R18, -0x20, PT                                      
+0x7a9607509ea0           ISETP.LT.AND P3, PT, R5, 0x0, P0                                         
+0x7a9607509eb0           ISETP.LT.AND P4, PT, R5, -0x40, P0                                       
+0x7a9607509ec0           ISETP.LT.AND P5, PT, R5, -0x80, P0                                       
+0x7a9607509ed0           ISETP.LT.AND P6, PT, R5, -0xc0, P0                                       
+0x7a9607509ee0           P2R.B1 R0, PR, R0, 0x78                                                  
+0x7a9607509ef0           ISETP.LT.AND P0, PT, R16, R1, PT                                         
+0x7a9607509f00           ISETP.LT.AND P3, PT, R13, 0x0, P0                                        
+0x7a9607509f10           ISETP.LT.AND P4, PT, R13, -0x20, P0                                      
+0x7a9607509f20           ISETP.LT.AND P5, PT, R13, -0x40, P0                                      
+0x7a9607509f30           ISETP.LT.AND P6, PT, R13, -0x60, P0                                      
+0x7a9607509f40           P2R.B2 R0, PR, R0, 0x78                                                  
+0x7a9607509f50           IADD3 R18, R4, -R152, RZ                                                 
+0x7a9607509f60           ISETP.LT.AND P0, PT, R18, 0x0, PT                                        
+0x7a9607509f70           ISETP.LT.AND P3, PT, R5, 0x0, P0                                         
+0x7a9607509f80           ISETP.LT.AND P4, PT, R5, -0x40, P0                                       
+0x7a9607509f90           ISETP.LT.AND P5, PT, R5, -0x80, P0                                       
+0x7a9607509fa0           ISETP.LT.AND P6, PT, R5, -0xc0, P0                                       
+0x7a9607509fb0           P2R R151, PR, RZ, 0x78                                                   
+0x7a9607509fc0           ISETP.LT.AND P0, PT, R18, -0x20, PT                                      
+0x7a9607509fd0           ISETP.LT.AND P3, PT, R5, 0x0, P0                                         
+0x7a9607509fe0           ISETP.LT.AND P4, PT, R5, -0x40, P0                                       
+0x7a9607509ff0           ISETP.LT.AND P5, PT, R5, -0x80, P0                                       
+0x7a960750a000           ISETP.LT.AND P6, PT, R5, -0xc0, P0                                       
+0x7a960750a010           P2R.B1 R151, PR, R151, 0x78                                              
+0x7a960750a020           ISETP.LT.AND P0, PT, R16, R152, PT                                       
+0x7a960750a030           ISETP.LT.AND P3, PT, R13, 0x0, P0                                        
+0x7a960750a040           ISETP.LT.AND P4, PT, R13, -0x20, P0                                      
+0x7a960750a050           ISETP.LT.AND P5, PT, R13, -0x40, P0                                      
+0x7a960750a060           ISETP.LT.AND P6, PT, R13, -0x60, P0                                      
+0x7a960750a070           P2R.B2 R151, PR, R151, 0x78                                              
+0x7a960750a080           MOV R19, RZ                                                              
+0x7a960750a090           MOV R154, 0x80                                                           
+0x7a960750a0a0           IMAD.WIDE.U32 R154, R154, c[0x0][0x1b8], RZ                              
+0x7a960750a0b0           MOV R156, 0x80                                                           
+0x7a960750a0c0           IMAD.WIDE.U32 R156, R156, 0x1, RZ                                        
+0x7a960750a0d0           ISETP.LE.AND P0, PT, R1, RZ, PT                                          
+0x7a960750a0e0           ULDC UR5, c[0x0][0x210]                                                  
+0x7a960750a0f0           ULDC UR7, c[0x0][0x214]                                                  
+0x7a960750a100           UMOV UR8, URZ                                                            
+0x7a960750a110           UMOV UR4, URZ                                                            
+0x7a960750a120           UMOV UR6, URZ                                                            
+0x7a960750a130           UISETP.LT.AND UP0, UPT, UR8, 0x18000, UPT                                
+0x7a960750a140           UISETP.LT.AND UP1, UPT, UR4, 0x18000, UPT                                
+0x7a960750a150     @P0   BRA.U 0x7a960750a380                                                     
+0x7a960750a160           SHF.R.S32.HI R2, RZ, 0x6, R152                                           
+0x7a960750a170           IMAD.WIDE.U32 R20, R2, R154, R130                                        
+0x7a960750a180           IMAD.WIDE.U32 R22, R2, R156, R134                                        
+0x7a960750a190           IADD3 R132, P2, R20, c[0x0][0x178], RZ                                   
+0x7a960750a1a0           IADD3.X R133, R21, c[0x0][0x17c], RZ, P2, !PT                            
+0x7a960750a1b0           IADD3 R136, P2, R22, c[0x0][0x180], RZ                                   
+0x7a960750a1c0           IADD3.X R137, R23, c[0x0][0x184], RZ, P2, !PT                            
+0x7a960750a1d0           IADD3 R138, P2, R136, c[0x0][0x180], RZ                                  
+0x7a960750a1e0           IADD3.X R139, R137, c[0x0][0x184], RZ, P2, !PT                           
+0x7a960750a1f0           IADD3 R140, P2, R138, c[0x0][0x180], RZ                                  
+0x7a960750a200           IADD3.X R141, R139, c[0x0][0x184], RZ, P2, !PT                           
+0x7a960750a210           R2P PR, R0, 0x78                                                         
+0x7a960750a220           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P3, [R129+UR4][R20.64]              
+0x7a960750a230           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P4, [R129+UR4+0x2000][R20.64+0x80]  
+0x7a960750a240           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P5, [R129+UR4+0x4000][R20.64+0x100] 
+0x7a960750a250           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P6, [R129+UR4+0x6000][R20.64+0x180] 
+0x7a960750a260           R2P PR, R0.B1, 0x78                                                      
+0x7a960750a270           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P3, [R129+UR4+0x1000][R132.64]      
+0x7a960750a280           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P4, [R129+UR4+0x3000][R132.64+0x80] 
+0x7a960750a290           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P5, [R129+UR4+0x5000][R132.64+0x100]
+0x7a960750a2a0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P6, [R129+UR4+0x7000][R132.64+0x180]
+0x7a960750a2b0           R2P PR, R0.B2, 0x78                                                      
+0x7a960750a2c0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P3, [R142+UR6][R22.64]              
+0x7a960750a2d0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P4, [R142+UR6+0x1000][R136.64]      
+0x7a960750a2e0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P5, [R142+UR6+0x2000][R138.64]      
+0x7a960750a2f0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P6, [R142+UR6+0x3000][R140.64]      
+0x7a960750a300           LDGDEPBAR                                                                
+0x7a960750a310     @UP1  UIADD3 UR4, UR4, 0xc000, URZ                                             
+0x7a960750a320     @!UP1 UMOV UR4, URZ                                                            
+0x7a960750a330           UISETP.LT.AND UP1, UPT, UR4, 0x18000, UPT                                
+0x7a960750a340           UMOV UR6, UR4                                                            
+0x7a960750a350           ISETP.GT.AND P0, PT, R152, R1, PT                                        
+0x7a960750a360           IADD3 R152, R152, -R1, RZ                                                
+0x7a960750a370           IADD3 R19, R19, 0x1, RZ                                                  
+0x7a960750a380           IADD3 R132, P2, R130, c[0x0][0x178], RZ                                  
+0x7a960750a390           IADD3.X R133, R131, c[0x0][0x17c], RZ, P2, !PT                           
+0x7a960750a3a0           IADD3 R136, P2, R134, c[0x0][0x180], RZ                                  
+0x7a960750a3b0           IADD3.X R137, R135, c[0x0][0x184], RZ, P2, !PT                           
+0x7a960750a3c0           IADD3 R138, P2, R136, c[0x0][0x180], RZ                                  
+0x7a960750a3d0           IADD3.X R139, R137, c[0x0][0x184], RZ, P2, !PT                           
+0x7a960750a3e0           IADD3 R140, P2, R138, c[0x0][0x180], RZ                                  
+0x7a960750a3f0           IADD3.X R141, R139, c[0x0][0x184], RZ, P2, !PT                           
+0x7a960750a400     @!P0  MOV R151, RZ                                                             
+0x7a960750a410           R2P PR, R151, 0x78                                                       
+0x7a960750a420           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P3, [R129+UR4][R130.64]             
+0x7a960750a430           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P4, [R129+UR4+0x2000][R130.64+0x80] 
+0x7a960750a440           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P5, [R129+UR4+0x4000][R130.64+0x100]
+0x7a960750a450           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P6, [R129+UR4+0x6000][R130.64+0x180]
+0x7a960750a460           R2P PR, R151.B1, 0x78                                                    
+0x7a960750a470           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P3, [R129+UR4+0x1000][R132.64]      
+0x7a960750a480           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P4, [R129+UR4+0x3000][R132.64+0x80] 
+0x7a960750a490           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P5, [R129+UR4+0x5000][R132.64+0x100]
+0x7a960750a4a0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P6, [R129+UR4+0x7000][R132.64+0x180]
+0x7a960750a4b0           R2P PR, R151.B2, 0x78                                                    
+0x7a960750a4c0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P3, [R142+UR6][R134.64]             
+0x7a960750a4d0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P4, [R142+UR6+0x1000][R136.64]      
+0x7a960750a4e0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P5, [R142+UR6+0x2000][R138.64]      
+0x7a960750a4f0           LDGSTS.E.BYPASS.LTC128B.128.CONSTANT P6, [R142+UR6+0x3000][R140.64]      
+0x7a960750a500           LDGDEPBAR                                                                
+0x7a960750a510     @UP1  UIADD3 UR4, UR4, 0xc000, URZ                                             
+0x7a960750a520     @!UP1 UMOV UR4, URZ                                                            
+0x7a960750a530           UISETP.LT.AND UP1, UPT, UR4, 0x18000, UPT                                
+0x7a960750a540           UMOV UR6, UR4                                                            
+0x7a960750a550           ISETP.GT.AND P0, PT, R152, 0x40, PT                                      
+0x7a960750a560           IADD3 R152, R152, -0x40, RZ                                              
+0x7a960750a570           IADD3 R19, R19, 0x1, RZ                                                  
+0x7a960750a580           ISETP.LT.AND P1, PT, R19, 0x2, P0                                        
+0x7a960750a590           IADD3 R130, P2, R130, R154, RZ                                           
+0x7a960750a5a0           IADD3.X R131, R131, R155, RZ, P2, !PT                                    
+0x7a960750a5b0           IADD3 R132, P2, R132, R154, RZ                                           
+0x7a960750a5c0           IADD3.X R133, R133, R155, RZ, P2, !PT                                    
+0x7a960750a5d0           IADD3 R134, P2, R134, R156, RZ                                           
+0x7a960750a5e0           IADD3.X R135, R135, R157, RZ, P2, !PT                                    
+0x7a960750a5f0           IADD3 R136, P2, R136, R156, RZ                                           
+0x7a960750a600           IADD3.X R137, R137, R157, RZ, P2, !PT                                    
+0x7a960750a610           IADD3 R138, P2, R138, R156, RZ                                           
+0x7a960750a620           IADD3.X R139, R139, R157, RZ, P2, !PT                                    
+0x7a960750a630           IADD3 R140, P2, R140, R156, RZ                                           
+0x7a960750a640           IADD3.X R141, R141, R157, RZ, P2, !PT                                    
+0x7a960750a650     @P1   BRA 0x7a960750a400                                                       
+0x7a960750a660           ISETP.LT.AND P0, PT, R19, 0x2, PT                                        
+0x7a960750a670           IADD3 R19, R19, -0x2, RZ                                                 
+0x7a960750a680           IMAD R152, R19, 0x40, R152                                               
+0x7a960750a690     @!P0  BRA 0x7a960750a6e0                                                       
+0x7a960750a6a0           ISETP.LT.AND P0, PT, R19, -0x1, PT                                       
+0x7a960750a6b0           IADD3 R19, R19, 0x1, RZ                                                  
+0x7a960750a6c0           LDGDEPBAR                                                                
+0x7a960750a6d0     @P0   BRA 0x7a960750a6a0                                                       
+0x7a960750a6e0           ISETP.GT.AND P0, PT, R152, RZ, PT                                        
+0x7a960750a6f0           STS.128 [R129+UR4], RZ                                                   
+0x7a960750a700           STS.128 [R129+UR4+0x2000], RZ                                            
+0x7a960750a710           STS.128 [R129+UR4+0x4000], RZ                                            
+0x7a960750a720           STS.128 [R129+UR4+0x6000], RZ                                            
+0x7a960750a730           STS.128 [R129+UR4+0x1000], RZ                                            
+0x7a960750a740           STS.128 [R129+UR4+0x3000], RZ                                            
+0x7a960750a750           STS.128 [R129+UR4+0x5000], RZ                                            
+0x7a960750a760           STS.128 [R129+UR4+0x7000], RZ                                            
+0x7a960750a770           STS.128 [R142+UR6], RZ                                                   
+0x7a960750a780           STS.128 [R142+UR6+0x1000], RZ                                            
+0x7a960750a790           STS.128 [R142+UR6+0x2000], RZ                                            
+0x7a960750a7a0           STS.128 [R142+UR6+0x3000], RZ                                            
+0x7a960750a7b0           CS2R R0, SRZ                                                             
+0x7a960750a7c0           CS2R R2, SRZ                                                             
+0x7a960750a7d0           CS2R R4, SRZ                                                             
+0x7a960750a7e0           CS2R R6, SRZ                                                             
+0x7a960750a7f0           CS2R R8, SRZ                                                             
+0x7a960750a800           CS2R R10, SRZ                                                            
+0x7a960750a810           CS2R R12, SRZ                                                            
+0x7a960750a820           CS2R R14, SRZ                                                            
+0x7a960750a830           CS2R R16, SRZ                                                            
+0x7a960750a840           CS2R R18, SRZ                                                            
+0x7a960750a850           CS2R R20, SRZ                                                            
+0x7a960750a860           CS2R R22, SRZ                                                            
+0x7a960750a870           CS2R R24, SRZ                                                            
+0x7a960750a880           CS2R R26, SRZ                                                            
+0x7a960750a890           CS2R R28, SRZ                                                            
+0x7a960750a8a0           CS2R R30, SRZ                                                            
+0x7a960750a8b0           CS2R R32, SRZ                                                            
+0x7a960750a8c0           CS2R R34, SRZ                                                            
+0x7a960750a8d0           CS2R R36, SRZ                                                            
+0x7a960750a8e0           CS2R R38, SRZ                                                            
+0x7a960750a8f0           CS2R R40, SRZ                                                            
+0x7a960750a900           CS2R R42, SRZ                                                            
+0x7a960750a910           CS2R R44, SRZ                                                            
+0x7a960750a920           CS2R R46, SRZ                                                            
+0x7a960750a930           CS2R R48, SRZ                                                            
+0x7a960750a940           CS2R R50, SRZ                                                            
+0x7a960750a950           CS2R R52, SRZ                                                            
+0x7a960750a960           CS2R R54, SRZ                                                            
+0x7a960750a970           CS2R R56, SRZ                                                            
+0x7a960750a980           CS2R R58, SRZ                                                            
+0x7a960750a990           CS2R R60, SRZ                                                            
+0x7a960750a9a0           CS2R R62, SRZ                                                            
+0x7a960750a9b0           CS2R R64, SRZ                                                            
+0x7a960750a9c0           CS2R R66, SRZ                                                            
+0x7a960750a9d0           CS2R R68, SRZ                                                            
+0x7a960750a9e0           CS2R R70, SRZ                                                            
+0x7a960750a9f0           CS2R R72, SRZ                                                            
+0x7a960750aa00           CS2R R74, SRZ                                                            
+0x7a960750aa10           CS2R R76, SRZ                                                            
+0x7a960750aa20           CS2R R78, SRZ                                                            
+0x7a960750aa30           CS2R R80, SRZ                                                            
+0x7a960750aa40           CS2R R82, SRZ                                                            
+0x7a960750aa50           CS2R R84, SRZ                                                            
+0x7a960750aa60           CS2R R86, SRZ                                                            
+0x7a960750aa70           CS2R R88, SRZ                                                            
+0x7a960750aa80           CS2R R90, SRZ                                                            
+0x7a960750aa90           CS2R R92, SRZ                                                            
+0x7a960750aaa0           CS2R R94, SRZ                                                            
+0x7a960750aab0           CS2R R96, SRZ                                                            
+0x7a960750aac0           CS2R R98, SRZ                                                            
+0x7a960750aad0           CS2R R100, SRZ                                                           
+0x7a960750aae0           CS2R R102, SRZ                                                           
+0x7a960750aaf0           CS2R R104, SRZ                                                           
+0x7a960750ab00           CS2R R106, SRZ                                                           
+0x7a960750ab10           CS2R R108, SRZ                                                           
+0x7a960750ab20           CS2R R110, SRZ                                                           
+0x7a960750ab30           CS2R R112, SRZ                                                           
+0x7a960750ab40           CS2R R114, SRZ                                                           
+0x7a960750ab50           CS2R R116, SRZ                                                           
+0x7a960750ab60           CS2R R118, SRZ                                                           
+0x7a960750ab70           CS2R R120, SRZ                                                           
+0x7a960750ab80           CS2R R122, SRZ                                                           
+0x7a960750ab90           CS2R R124, SRZ                                                           
+0x7a960750aba0           CS2R R126, SRZ                                                           
+0x7a960750abb0           SHF.R.S32.HI R160, RZ, 0x5, R153                                         
+0x7a960750abc0           LOP3.LUT R161, R160, 0x3, RZ, 0xc0, !PT                                  
+0x7a960750abd0           SHF.R.S32.HI R165, RZ, 0x2, R160                                         
+0x7a960750abe0           SHF.R.S32.HI R166, RZ, 0x1, R165                                         
+0x7a960750abf0           LOP3.LUT R167, R165, 0x1, RZ, 0xc0, !PT                                  
+0x7a960750ac00           IMAD.SHL R166, R166, 0x2000, RZ                                          
+0x7a960750ac10           LOP3.LUT R169, R153, 0x1f, RZ, 0xc0, !PT                                 
+0x7a960750ac20           SHF.R.S32.HI R170, RZ, 0x4, R169                                         
+0x7a960750ac30           LOP3.LUT R168, R169, 0x7, RZ, 0xc0, !PT                                  
+0x7a960750ac40           LOP3.LUT R169, R169, 0xf, RZ, 0xc0, !PT                                  
+0x7a960750ac50           LEA R168, R170, R168, 0x3                                                
+0x7a960750ac60           SHF.R.S32.HI R169, RZ, 0x3, R169                                         
+0x7a960750ac70           SHF.L.U32 R170, R168, 0x7, RZ                                            
+0x7a960750ac80           LOP3.LUT R168, R153, 0x7, RZ, 0xc0, !PT                                  
+0x7a960750ac90           LOP3.LUT R169, R168, R169, RZ, 0x3c, !PT                                 
+0x7a960750aca0           IMAD R170, R161, 0x2000, R170                                            
+0x7a960750acb0           LEA R143, R169, R170, 0x4                                                
+0x7a960750acc0           LOP3.LUT R144, R143, 0x20, RZ, 0x3c, !PT                                 
+0x7a960750acd0           LOP3.LUT R145, R143, 0x40, RZ, 0x3c, !PT                                 
+0x7a960750ace0           LOP3.LUT R146, R145, 0x20, RZ, 0x3c, !PT                                 
+0x7a960750acf0           SHF.R.S32.HI R160, RZ, 0x5, R153                                         
+0x7a960750ad00           LOP3.LUT R161, R160, 0x3, RZ, 0xc0, !PT                                  
+0x7a960750ad10           SHF.R.S32.HI R165, RZ, 0x2, R160                                         
+0x7a960750ad20           SHF.R.S32.HI R166, RZ, 0x1, R165                                         
+0x7a960750ad30           LOP3.LUT R167, R165, 0x1, RZ, 0xc0, !PT                                  
+0x7a960750ad40           IMAD.SHL R166, R166, 0x80, RZ                                            
+0x7a960750ad50           LOP3.LUT R170, R153, 0x1f, RZ, 0xc0, !PT                                 
+0x7a960750ad60           LOP3.LUT R169, R170, 0xf, RZ, 0xc0, !PT                                  
+0x7a960750ad70           LOP3.LUT R168, R170, 0x7, RZ, 0xc0, !PT                                  
+0x7a960750ad80           LOP3.LUT R171, R170, 0x7, RZ, 0xc0, !PT                                  
+0x7a960750ad90           SHF.R.S32.HI R169, RZ, 0x3, R169                                         
+0x7a960750ada0           SHF.R.S32.HI R170, RZ, 0x4, R170                                         
+0x7a960750adb0           LOP3.LUT R169, R171, R169, RZ, 0x3c, !PT                                 
+0x7a960750adc0           LEA R168, R170, R168, 0x3                                                
+0x7a960750add0           SHF.L.U32 R171, R168, 0x7, RZ                                            
+0x7a960750ade0           IMAD R171, R167, 0x2000, R171                                            
+0x7a960750adf0           LEA R147, R169, R171, 0x4                                                
+0x7a960750ae00           LOP3.LUT R147, R147, R166, RZ, 0x3c, !PT                                 
+0x7a960750ae10           LOP3.LUT R148, R147, 0x20, RZ, 0x3c, !PT                                 
+0x7a960750ae20           LOP3.LUT R149, R147, 0x40, RZ, 0x3c, !PT                                 
+0x7a960750ae30           LOP3.LUT R150, R147, 0x60, RZ, 0x3c, !PT                                 
+0x7a960750ae40           DEPBAR.LE SB0, 0x1                                                       
+0x7a960750ae50           BAR.SYNC.DEFER_BLOCKING 0x0                                              
+0x7a960750ae60     @!P0  MOV R151, RZ                                                             
+0x7a960750ae70           R2P PR, R151, 0x78                                                       
+0x7a960750ae80     @P3   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4][R130.64]                 
+0x7a960750ae90     @P4   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x2000][R130.64+0x80]     
+0x7a960750aea0     @P5   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x4000][R130.64+0x100]    
+0x7a960750aeb0           LDSM.16.MT88.4 R160, [R143+UR8]                                          
+0x7a960750aec0           LDSM.16.MT88.4 R164, [R144+UR8]                                          
+0x7a960750aed0           LDSM.16.MT88.4 R168, [R145+UR8]                                          
+0x7a960750aee0           LDSM.16.MT88.4 R172, [R146+UR8]                                          
+0x7a960750aef0           LDSM.16.M88.4 R192, [R147+UR8+0x8000]                                    
+0x7a960750af00           LDSM.16.M88.4 R196, [R147+UR8+0x8800]                                    
+0x7a960750af10           LDSM.16.M88.4 R200, [R147+UR8+0x9000]                                    
+0x7a960750af20           LDSM.16.M88.4 R204, [R147+UR8+0x9800]                                    
+0x7a960750af30           HMMA.16816.F32.BF16 R0, R160, R192, R0                                   
+0x7a960750af40           LDSM.16.MT88.4 R176, [R143+UR8+0x800]                                    
+0x7a960750af50     @P6   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x6000][R130.64+0x180]    
+0x7a960750af60           R2P PR, R151.B1, 0x78                                                    
+0x7a960750af70           HMMA.16816.F32.BF16 R4, R160, R194, R4                                   
+0x7a960750af80           HMMA.16816.F32.BF16 R8, R160, R196, R8                                   
+0x7a960750af90           LDSM.16.MT88.4 R180, [R144+UR8+0x800]                                    
+0x7a960750afa0           HMMA.16816.F32.BF16 R12, R160, R198, R12                                 
+0x7a960750afb0           HMMA.16816.F32.BF16 R16, R160, R200, R16                                 
+0x7a960750afc0           LDSM.16.MT88.4 R184, [R145+UR8+0x800]                                    
+0x7a960750afd0           HMMA.16816.F32.BF16 R20, R160, R202, R20                                 
+0x7a960750afe0           HMMA.16816.F32.BF16 R24, R160, R204, R24                                 
+0x7a960750aff0           LDSM.16.MT88.4 R188, [R146+UR8+0x800]                                    
+0x7a960750b000           HMMA.16816.F32.BF16 R28, R160, R206, R28                                 
+0x7a960750b010           HMMA.16816.F32.BF16 R60, R164, R206, R60                                 
+0x7a960750b020           LDSM.16.M88.4 R208, [R148+UR8+0x8000]                                    
+0x7a960750b030           HMMA.16816.F32.BF16 R56, R164, R204, R56                                 
+0x7a960750b040           HMMA.16816.F32.BF16 R52, R164, R202, R52                                 
+0x7a960750b050           LDSM.16.M88.4 R212, [R148+UR8+0x8800]                                    
+0x7a960750b060           HMMA.16816.F32.BF16 R48, R164, R200, R48                                 
+0x7a960750b070     @P3   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x1000][R132.64]          
+0x7a960750b080           HMMA.16816.F32.BF16 R44, R164, R198, R44                                 
+0x7a960750b090           LDSM.16.M88.4 R216, [R148+UR8+0x9000]                                    
+0x7a960750b0a0           HMMA.16816.F32.BF16 R40, R164, R196, R40                                 
+0x7a960750b0b0           HMMA.16816.F32.BF16 R36, R164, R194, R36                                 
+0x7a960750b0c0           LDSM.16.M88.4 R220, [R148+UR8+0x9800]                                    
+0x7a960750b0d0           HMMA.16816.F32.BF16 R32, R164, R192, R32                                 
+0x7a960750b0e0           HMMA.16816.F32.BF16 R64, R168, R192, R64                                 
+0x7a960750b0f0           HMMA.16816.F32.BF16 R68, R168, R194, R68                                 
+0x7a960750b100           HMMA.16816.F32.BF16 R72, R168, R196, R72                                 
+0x7a960750b110           HMMA.16816.F32.BF16 R76, R168, R198, R76                                 
+0x7a960750b120           HMMA.16816.F32.BF16 R80, R168, R200, R80                                 
+0x7a960750b130           HMMA.16816.F32.BF16 R84, R168, R202, R84                                 
+0x7a960750b140     @P4   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x3000][R132.64+0x80]     
+0x7a960750b150           HMMA.16816.F32.BF16 R88, R168, R204, R88                                 
+0x7a960750b160           HMMA.16816.F32.BF16 R92, R168, R206, R92                                 
+0x7a960750b170           HMMA.16816.F32.BF16 R124, R172, R206, R124                               
+0x7a960750b180           HMMA.16816.F32.BF16 R120, R172, R204, R120                               
+0x7a960750b190           HMMA.16816.F32.BF16 R116, R172, R202, R116                               
+0x7a960750b1a0           HMMA.16816.F32.BF16 R112, R172, R200, R112                               
+0x7a960750b1b0           HMMA.16816.F32.BF16 R108, R172, R198, R108                               
+0x7a960750b1c0           HMMA.16816.F32.BF16 R104, R172, R196, R104                               
+0x7a960750b1d0           HMMA.16816.F32.BF16 R100, R172, R194, R100                               
+0x7a960750b1e0           HMMA.16816.F32.BF16 R96, R172, R192, R96                                 
+0x7a960750b1f0     @P5   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x5000][R132.64+0x100]    
+0x7a960750b200           HMMA.16816.F32.BF16 R0, R176, R208, R0                                   
+0x7a960750b210           LDSM.16.MT88.4 R160, [R143+UR8+0x1000]                                   
+0x7a960750b220           HMMA.16816.F32.BF16 R4, R176, R210, R4                                   
+0x7a960750b230           HMMA.16816.F32.BF16 R8, R176, R212, R8                                   
+0x7a960750b240           LDSM.16.MT88.4 R164, [R144+UR8+0x1000]                                   
+0x7a960750b250           HMMA.16816.F32.BF16 R12, R176, R214, R12                                 
+0x7a960750b260           HMMA.16816.F32.BF16 R16, R176, R216, R16                                 
+0x7a960750b270           LDSM.16.MT88.4 R168, [R145+UR8+0x1000]                                   
+0x7a960750b280           HMMA.16816.F32.BF16 R20, R176, R218, R20                                 
+0x7a960750b290           HMMA.16816.F32.BF16 R24, R176, R220, R24                                 
+0x7a960750b2a0           LDSM.16.MT88.4 R172, [R146+UR8+0x1000]                                   
+0x7a960750b2b0           HMMA.16816.F32.BF16 R28, R176, R222, R28                                 
+0x7a960750b2c0           HMMA.16816.F32.BF16 R60, R180, R222, R60                                 
+0x7a960750b2d0           LDSM.16.M88.4 R192, [R149+UR8+0x8000]                                    
+0x7a960750b2e0           HMMA.16816.F32.BF16 R56, R180, R220, R56                                 
+0x7a960750b2f0     @P6   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x7000][R132.64+0x180]    
+0x7a960750b300           R2P PR, R151.B2, 0x78                                                    
+0x7a960750b310           HMMA.16816.F32.BF16 R52, R180, R218, R52                                 
+0x7a960750b320           LDSM.16.M88.4 R196, [R149+UR8+0x8800]                                    
+0x7a960750b330           HMMA.16816.F32.BF16 R48, R180, R216, R48                                 
+0x7a960750b340           HMMA.16816.F32.BF16 R44, R180, R214, R44                                 
+0x7a960750b350           LDSM.16.M88.4 R200, [R149+UR8+0x9000]                                    
+0x7a960750b360           HMMA.16816.F32.BF16 R40, R180, R212, R40                                 
+0x7a960750b370           HMMA.16816.F32.BF16 R36, R180, R210, R36                                 
+0x7a960750b380           LDSM.16.M88.4 R204, [R149+UR8+0x9800]                                    
+0x7a960750b390           HMMA.16816.F32.BF16 R32, R180, R208, R32                                 
+0x7a960750b3a0           HMMA.16816.F32.BF16 R64, R184, R208, R64                                 
+0x7a960750b3b0           HMMA.16816.F32.BF16 R68, R184, R210, R68                                 
+0x7a960750b3c0           HMMA.16816.F32.BF16 R72, R184, R212, R72                                 
+0x7a960750b3d0           HMMA.16816.F32.BF16 R76, R184, R214, R76                                 
+0x7a960750b3e0     @P3   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R142+UR6][R134.64]                 
+0x7a960750b3f0           HMMA.16816.F32.BF16 R80, R184, R216, R80                                 
+0x7a960750b400           HMMA.16816.F32.BF16 R84, R184, R218, R84                                 
+0x7a960750b410           HMMA.16816.F32.BF16 R88, R184, R220, R88                                 
+0x7a960750b420           HMMA.16816.F32.BF16 R92, R184, R222, R92                                 
+0x7a960750b430           HMMA.16816.F32.BF16 R124, R188, R222, R124                               
+0x7a960750b440           HMMA.16816.F32.BF16 R120, R188, R220, R120                               
+0x7a960750b450           HMMA.16816.F32.BF16 R116, R188, R218, R116                               
+0x7a960750b460           HMMA.16816.F32.BF16 R112, R188, R216, R112                               
+0x7a960750b470           HMMA.16816.F32.BF16 R108, R188, R214, R108                               
+0x7a960750b480           HMMA.16816.F32.BF16 R104, R188, R212, R104                               
+0x7a960750b490     @P4   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R142+UR6+0x1000][R136.64]          
+0x7a960750b4a0           HMMA.16816.F32.BF16 R100, R188, R210, R100                               
+0x7a960750b4b0           HMMA.16816.F32.BF16 R96, R188, R208, R96                                 
+0x7a960750b4c0           HMMA.16816.F32.BF16 R0, R160, R192, R0                                   
+0x7a960750b4d0           LDSM.16.MT88.4 R176, [R143+UR8+0x1800]                                   
+0x7a960750b4e0           HMMA.16816.F32.BF16 R4, R160, R194, R4                                   
+0x7a960750b4f0           HMMA.16816.F32.BF16 R8, R160, R196, R8                                   
+0x7a960750b500           LDSM.16.MT88.4 R180, [R144+UR8+0x1800]                                   
+0x7a960750b510           HMMA.16816.F32.BF16 R12, R160, R198, R12                                 
+0x7a960750b520           HMMA.16816.F32.BF16 R16, R160, R200, R16                                 
+0x7a960750b530           LDSM.16.MT88.4 R184, [R145+UR8+0x1800]                                   
+0x7a960750b540           UISETP.LT.AND UP0, UPT, UR8, 0x18000, UPT                                
+0x7a960750b550           HMMA.16816.F32.BF16 R20, R160, R202, R20                                 
+0x7a960750b560           HMMA.16816.F32.BF16 R24, R160, R204, R24                                 
+0x7a960750b570           LDSM.16.MT88.4 R188, [R146+UR8+0x1800]                                   
+0x7a960750b580           HMMA.16816.F32.BF16 R28, R160, R206, R28                                 
+0x7a960750b590     @P5   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R142+UR6+0x2000][R138.64]          
+0x7a960750b5a0           HMMA.16816.F32.BF16 R60, R164, R206, R60                                 
+0x7a960750b5b0           LDSM.16.M88.4 R208, [R150+UR8+0x8000]                                    
+0x7a960750b5c0           HMMA.16816.F32.BF16 R56, R164, R204, R56                                 
+0x7a960750b5d0           HMMA.16816.F32.BF16 R52, R164, R202, R52                                 
+0x7a960750b5e0           LDSM.16.M88.4 R212, [R150+UR8+0x8800]                                    
+0x7a960750b5f0           HMMA.16816.F32.BF16 R48, R164, R200, R48                                 
+0x7a960750b600           HMMA.16816.F32.BF16 R44, R164, R198, R44                                 
+0x7a960750b610           LDSM.16.M88.4 R216, [R150+UR8+0x9000]                                    
+0x7a960750b620           HMMA.16816.F32.BF16 R40, R164, R196, R40                                 
+0x7a960750b630           HMMA.16816.F32.BF16 R36, R164, R194, R36                                 
+0x7a960750b640           LDSM.16.M88.4 R220, [R150+UR8+0x9800]                                    
+0x7a960750b650     @UP0  UIADD3 UR8, UR8, 0xc000, URZ                                             
+0x7a960750b660     @!UP0 UMOV UR8, URZ                                                            
+0x7a960750b670           HMMA.16816.F32.BF16 R32, R164, R192, R32                                 
+0x7a960750b680           HMMA.16816.F32.BF16 R64, R168, R192, R64                                 
+0x7a960750b690           HMMA.16816.F32.BF16 R68, R168, R194, R68                                 
+0x7a960750b6a0     @P6   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R142+UR6+0x3000][R140.64]          
+0x7a960750b6b0           LDGDEPBAR                                                                
+0x7a960750b6c0     @UP1  UIADD3 UR4, UR4, 0xc000, URZ                                             
+0x7a960750b6d0     @!UP1 UMOV UR4, URZ                                                            
+0x7a960750b6e0           HMMA.16816.F32.BF16 R72, R168, R196, R72                                 
+0x7a960750b6f0           UISETP.LT.AND UP1, UPT, UR4, 0x18000, UPT                                
+0x7a960750b700           UMOV UR6, UR4                                                            
+0x7a960750b710           IADD3 R152, R152, -0x40, RZ                                              
+0x7a960750b720           HMMA.16816.F32.BF16 R76, R168, R198, R76                                 
+0x7a960750b730           ISETP.GT.AND P0, PT, R152, RZ, PT                                        
+0x7a960750b740           HMMA.16816.F32.BF16 R80, R168, R200, R80                                 
+0x7a960750b750           HMMA.16816.F32.BF16 R84, R168, R202, R84                                 
+0x7a960750b760           ISETP.GT.AND P1, PT, R152, -0x80, PT                                     
+0x7a960750b770           IADD3 R130, P2, R130, R154, RZ                                           
+0x7a960750b780           HMMA.16816.F32.BF16 R88, R168, R204, R88                                 
+0x7a960750b790           IADD3.X R131, R131, R155, RZ, P2, !PT                                    
+0x7a960750b7a0           IADD3 R132, P2, R132, R154, RZ                                           
+0x7a960750b7b0           HMMA.16816.F32.BF16 R92, R168, R206, R92                                 
+0x7a960750b7c0           IADD3.X R133, R133, R155, RZ, P2, !PT                                    
+0x7a960750b7d0           IADD3 R134, P2, R134, R156, RZ                                           
+0x7a960750b7e0           HMMA.16816.F32.BF16 R124, R172, R206, R124                               
+0x7a960750b7f0           IADD3.X R135, R135, R157, RZ, P2, !PT                                    
+0x7a960750b800           IADD3 R136, P2, R136, R156, RZ                                           
+0x7a960750b810           HMMA.16816.F32.BF16 R120, R172, R204, R120                               
+0x7a960750b820           DEPBAR.LE SB0, 0x1                                                       
+0x7a960750b830           IADD3.X R137, R137, R157, RZ, P2, !PT                                    
+0x7a960750b840           HMMA.16816.F32.BF16 R116, R172, R202, R116                               
+0x7a960750b850           BAR.SYNC.DEFER_BLOCKING 0x0                                              
+0x7a960750b860           HMMA.16816.F32.BF16 R112, R172, R200, R112                               
+0x7a960750b870           IADD3 R138, P2, R138, R156, RZ                                           
+0x7a960750b880           IADD3.X R139, R139, R157, RZ, P2, !PT                                    
+0x7a960750b890           HMMA.16816.F32.BF16 R108, R172, R198, R108                               
+0x7a960750b8a0           IADD3 R140, P2, R140, R156, RZ                                           
+0x7a960750b8b0           IADD3.X R141, R141, R157, RZ, P2, !PT                                    
+0x7a960750b8c0           HMMA.16816.F32.BF16 R104, R172, R196, R104                               
+0x7a960750b8d0           HMMA.16816.F32.BF16 R100, R172, R194, R100                               
+0x7a960750b8e0           HMMA.16816.F32.BF16 R96, R172, R192, R96                                 
+0x7a960750b8f0           HMMA.16816.F32.BF16 R0, R176, R208, R0                                   
+0x7a960750b900           LDSM.16.MT88.4 R160, [R143+UR8]                                          
+0x7a960750b910     @!P0  MOV R151, RZ                                                             
+0x7a960750b920           R2P PR, R151, 0x78                                                       
+0x7a960750b930           HMMA.16816.F32.BF16 R4, R176, R210, R4                                   
+0x7a960750b940           HMMA.16816.F32.BF16 R8, R176, R212, R8                                   
+0x7a960750b950           LDSM.16.MT88.4 R164, [R144+UR8]                                          
+0x7a960750b960     @P3   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4][R130.64]                 
+0x7a960750b970           HMMA.16816.F32.BF16 R12, R176, R214, R12                                 
+0x7a960750b980           HMMA.16816.F32.BF16 R16, R176, R216, R16                                 
+0x7a960750b990           LDSM.16.MT88.4 R168, [R145+UR8]                                          
+0x7a960750b9a0           HMMA.16816.F32.BF16 R20, R176, R218, R20                                 
+0x7a960750b9b0           HMMA.16816.F32.BF16 R24, R176, R220, R24                                 
+0x7a960750b9c0           LDSM.16.MT88.4 R172, [R146+UR8]                                          
+0x7a960750b9d0           HMMA.16816.F32.BF16 R28, R176, R222, R28                                 
+0x7a960750b9e0           HMMA.16816.F32.BF16 R60, R180, R222, R60                                 
+0x7a960750b9f0           LDSM.16.M88.4 R192, [R147+UR8+0x8000]                                    
+0x7a960750ba00           HMMA.16816.F32.BF16 R56, R180, R220, R56                                 
+0x7a960750ba10           HMMA.16816.F32.BF16 R52, R180, R218, R52                                 
+0x7a960750ba20           LDSM.16.M88.4 R196, [R147+UR8+0x8800]                                    
+0x7a960750ba30           HMMA.16816.F32.BF16 R48, R180, R216, R48                                 
+0x7a960750ba40     @P4   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x2000][R130.64+0x80]     
+0x7a960750ba50           HMMA.16816.F32.BF16 R44, R180, R214, R44                                 
+0x7a960750ba60           LDSM.16.M88.4 R200, [R147+UR8+0x9000]                                    
+0x7a960750ba70           HMMA.16816.F32.BF16 R40, R180, R212, R40                                 
+0x7a960750ba80           HMMA.16816.F32.BF16 R36, R180, R210, R36                                 
+0x7a960750ba90           LDSM.16.M88.4 R204, [R147+UR8+0x9800]                                    
+0x7a960750baa0           HMMA.16816.F32.BF16 R32, R180, R208, R32                                 
+0x7a960750bab0           HMMA.16816.F32.BF16 R64, R184, R208, R64                                 
+0x7a960750bac0           HMMA.16816.F32.BF16 R68, R184, R210, R68                                 
+0x7a960750bad0           HMMA.16816.F32.BF16 R72, R184, R212, R72                                 
+0x7a960750bae0           HMMA.16816.F32.BF16 R76, R184, R214, R76                                 
+0x7a960750baf0           HMMA.16816.F32.BF16 R80, R184, R216, R80                                 
+0x7a960750bb00           HMMA.16816.F32.BF16 R84, R184, R218, R84                                 
+0x7a960750bb10           HMMA.16816.F32.BF16 R88, R184, R220, R88                                 
+0x7a960750bb20     @P5   LDGSTS.E.BYPASS.LTC128B.128.CONSTANT [R129+UR4+0x4000][R130.64+0x100]    
+0x7a960750bb30           HMMA.16816.F32.BF16 R92, R184, R222, R92                                 
+0x7a960750bb40           HMMA.16816.F32.BF16 R124, R188, R222, R124                               
+0x7a960750bb50           HMMA.16816.F32.BF16 R120, R188, R220, R120                               
+0x7a960750bb60           HMMA.16816.F32.BF16 R116, R188, R218, R116                               
+0x7a960750bb70           HMMA.16816.F32.BF16 R112, R188, R216, R112                               
+0x7a960750bb80           HMMA.16816.F32.BF16 R108, R188, R214, R108                               
+0x7a960750bb90           HMMA.16816.F32.BF16 R104, R188, R212, R104                               
+0x7a960750bba0           HMMA.16816.F32.BF16 R100, R188, R210, R100                               
+0x7a960750bbb0           HMMA.16816.F32.BF16 R96, R188, R208, R96                                 
+0x7a960750bbc0     @P1   BRA.U 0x7a960750af30                                                     
+0x7a960750bbd0           ULDC UR4, c[0x0][0x218]                                                  
+0x7a960750bbe0           ULDC UR5, c[0x0][0x21c]                                                  
+0x7a960750bbf0           ISETP.NE.AND P0, PT, RZ, c[0x0][0x200], PT                               
+0x7a960750bc00           MOV R146, c[0x0][0x1e8]                                                  
+0x7a960750bc10           MOV R147, c[0x0][0x1ec]                                                  
+0x7a960750bc20           MOV R137, c[0x0][0x1e4]                                                  
+0x7a960750bc30           S2R R133, SR_TID.X                                                       
+0x7a960750bc40           S2R R134, SR_CTAID.X                                                     
+0x7a960750bc50           S2R R135, SR_CTAID.Y                                                     
+0x7a960750bc60           S2R R136, SR_CTAID.Z                                                     
+0x7a960750bc70     @P0   LDG.E.LTC128B.CONSTANT R145, [R146]                                      
+0x7a960750bc80           FSETP.NE.AND P1, PT, R128, RZ, PT                                        
+0x7a960750bc90     @!P0  MOV R145, c[0x0][0x1f8]                                                  
+0x7a960750bca0           BAR.SYNC.DEFER_BLOCKING 0x0                                              
+0x7a960750bcb0           MOV R147, RZ                                                             
+0x7a960750bcc0           LOP3.LUT R151, R137, 0xf00, RZ, 0xc0, !PT                                
+0x7a960750bcd0           LOP3.LUT P5, RZ, R137, 0x1000, RZ, 0xc0, !PT                             
+0x7a960750bce0           SHF.R.U32.HI R151, RZ, 0x8, R151                                         
+0x7a960750bcf0           BMSK R152, R151, 0x1                                                     
+0x7a960750bd00           BMSK R153, RZ, R151                                                      
+0x7a960750bd10           PLOP3.LUT P4, PT, PT, PT, PT, 0x2, 0x20                                  
+0x7a960750bd20           LOP3.LUT R154, R135, R153, RZ, 0xfc, !PT                                 
+0x7a960750bd30           ISETP.EQ.AND P3, PT, R153, 0x3, PT                                       
+0x7a960750bd40           ISETP.LT.AND P2, PT, R154, c[0x0][0x10], PT                              
+0x7a960750bd50           LOP3.LUT R155, R135, R153, RZ, 0xc0, !PT                                 
+0x7a960750bd60           LOP3.LUT R158, R135, R152, RZ, 0xc0, !PT                                 
+0x7a960750bd70           ISETP.EQ.AND P3, PT, R154, c[0x0][0x10], P3                              
+0x7a960750bd80           LOP3.LUT R156, R135, R153, RZ, 0x30, !PT                                 
+0x7a960750bd90           IMAD.U32 R157, R155, c[0x0][0xc], R134                                   
+0x7a960750bda0     @P5   ISETP.EQ.XOR P4, PT, R158, R152, P4                                      
+0x7a960750bdb0           SHF.R.U32.HI R152, RZ, 0x1, R152                                         
+0x7a960750bdc0     @P2   BRA 0x7a960750be60                                                       
+0x7a960750bdd0     @!P3  SHF.R.U32.HI R153, RZ, 0x1, R153                                         
+0x7a960750bde0     @!P3  IADD3 R151, R151, -0x1, RZ                                               
+0x7a960750bdf0     @!P3  BRA 0x7a960750bd20                                                       
+0x7a960750be00           IMAD.WIDE.U32 R160, R157, 0x55555556, RZ                                 
+0x7a960750be10           IADD3 R135, R156, R157, RZ                                               
+0x7a960750be20           IMAD.U32 R135, R161, -0x3, R135                                          
+0x7a960750be30     @!P4  MOV R134, R161                                                           
+0x7a960750be40     @P4   IADD3.X R134, ~R161, c[0x0][0xc], RZ, !PT, !PT                           
+0x7a960750be50           BRA 0x7a960750be90                                                       
+0x7a960750be60           SHF.R.U32.HI R134, RZ, R151, R157                                        
+0x7a960750be70           LOP3.LUT R135, R156, R157, R153, 0xf8, !PT                               
+0x7a960750be80     @P4   IADD3.X R134, ~R134, c[0x0][0xc], RZ, !PT, !PT                           
+0x7a960750be90           LOP3.LUT R153, R133, 0x3, RZ, 0xc0, !PT                                  
+0x7a960750bea0           SHF.L.U32 R129, R153, 0x5, RZ                                            
+0x7a960750beb0           SHF.R.S32.HI R153, RZ, 0x2, R133                                         
+0x7a960750bec0           LOP3.LUT R153, R153, 0x7, RZ, 0xc0, !PT                                  
+0x7a960750bed0           LEA R129, R153, R129, 0x2                                                
+0x7a960750bee0           SHF.R.S32.HI R154, RZ, 0x5, R133                                         
+0x7a960750bef0           LEA R129, R154, R129, 0x8                                                
+0x7a960750bf00           LOP3.LUT R153, R133, 0x3, RZ, 0xc0, !PT                                  
+0x7a960750bf10           LEA R129, R153, R129, 0xd                                                
+0x7a960750bf20           LOP3.LUT R153, R133, 0xf, RZ, 0xc0, !PT                                  
+0x7a960750bf30           SHF.L.U32 R132, R153, 0x4, RZ                                            
+0x7a960750bf40           SHF.L.U32 R151, R153, 0x2, RZ                                            
+0x7a960750bf50           LEA R132, R154, R132, 0x8                                                
+0x7a960750bf60           LOP3.LUT R153, R133, 0x1f, RZ, 0xc0, !PT                                 
+0x7a960750bf70           SHF.R.S32.HI R153, RZ, 0x5, R153                                         
+0x7a960750bf80           SHF.L.U32 R155, R153, 0x5, RZ                                            
+0x7a960750bf90           IADD3 R132, R132, R155, RZ                                               
+0x7a960750bfa0           LEA R132, R153, R132, 0xd                                                
+0x7a960750bfb0           LOP3.LUT R153, R133, 0x10, RZ, 0xc0, !PT                                 
+0x7a960750bfc0           LEA R132, R153, R132, 0x7                                                
+0x7a960750bfd0           LOP3.LUT R153, R133, 0x1f, RZ, 0xc0, !PT                                 
+0x7a960750bfe0           SHF.R.S32.HI R152, RZ, 0x4, R153                                         
+0x7a960750bff0           LOP3.LUT R153, R133, 0xff, RZ, 0xc0, !PT                                 
+0x7a960750c000           SHF.R.S32.HI R156, RZ, 0x5, R153                                         
+0x7a960750c010           SHF.R.S32.HI R157, RZ, 0x7, R153                                         
+0x7a960750c020           LOP3.LUT R156, R156, 0x3, RZ, 0xc0, !PT                                  
+0x7a960750c030           LEA R150, R135, R152, 0x7                                                
+0x7a960750c040           MOV R144, c[0x0][0x1c4]                                                  
+0x7a960750c050           MOV R143, c[0x0][0x1c0]                                                  
+0x7a960750c060           LEA R146, R134, R151, 0x8                                                
+0x7a960750c070           LEA R150, R157, R150, 0x6                                                
+0x7a960750c080           LEA R146, R156, R146, 0x6                                                
+0x7a960750c090           LOP3.LUT P2, RZ, R137, 0x8, RZ, 0xc0, !PT                                
+0x7a960750c0a0           IMAD.WIDE.U32 R152, R150, c[0x0][0x1c0], R146                            
+0x7a960750c0b0           LOP3.LUT P6, R151, R137, 0x3, RZ, 0xc0, !PT                              
+0x7a960750c0c0     @!P6  BRA.U 0x7a960750c1a0                                                     
+0x7a960750c0d0           ISETP.EQ.AND P3, PT, R151, 0x2, PT                                       
+0x7a960750c0e0     @P3   LEA R140, P4, R136, c[0x0][0x170], 0x3                                   
+0x7a960750c0f0     @P3   LEA.HI.X R141, R136, c[0x0][0x174], RZ, 0x3, P4                          
+0x7a960750c100     @P3   LDG.E.LTC128B.64.CONSTANT R154, [R140]                                   
+0x7a960750c110     @P3   LEA R140, P4, R152, R154, 0x1                                            
+0x7a960750c120     @P3   LEA.HI.X R141, R152, R155, R153, 0x1, P4                                 
+0x7a960750c130     @!P3  LEA R140, P4, R152, c[0x0][0x170], 0x1                                   
+0x7a960750c140     @!P3  LEA.HI.X R141, R152, c[0x0][0x174], R153, 0x1, P4                        
+0x7a960750c150     @!P3  IMAD.WIDE.U32 R154, R136, c[0x0][0x1a8], RZ                              
+0x7a960750c160     @!P3  IMAD.U32 R155, R136, c[0x0][0x1ac], R155                                 
+0x7a960750c170     @!P3  LEA R140, P4, R154, R140, 0x1                                            
+0x7a960750c180     @!P3  LEA.HI.X R141, R154, R141, R155, 0x1, P4                                 
+0x7a960750c190           BRA.U 0x7a960750c1c0                                                     
+0x7a960750c1a0           LEA R140, P4, R152, c[0x0][0x170], 0x1                                   
+0x7a960750c1b0           LEA.HI.X R141, R152, c[0x0][0x174], R153, 0x1, P4                        
+0x7a960750c1c0           LOP3.LUT P3, RZ, R137, 0x20, RZ, 0xc0, !PT                               
+0x7a960750c1d0     @P3   IMAD.WIDE.U32 R154, R136, c[0x0][0x1a8], RZ                              
+0x7a960750c1e0     @P3   IMAD.U32 R155, R136, c[0x0][0x1ac], R155                                 
+0x7a960750c1f0     @P3   LEA R140, P4, R154, R140, 0x1                                            
+0x7a960750c200     @P3   LEA.HI.X R141, R154, R141, R153, 0x1, P4                                 
+0x7a960750c210           ISETP.NE.AND P5, PT, R136, RZ, P2                                        
+0x7a960750c220           MOV R138, c[0x0][0x170]                                                  
+0x7a960750c230           MOV R139, c[0x0][0x174]                                                  
+0x7a960750c240           ISETP.EQ.AND P4, PT, R138, c[0x0][0x208], PT                             
+0x7a960750c250           ISETP.EQ.AND P4, PT, R139, c[0x0][0x20c], P4                             
+0x7a960750c260           PLOP3.LUT P4, PT, P4, P5, PT, 0xf8, 0x8f                                 
+0x7a960750c270     @P5   MOV R144, R143                                                           
+0x7a960750c280     @!P4  BRA.U 0x7a960750c2c0                                                     
+0x7a960750c290           MOV R138, R140                                                           
+0x7a960750c2a0           MOV R139, R141                                                           
+0x7a960750c2b0           BRA.U 0x7a960750c430                                                     
+0x7a960750c2c0           LOP3.LUT P6, R151, R137, 0x3, RZ, 0xc0, !PT                              
+0x7a960750c2d0           IMAD.WIDE.U32 R152, R150, c[0x0][0x1c4], R146                            
+0x7a960750c2e0     @!P6  BRA.U 0x7a960750c3c0                                                     
+0x7a960750c2f0           ISETP.EQ.AND P3, PT, R151, 0x2, PT                                       
+0x7a960750c300     @P3   LEA R138, P4, R136, c[0x0][0x208], 0x3                                   
+0x7a960750c310     @P3   LEA.HI.X R139, R136, c[0x0][0x20c], RZ, 0x3, P4                          
+0x7a960750c320     @P3   LDG.E.LTC128B.64.CONSTANT R154, [R138]                                   
+0x7a960750c330     @P3   LEA R138, P4, R152, R154, 0x1                                            
+0x7a960750c340     @P3   LEA.HI.X R139, R152, R155, R153, 0x1, P4                                 
+0x7a960750c350     @!P3  LEA R138, P4, R152, c[0x0][0x208], 0x1                                   
+0x7a960750c360     @!P3  LEA.HI.X R139, R152, c[0x0][0x20c], R153, 0x1, P4                        
+0x7a960750c370     @!P3  IMAD.WIDE.U32 R154, R136, c[0x0][0x1b0], RZ                              
+0x7a960750c380     @!P3  IMAD.U32 R155, R136, c[0x0][0x1b4], R155                                 
+0x7a960750c390     @!P3  LEA R138, P4, R154, R138, 0x1                                            
+0x7a960750c3a0     @!P3  LEA.HI.X R139, R154, R139, R155, 0x1, P4                                 
+0x7a960750c3b0           BRA.U 0x7a960750c3e0                                                     
+0x7a960750c3c0           LEA R138, P4, R152, c[0x0][0x208], 0x1                                   
+0x7a960750c3d0           LEA.HI.X R139, R152, c[0x0][0x20c], R153, 0x1, P4                        
+0x7a960750c3e0           LOP3.LUT P3, RZ, R137, 0x20, RZ, 0xc0, !PT                               
+0x7a960750c3f0     @P3   IMAD.WIDE.U32 R154, R136, c[0x0][0x1b0], RZ                              
+0x7a960750c400     @P3   IMAD.U32 R155, R136, c[0x0][0x1b4], R155                                 
+0x7a960750c410     @P3   LEA R138, P4, R154, R138, 0x1                                            
+0x7a960750c420     @P3   LEA.HI.X R139, R154, R139, R153, 0x1, P4                                 
+0x7a960750c430     @P5   MOV R128, 0x3f800000                                                     
+0x7a960750c440     @P5   PLOP3.LUT P1, PT, PT, PT, PT, 0x80, 0x8                                  
+0x7a960750c450           IADD3 R148, R146, -c[0x0][0x1c8], RZ                                     
+0x7a960750c460           IADD3 R149, R150, -c[0x0][0x1cc], RZ                                     
+0x7a960750c470     @!P2  BRA 0x7a960750c4f0                                                       
+0x7a960750c480           IMAD.U32 R186, R135, c[0x0][0xc], R134                                   
+0x7a960750c490           LEA R184, P2, R186, c[0x0][0x1d8], 0x2                                   
+0x7a960750c4a0           LEA.HI.X R185, R186, c[0x0][0x1dc], RZ, 0x2, P2                          
+0x7a960750c4b0           MOV R151, RZ                                                             
+0x7a960750c4c0           ISETP.NE.AND P2, PT, R151, R136, PT                                      
+0x7a960750c4d0     @P2   LDG.E.EL.LTC128B.STRONG.GPU R151, [R184]                                 
+0x7a960750c4e0     @P2   BRA.U 0x7a960750c4c0                                                     
+0x7a960750c4f0           ISETP.LT.AND P2, PT, R148, 0x0, PT                                       
+0x7a960750c500           ISETP.LT.AND P3, PT, R149, 0x0, P2                                       
+0x7a960750c510           ISETP.LT.AND P4, PT, R149, -0x2, P2                                      
+0x7a960750c520           P2R R142, PR, RZ, 0x78                                                   
+0x7a960750c530           ISETP.LT.AND P3, PT, R149, -0x4, P2                                      
+0x7a960750c540           ISETP.LT.AND P4, PT, R149, -0x6, P2                                      
+0x7a960750c550           P2R.B1 R142, PR, R142, 0x78                                              
+0x7a960750c560     @!P1  BRA.U 0x7a960750c650                                                     
+0x7a960750c570           R2P PR, R142, 0x78                                                       
+0x7a960750c580           LEA R134, P2, R144, R138, 0x2                                            
+0x7a960750c590           LEA.HI.X R135, R144, R139, RZ, 0x2, P2                                   
+0x7a960750c5a0           LDG.E.LTC128B.64.STRONG.GPU R152, P3, [R138.64]                          
+0x7a960750c5b0           LEA R186, P2, R144, R134, 0x2                                            
+0x7a960750c5c0           LEA.HI.X R187, R144, R135, RZ, 0x2, P2                                   
+0x7a960750c5d0           LDG.E.LTC128B.64.STRONG.GPU R154, P4, [R134.64]                          
+0x7a960750c5e0           R2P PR, R142.B1, 0x78                                                    
+0x7a960750c5f0           LEA R188, P2, R144, R186, 0x2                                            
+0x7a960750c600           LEA.HI.X R189, R144, R187, RZ, 0x2, P2                                   
+0x7a960750c610           LDG.E.LTC128B.64.STRONG.GPU R156, P3, [R186.64]                          
+0x7a960750c620           LDG.E.LTC128B.64.STRONG.GPU R158, P4, [R188.64]                          
+0x7a960750c630           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750c640           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750c650           PLOP3.LUT P0, PT, P1, P1, PT, 0x80, 0x8                                  
+0x7a960750c660           FMUL R168, R145, R0                                                      
+0x7a960750c670           FMUL R169, R145, R2                                                      
+0x7a960750c680           FMUL R170, R145, R32                                                     
+0x7a960750c690           FMUL R171, R145, R34                                                     
+0x7a960750c6a0           FMUL R172, R145, R64                                                     
+0x7a960750c6b0           FMUL R173, R145, R66                                                     
+0x7a960750c6c0           FMUL R174, R145, R96                                                     
+0x7a960750c6d0           FMUL R175, R145, R98                                                     
+0x7a960750c6e0           FMUL R176, R145, R1                                                      
+0x7a960750c6f0           FMUL R177, R145, R3                                                      
+0x7a960750c700           FMUL R178, R145, R33                                                     
+0x7a960750c710           FMUL R179, R145, R35                                                     
+0x7a960750c720           FMUL R180, R145, R65                                                     
+0x7a960750c730           FMUL R181, R145, R67                                                     
+0x7a960750c740           FMUL R182, R145, R97                                                     
+0x7a960750c750           FMUL R183, R145, R99                                                     
+0x7a960750c760           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750c770           LEPC R130                                                                
+0x7a960750c780           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750c790           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750c7a0           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750c7b0           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750c7c0           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750c7d0           FMUL R168, R145, R4                                                      
+0x7a960750c7e0           FMUL R169, R145, R6                                                      
+0x7a960750c7f0           FMUL R170, R145, R36                                                     
+0x7a960750c800           FMUL R171, R145, R38                                                     
+0x7a960750c810           FMUL R172, R145, R68                                                     
+0x7a960750c820           FMUL R173, R145, R70                                                     
+0x7a960750c830           FMUL R174, R145, R100                                                    
+0x7a960750c840           FMUL R175, R145, R102                                                    
+0x7a960750c850           FMUL R176, R145, R5                                                      
+0x7a960750c860           FMUL R177, R145, R7                                                      
+0x7a960750c870           FMUL R178, R145, R37                                                     
+0x7a960750c880           FMUL R179, R145, R39                                                     
+0x7a960750c890           FMUL R180, R145, R69                                                     
+0x7a960750c8a0           FMUL R181, R145, R71                                                     
+0x7a960750c8b0           FMUL R182, R145, R101                                                    
+0x7a960750c8c0           FMUL R183, R145, R103                                                    
+0x7a960750c8d0           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750c8e0           LEPC R130                                                                
+0x7a960750c8f0           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750c900           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750c910           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750c920           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750c930           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750c940           FMUL R168, R145, R8                                                      
+0x7a960750c950           FMUL R169, R145, R10                                                     
+0x7a960750c960           FMUL R170, R145, R40                                                     
+0x7a960750c970           FMUL R171, R145, R42                                                     
+0x7a960750c980           FMUL R172, R145, R72                                                     
+0x7a960750c990           FMUL R173, R145, R74                                                     
+0x7a960750c9a0           FMUL R174, R145, R104                                                    
+0x7a960750c9b0           FMUL R175, R145, R106                                                    
+0x7a960750c9c0           FMUL R176, R145, R9                                                      
+0x7a960750c9d0           FMUL R177, R145, R11                                                     
+0x7a960750c9e0           FMUL R178, R145, R41                                                     
+0x7a960750c9f0           FMUL R179, R145, R43                                                     
+0x7a960750ca00           FMUL R180, R145, R73                                                     
+0x7a960750ca10           FMUL R181, R145, R75                                                     
+0x7a960750ca20           FMUL R182, R145, R105                                                    
+0x7a960750ca30           FMUL R183, R145, R107                                                    
+0x7a960750ca40           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750ca50           LEPC R130                                                                
+0x7a960750ca60           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750ca70           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750ca80           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750ca90           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750caa0           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750cab0           FMUL R168, R145, R12                                                     
+0x7a960750cac0           FMUL R169, R145, R14                                                     
+0x7a960750cad0           FMUL R170, R145, R44                                                     
+0x7a960750cae0           FMUL R171, R145, R46                                                     
+0x7a960750caf0           FMUL R172, R145, R76                                                     
+0x7a960750cb00           FMUL R173, R145, R78                                                     
+0x7a960750cb10           FMUL R174, R145, R108                                                    
+0x7a960750cb20           FMUL R175, R145, R110                                                    
+0x7a960750cb30           FMUL R176, R145, R13                                                     
+0x7a960750cb40           FMUL R177, R145, R15                                                     
+0x7a960750cb50           FMUL R178, R145, R45                                                     
+0x7a960750cb60           FMUL R179, R145, R47                                                     
+0x7a960750cb70           FMUL R180, R145, R77                                                     
+0x7a960750cb80           FMUL R181, R145, R79                                                     
+0x7a960750cb90           FMUL R182, R145, R109                                                    
+0x7a960750cba0           FMUL R183, R145, R111                                                    
+0x7a960750cbb0           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750cbc0           LEPC R130                                                                
+0x7a960750cbd0           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750cbe0           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750cbf0           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750cc00           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750cc10           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750cc20           FMUL R168, R145, R16                                                     
+0x7a960750cc30           FMUL R169, R145, R18                                                     
+0x7a960750cc40           FMUL R170, R145, R48                                                     
+0x7a960750cc50           FMUL R171, R145, R50                                                     
+0x7a960750cc60           FMUL R172, R145, R80                                                     
+0x7a960750cc70           FMUL R173, R145, R82                                                     
+0x7a960750cc80           FMUL R174, R145, R112                                                    
+0x7a960750cc90           FMUL R175, R145, R114                                                    
+0x7a960750cca0           FMUL R176, R145, R17                                                     
+0x7a960750ccb0           FMUL R177, R145, R19                                                     
+0x7a960750ccc0           FMUL R178, R145, R49                                                     
+0x7a960750ccd0           FMUL R179, R145, R51                                                     
+0x7a960750cce0           FMUL R180, R145, R81                                                     
+0x7a960750ccf0           FMUL R181, R145, R83                                                     
+0x7a960750cd00           FMUL R182, R145, R113                                                    
+0x7a960750cd10           FMUL R183, R145, R115                                                    
+0x7a960750cd20           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750cd30           LEPC R130                                                                
+0x7a960750cd40           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750cd50           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750cd60           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750cd70           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750cd80           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750cd90           FMUL R168, R145, R20                                                     
+0x7a960750cda0           FMUL R169, R145, R22                                                     
+0x7a960750cdb0           FMUL R170, R145, R52                                                     
+0x7a960750cdc0           FMUL R171, R145, R54                                                     
+0x7a960750cdd0           FMUL R172, R145, R84                                                     
+0x7a960750cde0           FMUL R173, R145, R86                                                     
+0x7a960750cdf0           FMUL R174, R145, R116                                                    
+0x7a960750ce00           FMUL R175, R145, R118                                                    
+0x7a960750ce10           FMUL R176, R145, R21                                                     
+0x7a960750ce20           FMUL R177, R145, R23                                                     
+0x7a960750ce30           FMUL R178, R145, R53                                                     
+0x7a960750ce40           FMUL R179, R145, R55                                                     
+0x7a960750ce50           FMUL R180, R145, R85                                                     
+0x7a960750ce60           FMUL R181, R145, R87                                                     
+0x7a960750ce70           FMUL R182, R145, R117                                                    
+0x7a960750ce80           FMUL R183, R145, R119                                                    
+0x7a960750ce90           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750cea0           LEPC R130                                                                
+0x7a960750ceb0           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750cec0           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750ced0           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750cee0           LEA R138, P2, R144, R138, 0x4                                            
+0x7a960750cef0           LEA.HI.X R139, R144, R139, RZ, 0x4, P2                                   
+0x7a960750cf00           FMUL R168, R145, R24                                                     
+0x7a960750cf10           FMUL R169, R145, R26                                                     
+0x7a960750cf20           FMUL R170, R145, R56                                                     
+0x7a960750cf30           FMUL R171, R145, R58                                                     
+0x7a960750cf40           FMUL R172, R145, R88                                                     
+0x7a960750cf50           FMUL R173, R145, R90                                                     
+0x7a960750cf60           FMUL R174, R145, R120                                                    
+0x7a960750cf70           FMUL R175, R145, R122                                                    
+0x7a960750cf80           FMUL R176, R145, R25                                                     
+0x7a960750cf90           FMUL R177, R145, R27                                                     
+0x7a960750cfa0           FMUL R178, R145, R57                                                     
+0x7a960750cfb0           FMUL R179, R145, R59                                                     
+0x7a960750cfc0           FMUL R180, R145, R89                                                     
+0x7a960750cfd0           FMUL R181, R145, R91                                                     
+0x7a960750cfe0           FMUL R182, R145, R121                                                    
+0x7a960750cff0           FMUL R183, R145, R123                                                    
+0x7a960750d000           IADD3 R149, R149, 0x8, RZ                                                
+0x7a960750d010           LEPC R130                                                                
+0x7a960750d020           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750d030           LEA R140, P2, R143, R140, 0x4                                            
+0x7a960750d040           LEA.HI.X R141, R143, R141, RZ, 0x4, P2                                   
+0x7a960750d050           PLOP3.LUT P0, PT, PT, PT, PT, 0x20, 0x2                                  
+0x7a960750d060           FMUL R168, R145, R28                                                     
+0x7a960750d070           FMUL R169, R145, R30                                                     
+0x7a960750d080           FMUL R170, R145, R60                                                     
+0x7a960750d090           FMUL R171, R145, R62                                                     
+0x7a960750d0a0           FMUL R172, R145, R92                                                     
+0x7a960750d0b0           FMUL R173, R145, R94                                                     
+0x7a960750d0c0           FMUL R174, R145, R124                                                    
+0x7a960750d0d0           FMUL R175, R145, R126                                                    
+0x7a960750d0e0           FMUL R176, R145, R29                                                     
+0x7a960750d0f0           FMUL R177, R145, R31                                                     
+0x7a960750d100           FMUL R178, R145, R61                                                     
+0x7a960750d110           FMUL R179, R145, R63                                                     
+0x7a960750d120           FMUL R180, R145, R93                                                     
+0x7a960750d130           FMUL R181, R145, R95                                                     
+0x7a960750d140           FMUL R182, R145, R125                                                    
+0x7a960750d150           FMUL R183, R145, R127                                                    
+0x7a960750d160           LEPC R130                                                                
+0x7a960750d170           CALL.REL 0x7a960750d1f0                                                  
+0x7a960750d180           LOP3.LUT P1, RZ, R137, 0x8, RZ, 0xc0, !PT                                
+0x7a960750d190           ISETP.EQ.AND P5, PT, R133, 0x0, P1                                       
+0x7a960750d1a0     @P1   IADD3 R136, R136, 0x1, RZ                                                
+0x7a960750d1b0     @P1   BAR.SYNC 0x0                                                             
+0x7a960750d1c0     @P5   MEMBAR.GPU                                                               
+0x7a960750d1d0     @P5   STG.E.EF.STRONG.GPU [R184], R136                                         
+0x7a960750d1e0           EXIT                                                                     
+0x7a960750d1f0           STS [R129], R168                                                         
+0x7a960750d200           STS [R129+0x20], R169                                                    
+0x7a960750d210           STS [R129+0x40], R170                                                    
+0x7a960750d220           STS [R129+0x60], R171                                                    
+0x7a960750d230           STS [R129+0x80], R172                                                    
+0x7a960750d240           STS [R129+0xa0], R173                                                    
+0x7a960750d250           STS [R129+0xc0], R174                                                    
+0x7a960750d260           STS [R129+0xe0], R175                                                    
+0x7a960750d270           STS [R129+0x800], R176                                                   
+0x7a960750d280           STS [R129+0x820], R177                                                   
+0x7a960750d290           STS [R129+0x840], R178                                                   
+0x7a960750d2a0           STS [R129+0x860], R179                                                   
+0x7a960750d2b0           STS [R129+0x880], R180                                                   
+0x7a960750d2c0           STS [R129+0x8a0], R181                                                   
+0x7a960750d2d0           STS [R129+0x8c0], R182                                                   
+0x7a960750d2e0           STS [R129+0x8e0], R183                                                   
+0x7a960750d2f0           BAR.SYNC.DEFER_BLOCKING 0x0                                              
+0x7a960750d300           MOV R134, R142                                                           
+0x7a960750d310           ISETP.LT.AND P2, PT, R148, 0x0, PT                                       
+0x7a960750d320           ISETP.LT.AND P3, PT, R149, 0x0, P2                                       
+0x7a960750d330           ISETP.LT.AND P4, PT, R149, -0x2, P2                                      
+0x7a960750d340           P2R R142, PR, RZ, 0x78                                                   
+0x7a960750d350           ISETP.LT.AND P3, PT, R149, -0x4, P2                                      
+0x7a960750d360           ISETP.LT.AND P4, PT, R149, -0x6, P2                                      
+0x7a960750d370           P2R.B1 R142, PR, R142, 0x78                                              
+0x7a960750d380           LDS.128 R168, [R132]                                                     
+0x7a960750d390           LDS.128 R172, [R132+0x2020]                                              
+0x7a960750d3a0           LDS.128 R176, [R132+0x4040]                                              
+0x7a960750d3b0           LDS.128 R180, [R132+0x6060]                                              
+0x7a960750d3c0           BAR.SYNC.DEFER_BLOCKING 0x0                                              
+0x7a960750d3d0           LOP3.LUT P2, RZ, R137, 0x20, RZ, 0xc0, !PT                               
+0x7a960750d3e0           ISETP.GT.AND P2, PT, R136, 0x0, P2                                       
+0x7a960750d3f0     @P2   BRA.U 0x7a960750d400                                                     
+0x7a960750d400     @!P1  BRA 0x7a960750d700                                                       
+0x7a960750d410           MOV R135, R152                                                           
+0x7a960750d420           PRMT R167, R159, 0x3276, RZ                                              
+0x7a960750d430           PRMT R166, R159, 0x1054, RZ                                              
+0x7a960750d440           PRMT R165, R158, 0x3276, RZ                                              
+0x7a960750d450           PRMT R164, R158, 0x1054, RZ                                              
+0x7a960750d460           PRMT R163, R157, 0x3276, RZ                                              
+0x7a960750d470           PRMT R162, R157, 0x1054, RZ                                              
+0x7a960750d480           PRMT R161, R156, 0x3276, RZ                                              
+0x7a960750d490           PRMT R160, R156, 0x1054, RZ                                              
+0x7a960750d4a0           PRMT R159, R155, 0x3276, RZ                                              
+0x7a960750d4b0           PRMT R158, R155, 0x1054, RZ                                              
+0x7a960750d4c0           PRMT R157, R154, 0x3276, RZ                                              
+0x7a960750d4d0           PRMT R156, R154, 0x1054, RZ                                              
+0x7a960750d4e0           PRMT R155, R153, 0x3276, RZ                                              
+0x7a960750d4f0           PRMT R154, R153, 0x1054, RZ                                              
+0x7a960750d500           PRMT R153, R152, 0x3276, RZ                                              
+0x7a960750d510           PRMT R152, R135, 0x1054, RZ                                              
+0x7a960750d520     @P2   BRA.U 0x7a960750d700                                                     
+0x7a960750d530           FFMA R168, R128, R152, R168                                              
+0x7a960750d540           FFMA R169, R128, R153, R169                                              
+0x7a960750d550           FFMA R170, R128, R154, R170                                              
+0x7a960750d560           FFMA R171, R128, R155, R171                                              
+0x7a960750d570           FFMA R172, R128, R156, R172                                              
+0x7a960750d580           FFMA R173, R128, R157, R173                                              
+0x7a960750d590           FFMA R174, R128, R158, R174                                              
+0x7a960750d5a0           FFMA R175, R128, R159, R175                                              
+0x7a960750d5b0           FFMA R176, R128, R160, R176                                              
+0x7a960750d5c0           FFMA R177, R128, R161, R177                                              
+0x7a960750d5d0           FFMA R178, R128, R162, R178                                              
+0x7a960750d5e0           FFMA R179, R128, R163, R179                                              
+0x7a960750d5f0           FFMA R180, R128, R164, R180                                              
+0x7a960750d600           FFMA R181, R128, R165, R181                                              
+0x7a960750d610           FFMA R182, R128, R166, R182                                              
+0x7a960750d620           FFMA R183, R128, R167, R183                                              
+0x7a960750d630     @!P0  BRA.U 0x7a960750d700                                                     
+0x7a960750d640           R2P PR, R142, 0x78                                                       
+0x7a960750d650           LEA R186, P2, R144, R138, 0x2                                            
+0x7a960750d660           LEA.HI.X R187, R144, R139, RZ, 0x2, P2                                   
+0x7a960750d670           LDG.E.LTC128B.64.STRONG.GPU R152, P3, [R138.64]                          
+0x7a960750d680           LEA R188, P2, R144, R186, 0x2                                            
+0x7a960750d690           LEA.HI.X R189, R144, R187, RZ, 0x2, P2                                   
+0x7a960750d6a0           LDG.E.LTC128B.64.STRONG.GPU R154, P4, [R186.64]                          
+0x7a960750d6b0           R2P PR, R142.B1, 0x78                                                    
+0x7a960750d6c0           LEA R190, P2, R144, R188, 0x2                                            
+0x7a960750d6d0           LEA.HI.X R191, R144, R189, RZ, 0x2, P2                                   
+0x7a960750d6e0           LDG.E.LTC128B.64.STRONG.GPU R156, P3, [R188.64]                          
+0x7a960750d6f0           LDG.E.LTC128B.64.STRONG.GPU R158, P4, [R190.64]                          
+0x7a960750d700           LOP3.LUT P2, RZ, R137, 0x20, RZ, 0xc0, !PT                               
+0x7a960750d710     @P2   BRA.U 0x7a960750d720                                                     
+0x7a960750d720           F2FP.BF16.PACK_AB R168, R169, R168                                       
+0x7a960750d730           F2FP.BF16.PACK_AB R169, R171, R170                                       
+0x7a960750d740           F2FP.BF16.PACK_AB R170, R173, R172                                       
+0x7a960750d750           F2FP.BF16.PACK_AB R171, R175, R174                                       
+0x7a960750d760           F2FP.BF16.PACK_AB R172, R177, R176                                       
+0x7a960750d770           F2FP.BF16.PACK_AB R173, R179, R178                                       
+0x7a960750d780           F2FP.BF16.PACK_AB R174, R181, R180                                       
+0x7a960750d790           F2FP.BF16.PACK_AB R175, R183, R182                                       
+0x7a960750d7a0           R2P PR, R134, 0x78                                                       
+0x7a960750d7b0           LEA R186, P2, R143, R140, 0x2                                            
+0x7a960750d7c0           LEA.HI.X R187, R143, R141, RZ, 0x2, P2                                   
+0x7a960750d7d0     @P3   STG.E.EF.64 [R140.64], R168                                              
+0x7a960750d7e0           LEA R188, P2, R143, R186, 0x2                                            
+0x7a960750d7f0           LEA.HI.X R189, R143, R187, RZ, 0x2, P2                                   
+0x7a960750d800     @P4   STG.E.EF.64 [R186.64], R170                                              
+0x7a960750d810           R2P PR, R134.B1, 0x78                                                    
+0x7a960750d820           LEA R190, P2, R143, R188, 0x2                                            
+0x7a960750d830           LEA.HI.X R191, R143, R189, RZ, 0x2, P2                                   
+0x7a960750d840     @P3   STG.E.EF.64 [R188.64], R172                                              
+0x7a960750d850     @P4   STG.E.EF.64 [R190.64], R174                                              
+0x7a960750d860           RET.ABS R130, 0x20                                                       
+0x7a960750d870           BRA 0x7a960750d870                                                       
+0x7a960750d880           NOP                                                                      
+0x7a960750d890           NOP                                                                      
+0x7a960750d8a0           NOP                                                                      
+0x7a960750d8b0           NOP                                                                      
+0x7a960750d8c0           NOP                                                                      
+0x7a960750d8d0           NOP                                                                      
+0x7a960750d8e0           NOP                                                                      
+0x7a960750d8f0           NOP                                                                      
+0x7a960750d900           NOP                                                                      
+0x7a960750d910           NOP                                                                      
+0x7a960750d920           NOP                                                                      
+0x7a960750d930           NOP                                                                      
+0x7a960750d940           NOP                                                                      
+0x7a960750d950           NOP                                                                      
+0x7a960750d960           NOP                                                                      
+0x7a960750d970           NOP                                                                      
