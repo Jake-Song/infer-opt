@@ -26,6 +26,17 @@ uv run infer-opt benchmark --device auto --prompt-len 128 --decode-len 64 --iter
 
 Use `--json` for JSON-only output suitable for an experiment runner. CPU is always supported. CUDA timings synchronize before and after each timed region, but results must be measured on the target GPU and with the intended dtype/model shape.
 
+### A100 matrix multiplication profiling
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/a100_matmul_profiling.ipynb)
+
+Upload [`notebooks/a100_matmul_profiling.ipynb`](notebooks/a100_matmul_profiling.ipynb)
+to Colab and select an A100 GPU. The standalone notebook compares strict FP32,
+TF32-enabled FP32, FP16, and BF16 GEMMs across small and large M, checks numerical
+error, and exports CUDA-event timings, a PyTorch CPU/CUDA trace, and runtime
+metadata in a ZIP. Profiler collection runs separately from timing; hardware
+counter metrics require a separate Nsight Compute setup.
+
 ### Reproducible 0.5B baseline
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/03_a100_baseline_colab.ipynb)
