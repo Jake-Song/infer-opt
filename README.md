@@ -156,6 +156,21 @@ It passed the gate again (KL ratio 0.67-1.07, no confident mismatch). The 9B che
 it. The 27B notebook pins this code (24.1 ms/token on an A100 40GB runtime, peak 29.1 GiB); the 9B notebooks still pin
 the earlier commit. Measurements are in `notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`.
 
+### Qwen3.5-27B Hugging Face BF16 with compile + CUDA Graph
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_hf_colab.ipynb)
+
+Open [`qwen3_5_27b_hf_colab.ipynb`](notebooks/qwen3_5_27b_hf_colab.ipynb) in Colab for a standalone
+**HF-original text-model** run. It loads only `Qwen/Qwen3.5-27B` in BF16, uses HF `StaticCache`, compiles
+single-token decode with `torch.compile`, then explicitly captures and replays a CUDA Graph. An **80GB-class GPU**
+is required; the hardware check rejects insufficient memory before downloading weights.
+
+The notebook checks eager/compiled/graph logits against HF dynamic-cache eager, including cache reset, then
+measures 1024-token prompt / 128-step batch-1 decode over five repetitions. Compilation, capture, prefill and
+warmup are excluded from decode timing. It also generates text and exports timings, validation and environment
+metadata as JSON. No 27B GPU measurements are pre-populated. Regenerate the notebook with
+`python scripts/build_qwen3_5_27b_hf_colab_notebook.py`; its decode helpers are embedded, so no repository clone is needed.
+
 ### Local A100 result analysis
 
 Open [`04_a100_roofline_analysis.ipynb`](notebooks/04_a100_roofline_analysis.ipynb)
