@@ -231,3 +231,28 @@ def test_layer_summary_describes_layout():
     assert tiny_config().layer_summary() == {
         "num_layers": 4, "linear_attention": 3, "full_attention": 1, "pattern": "LLLF",
     }
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="inductor Triton code generation")
+def test_cuda_wide_persistent_reductions_by_width_and_rows():
+    from torch._inductor.utils import run_and_get_code
+
+    from infer_opt.inductor_choices import wide_persistent_reductions
+
+    def rms(x):  # the decode RMSNorm: one row 5120 wide (Qwen3.5-27B hidden size)
+        h = x.float()
+        return (h * torch.rsqrt(h.pow(2).mean(-1, keepdim=True) + 1e-6)).half()
+
+    def compiled_code(x, wide):
+        torch._dynamo.reset()
+        with wide_persistent_reductions() if wide else torch.no_grad():
+            out, code = run_and_get_code(torch.compile(rms), x)
+        assert torch.allclose(out.float(), rms(x).float(), atol=1e-3, rtol=2e-3)  # 1 fp16 ulp
+        return "\n".join(code)
+
+    row = torch.randn(1, 1, 5120, device="cuda", dtype=torch.float16)
+    assert "@triton_heuristics.reduction" in compiled_code(row, wide=False)
+    assert "@triton_heuristics.persistent_reduction" in compiled_code(row, wide=True)
+    rows = torch.randn(2048, 5120, device="cuda", dtype=torch.float16)  # lm_head-like: many rows stay looped
+    assert "@triton_heuristics.persistent_reduction" not in compiled_code(rows, wide=True)
+    torch._dynamo.reset()

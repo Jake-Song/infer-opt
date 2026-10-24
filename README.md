@@ -156,6 +156,11 @@ It passed the gate again (KL ratio 0.67-1.07, no confident mismatch). The 9B che
 it. The 27B notebook pins this code (24.1 ms/token on an A100 40GB runtime, peak 29.1 GiB); the 9B notebooks still pin
 the earlier commit. Measurements are in `notebooks/assets/qwen3_5_27b_int8_opt_a100_20261020/`.
 
+Since then the fixed-shape decoder compiles with persistent reductions for rows up to 8192 wide
+(`infer_opt/inductor_choices.py`): inductor's default limit of 1024 made every 5120-wide RMSNorm a looped kernel. Same-session
+A/B on the Hub checkpoint: 20.31 -> 19.86 ms/token; the benchmark above now reads int8 20.0, int8 + lm_head 19.5 ms/token
+(bf16 35.1), and the gate passed (KL ratio 0.58). Measurements are in `notebooks/assets/qwen3_5_27b_int8_norm_a100_20261024/`.
+
 ### Qwen3.5-27B Hugging Face BF16 with compile + CUDA Graph
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_hf_colab.ipynb)

@@ -958,6 +958,11 @@ class FixedShapeDecoder:
                 raise RuntimeError("call prepare() after prefill before stepping a cudagraph decoder")
             self.graph.replay()
             logits = self.static_logits
+        elif self.mode.startswith("compile"):
+            from .inductor_choices import wide_persistent_reductions
+
+            with wide_persistent_reductions():  # compiles on the first call (and on any recompile)
+                logits = self.fn(self.static_token, cache)
         else:
             logits = self.fn(self.static_token, cache)
         cache.seen_tokens += 1

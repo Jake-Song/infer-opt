@@ -225,3 +225,60 @@ CUDA graph로 돌리면 GPU가 step 시간의 99%를 kernel로 채운다(26.07 /
 - 9B Colab 노트북은 아직 04af44f를 고정하고 있다. 새 kernel은 T4에서 재 보지 않았다.
 - 27B 노트북은 661f694를 고정하고 `fuse_projections()`를 부르게 다시 만들었다. Colab A100-SXM4-40GB에서 끝까지 실행했고
   decode 24.13 ms/token, peak 29.1 GiB였다(80GB의 20.72와 대역폭 비율로 맞는다).
+
+## 2026-10-24 — Qwen3.5-27B INT8 decode: 넓은 norm을 persistent reduction으로
+
+**목표:** 남은 일의 첫 항목. decode의 RMSNorm은 5120 폭 한 행이라 inductor의 persistent reduction 기준(INNER 1024,
+`torch/_inductor/choices.py`의 `should_use_persistent_reduction`)을 넘고, 행을 두 번 읽는 loop kernel을 program 하나가 돌린다.
+체크포인트(`Jakemu/Qwen3.5-27B-int8-g128`)는 바꾸지 않는다.
+
+숫자는 모두 Colab A100-SXM4-80GB(high-mem), torch 2.11, `fla-delta:compile-reduce-overhead`, max-autotune, `fuse_projections()`,
+1024-token 프롬프트다. 원시 결과와 실험 스크립트(`norm_variant.py`)는 `experiments/qwen3_5_27b_int8/a100_80gb_20261024_norm/`(git 제외),
+노트북용 사본은 `notebooks/assets/qwen3_5_27b_int8_norm_a100_20261024/`.
+
+### 결과
+
+변형마다 따로 프로세스와 inductor cache를 쓰고 Hub checkpoint를 읽었다. 128 step × 3회의 중앙값(회차 차이 ±0.01 ms),
+kernel 시간은 CUDA graph 20 step profile의 step 평균이다. KL은 base 실행의 logits에 같은 token을 먹인 teacher-forced 값이다.
+
+| 변형 | ms/token | 한 행 norm 128개 | norm·mm reduction (lm_head 포함) | KL vs base |
+|---|---:|---:|---:|---:|
+| base (661f694와 같은 코드) | 20.31 | 0.87 ms (`red_`) | 1.55 ms | – |
+| base 다시 | 20.31 | 0.66 ms (`red_`) | 1.77 ms | 7.0e-5 |
+| 한 행만 persistent | 20.24 | 0.40 ms (`per_`) | 1.95 ms | 1.6e-4 |
+| 폭 8192 이하 전부 persistent | 19.91 | 0.40 ms | 1.67 ms | 2.2e-4 |
+| `triton.multi_kernel = 1` | 20.18 | 64개만 `per_` | 1.63 ms | 1.6e-4 |
+| **커밋한 규칙 (폭 8192, 행 1024 이하)** | **19.86** | 0.41 ms | 1.60 ms | 1.8e-4 |
+
+- 같은 세션 A/B로 **20.31 → 19.86 ms/token(−0.45 ms)**. 하한 13.6 ms의 1.46배(이전 1.49배).
+- `bench_qwen3_5_int8_decode.py --fuse --autotune --group-size 128`(제자리 양자화, worklog 표와 같은 하니스): bf16 35.11, int8 **19.99**,
+  int8+lm_head 19.54 ms/token(2026-10-20에는 35.17 / 20.72 / 20.31). 이 차이(−0.73)는 세션이 달라서 크게 나온다.
+  같은 코드의 Hub checkpoint가 그날 20.69, 오늘 20.31이었다.
+- **gate 통과(고정 프롬프트, Hub checkpoint):** int8 KL 비율 **0.58**(bf16 대조 0.00200, int8 0.00115), strong 불일치 0.
+  이전 같은 gate는 0.86. bench의 int8 KL vs bf16 sliced-eager는 0.00059(이전 0.00030), int8+lm_head는 0.00030(이전 0.00033).
+
+### 바꾼 것
+
+- **`infer_opt/inductor_choices.py`:** `InductorChoices`를 상속한 `WidePersistentReductions`가 inductor 기본 규칙에 더해, INNER reduction이
+  폭 8192 이하이고 행 1024 이하이면 persistent로 만든다. `wide_persistent_reductions()` context가 `V.set_choices_handler`와
+  `inductor_choices_class` 설정을 함께 건다.
+- **`FixedShapeDecoder.step`:** compile 모드에서 이 context 안에서 compile된 함수를 부른다(첫 호출과 재compile이 그 안에서 일어난다).
+  bf16 대조와 int8이 같은 규칙을 쓴다.
+- 테스트: 5120 폭 한 행은 `persistent_reduction`, 2048행은 loop로 남는지(`tests/test_qwen3_5.py`).
+
+### 알게 된 것
+
+- **행 수도 봐야 한다.** 한 행만 persistent로 바꾸면, inductor가 norm과 합친 in_proj_a/b reduction(48행, 5120 폭)이 31개 4.6 → 16.9 µs,
+  16개 7.4 → 12.3 µs로 느려져서 norm에서 번 0.47 ms를 거의 다 잃었다. 그 kernel도 persistent로 하면 7.3 / 3.7 µs다.
+  lm_head(248 320행)는 persistent가 35 µs 느려서 행 상한으로 뺐다.
+- **choices는 스레드마다 처음 한 번 만들어 캐시된다.** `inductor_choices_class` 설정만 바꾸면 그 전에 compile이 한 번이라도 있었을 때
+  효과가 없다. 반대로 handler만 바꾸면 FX graph cache key에 들어가지 않아서 기본 규칙으로 compile한 kernel을 다시 쓸 수 있다.
+  그래서 둘 다 건다. 로컬에서 조건을 고친 뒤에도 같은 uuid의 cache가 옛 kernel을 돌려준 적이 있다.
+- `multi_kernel`(기준 16배, 런타임에 둘을 재서 고름)은 norm의 절반만 persistent로 골라 20.18 ms였다.
+- base를 두 번 돌리면 norm kernel 시간이 0.87 / 0.66 ms로 다르고 KL도 7e-5 나온다. max-autotune과 coordinate descent가 실행마다 다른
+  설정을 골라서다. 변형 사이의 KL 1.6–2.2e-4는 그 2–3배다.
+
+### 남은 일
+
+- GEMV 밖 kernel 약 3.3 ms(이번 변경 후). in_proj_a/b(bf16 48행)를 int8 qkvz GEMV에 합치는 것, norm을 GEMV 앞부분에 넣는 것이 후보다.
+- 27B 노트북은 아직 661f694를 고정한다. 이 변경으로 다시 고정할지 정해야 한다. 9B와 T4에서는 재 보지 않았다.

@@ -1,0 +1,244 @@
+{
+ "variant": "base",
+ "device": "NVIDIA A100-SXM4-80GB",
+ "torch": "2.11.0+cu130",
+ "first_step_s": 177.53454537,
+ "ms_per_token_runs": [
+  20.309506273437528,
+  20.31086457812492,
+  20.310742406250082
+ ],
+ "ms_per_token": 20.310742406250082,
+ "busy_ms_per_step": 20.41617299999998,
+ "kernels_per_step": 1159.0,
+ "by_category_us_per_step": {
+  "other": {
+   "n": 67.0,
+   "us": 492.20005000001964
+  },
+  "triton_other": {
+   "n": 563.0,
+   "us": 1293.5447499999345
+  },
+  "norm_looped": {
+   "n": 128.0,
+   "us": 870.1756999999928
+  },
+  "norm+mm": {
+   "n": 33.0,
+   "us": 1551.5004000000197
+  },
+  "gemv_int8": {
+   "n": 256.0,
+   "us": 16001.300300000014
+  },
+  "norm": {
+   "n": 112.0,
+   "us": 207.45179999999965
+  }
+ },
+ "top_kernels_us_per_step": [
+  {
+   "name": "_w8a16_group_gemv_kernel",
+   "n": 256.0,
+   "us": 16001.300300000014
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_34",
+   "n": 1.0,
+   "us": 1399.3168499999979
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_31",
+   "n": 31.0,
+   "us": 464.0260000000202
+  },
+  {
+   "name": "fused_recurrent_gated_delta_rule_fwd_kernel",
+   "n": 48.0,
+   "us": 345.40325000000945
+  },
+  {
+   "name": "triton_poi_fused_copy__9",
+   "n": 48.0,
+   "us": 158.92119999995998
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_20",
+   "n": 31.0,
+   "us": 143.73490000001433
+  },
+  {
+   "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_view_18",
+   "n": 31.0,
+   "us": 143.479600000018
+  },
+  {
+   "name": "_decode_attention_kernel",
+   "n": 16.0,
+   "us": 131.6034500000157
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_19",
+   "n": 31.0,
+   "us": 129.0149499999818
+  },
+  {
+   "name": "triton_poi_fused_mul_silu_split_13",
+   "n": 64.0,
+   "us": 119.44915000000219
+  },
+  {
+   "name": "triton_red_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_view_15",
+   "n": 16.0,
+   "us": 118.10989999999887
+  },
+  {
+   "name": "triton_per_fused__to_copy__unsafe_view_clone_div_exp_mul_sigmoid_split_split_with_sizes_sub_sum_transpose_unsqueeze_view_30",
+   "n": 16.0,
+   "us": 111.03325000001041
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_17",
+   "n": 31.0,
+   "us": 109.75994999997415
+  },
+  {
+   "name": "triton_poi_fused_cat_copy_copy__slice_split_with_sizes_transpose_8",
+   "n": 48.0,
+   "us": 108.27280000001102
+  },
+  {
+   "name": "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_3",
+   "n": 48.0,
+   "us": 103.23594999996276
+  },
+  {
+   "name": "triton_poi_fused__to_copy_add_empty_like_mean_mul_pow_rsqrt_silu_split_with_sizes_view_11",
+   "n": 48.0,
+   "us": 89.39344999998994
+  },
+  {
+   "name": "triton_poi_fused_cat_copy_slice_split_with_sizes_transpose_7",
+   "n": 48.0,
+   "us": 87.85914999998076
+  },
+  {
+   "name": "triton_per_fused__to_copy_empty_like_mean_pow_view_10",
+   "n": 48.0,
+   "us": 87.32954999999552
+  },
+  {
+   "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_6",
+   "n": 48.0,
+   "us": 81.65664999999358
+  },
+  {
+   "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_5",
+   "n": 48.0,
+   "us": 80.36019999999125
+  },
+  {
+   "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_unsqueeze_view_4",
+   "n": 48.0,
+   "us": 80.08140000001394
+  },
+  {
+   "name": "triton_per_fused_amax_exp_mul_sub_sum_29",
+   "n": 16.0,
+   "us": 37.950350000014716
+  },
+  {
+   "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_unsqueeze_view_27",
+   "n": 16.0,
+   "us": 31.363700000007064
+  },
+  {
+   "name": "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_with_sizes_transpose_unsqueeze_view_24",
+   "n": 16.0,
+   "us": 30.226399999969452
+  },
+  {
+   "name": "triton_per_fused__to_copy_mean_pow_split_split_with_sizes_view_23",
+   "n": 16.0,
+   "us": 30.039850000018212
+  },
+  {
+   "name": "triton_per_fused__to_copy_mean_pow_split_with_sizes_view_22",
+   "n": 16.0,
+   "us": 28.842899999982638
+  },
+  {
+   "name": "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_unsqueeze_view_28",
+   "n": 16.0,
+   "us": 28.782400000021607
+  },
+  {
+   "name": "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_with_sizes_transpose_unsqueeze_view_25",
+   "n": 16.0,
+   "us": 27.685850000011577
+  },
+  {
+   "name": "triton_poi_fused_index_copy_split_with_sizes_transpose_view_21",
+   "n": 16.0,
+   "us": 26.9166500000023
+  },
+  {
+   "name": "triton_poi_fused_index_copy_26",
+   "n": 16.0,
+   "us": 24.689249999995354
+  },
+  {
+   "name": "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, 4, 4> >(at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, 4, 4>)",
+   "n": 1.0,
+   "us": 10.926249999997527
+  },
+  {
+   "name": "triton_red_fused__to_copy__unsafe_view_add_clone_embedding_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_split_with_sizes_t_transpose_unsqueeze_view_2",
+   "n": 1.0,
+   "us": 8.703950000003896
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_12",
+   "n": 1.0,
+   "us": 8.342250000004288
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_16",
+   "n": 1.0,
+   "us": 6.22555000000275
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_1",
+   "n": 1.0,
+   "us": 5.1616499999983265
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_mean_pow_33",
+   "n": 1.0,
+   "us": 4.275049999998009
+  },
+  {
+   "name": "triton_red_fused__to_copy_add_embedding_mean_mul_pow_rsqrt_14",
+   "n": 1.0,
+   "us": 3.9104499999969904
+  },
+  {
+   "name": "triton_poi_fused__to_copy_cos_expand_mul_select_sin_slice_unsqueeze_view_0",
+   "n": 1.0,
+   "us": 3.113650000000098
+  },
+  {
+   "name": "Memcpy DtoD (Device -> Device)",
+   "n": 1.0,
+   "us": 2.542299999993017
+  },
+  {
+   "name": "Memset (Device)",
+   "n": 1.0,
+   "us": 1.724800000003961
+  }
+ ],
+ "persistent_overrides": {},
+ "peak_mem_gib": 28.830864906311035
+}
