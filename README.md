@@ -176,6 +176,13 @@ target model, so it stays opt-in. `scripts/bench_qwen3_5_spec_decode.py` measure
 a round are in `notebooks/assets/qwen3_5_27b_int8_spec_gdn_a100_20261025/` (and `..._spec_a100_20261024/` for the
 first version, before the fused GatedDeltaNet kernel).
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_int8_spec_colab.ipynb)
+
+[`qwen3_5_27b_int8_spec_colab.ipynb`](notebooks/qwen3_5_27b_int8_spec_colab.ipynb) (Korean) runs it on Colab: the int8
+checkpoint from the Hub, plus the MTP head read from the original shards with range requests (`infer_opt.hub`, 0.8 GB of
+the 17 GB of shards that hold it) and attached with `attach_mtp`. It generates with both decoders and compares their speed
+and tokens. It needs an A100 (40 GB or more).
+
 ### Qwen3.5-27B Hugging Face BF16 with compile + CUDA Graph
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_hf_colab.ipynb)
