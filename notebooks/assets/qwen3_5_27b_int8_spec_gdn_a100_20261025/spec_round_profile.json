@@ -1,0 +1,243 @@
+{
+ "k": 3,
+ "prompt": "prose_1k",
+ "mtp_bf16": false,
+ "lm_head_int8": false,
+ "step": {
+  "total_ms": 19.950570450000146,
+  "by_category_ms": {
+   "gemv": 16.03705290000004,
+   "bf16_matmul": 1.8852028000000414,
+   "reduction": 0.7330504499999273,
+   "pointwise": 0.6680532000001235,
+   "delta_rule": 0.3395335000000057,
+   "copy": 0.16824740000000898,
+   "attention": 0.11943019999999743
+  },
+  "top_kernels_ms": [
+   [
+    "_w8a16_group_gemv_kernel",
+    16.03705290000004
+   ],
+   [
+    "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_34",
+    1.4064162500000013
+   ],
+   [
+    "fused_recurrent_gated_delta_rule_fwd_kernel",
+    0.3395335000000057
+   ],
+   [
+    "triton_poi_fused_copy__9",
+    0.16570195000000673
+   ],
+   [
+    "triton_per_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_s",
+    0.1635373500000163
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_31",
+    0.15798975000001078
+   ],
+   [
+    "_decode_attention_kernel",
+    0.11943019999999743
+   ],
+   [
+    "triton_poi_fused_mul_silu_split_13",
+    0.11146304999999616
+   ],
+   [
+    "triton_per_fused__to_copy__unsafe_view_clone_div_exp_mul_sigmoid_split_split_with_sizes_sub_sum_transpose_unsqueeze_view",
+    0.11032020000000166
+   ],
+   [
+    "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_3",
+    0.10977680000002711
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_20",
+    0.09395814999995646
+   ],
+   [
+    "triton_poi_fused__to_copy_add_empty_like_mean_mul_pow_rsqrt_silu_split_with_sizes_view_11",
+    0.09287890000001331
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_19",
+    0.09211305000001303
+   ],
+   [
+    "triton_poi_fused_cat_copy_slice_split_with_sizes_transpose_7",
+    0.08976730000004472
+   ],
+   [
+    "triton_per_fused__to_copy_empty_like_mean_pow_view_10",
+    0.08673029999999589
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_17",
+    0.08479769999998106
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.08179740000000188
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.08025340000002784
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.08007594999999629
+   ],
+   [
+    "triton_poi_fused_cat_copy_copy__slice_split_with_sizes_transpose_8",
+    0.07821185000000401
+   ],
+   [
+    "triton_per_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.06673049999999675
+   ],
+   [
+    "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_un",
+    0.038979850000017316
+   ],
+   [
+    "triton_per_fused_amax_exp_mul_sub_sum_29",
+    0.03254429999998583
+   ],
+   [
+    "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_with_sizes_transpose_unsqueez",
+    0.031866899999989394
+   ],
+   [
+    "triton_per_fused__to_copy_mean_pow_split_split_with_sizes_view_23",
+    0.029817750000019533
+   ]
+  ]
+ },
+ "round": {
+  "total_ms": 29.242185150000374,
+  "by_category_ms": {
+   "gemv_rows": 18.321224850000075,
+   "bf16_matmul": 6.297461149999968,
+   "pointwise": 1.3123296500003554,
+   "reduction": 1.2771025499999493,
+   "delta_rule": 0.8087776000000151,
+   "gemv": 0.534826450000031,
+   "copy": 0.5055931999999644,
+   "attention": 0.18154645000001482,
+   "other": 0.0033232499999990978
+  },
+  "top_kernels_ms": [
+   [
+    "_w8a16_group_gemv_rows_kernel",
+    18.321224850000075
+   ],
+   [
+    "triton_red_fused_mm_t_view_57",
+    1.3988658500000006
+   ],
+   [
+    "triton_red_fused__to_copy_add_index_select_mean_mm_mul_pow_rsqrt_sub_t_view_39",
+    1.3897058000000064
+   ],
+   [
+    "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_60",
+    1.3860228000000006
+   ],
+   [
+    "triton_tem_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_28",
+    1.379298049999992
+   ],
+   [
+    "_gated_delta_verify_kernel",
+    0.8087776000000151
+   ],
+   [
+    "_w8a16_group_gemv_kernel",
+    0.534826450000031
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_sum_13",
+    0.5015549499999696
+   ],
+   [
+    "void cutlass::Kernel2<cutlass_80_wmma_tensorop_s161616gemm_bf16_32x32_128x2_tn_align8>(cutlass_80_wmma_tensorop_s161616g",
+    0.3818175499999978
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_sum_14",
+    0.3183986500000261
+   ],
+   [
+    "triton_poi_fused_copy__index_select_squeeze_sub_65",
+    0.31408495000004766
+   ],
+   [
+    "triton_per_fused__to_copy_add_embedding_mean_mm_mul_pow_rsqrt_t_view_2",
+    0.1998686999999809
+   ],
+   [
+    "_decode_attention_kernel",
+    0.18154645000001482
+   ],
+   [
+    "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_unfold_unsqueeze_1",
+    0.1676471000000269
+   ],
+   [
+    "triton_poi_fused_mul_silu_split_11",
+    0.16495770000003457
+   ],
+   [
+    "triton_red_fused__unsafe_view_argmax_mm_40",
+    0.15847444999998408
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_mean_mul_pow_rsqrt_silu_split_with_sizes_view_9",
+    0.11658555000003881
+   ],
+   [
+    "triton_poi_fused_cat_copy__split_with_sizes_transpose_62",
+    0.1140298500000663
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_5",
+    0.10512415000005658
+   ],
+   [
+    "triton_poi_fused_add_arange_cat_index_select_split_with_sizes_transpose_63",
+    0.10499179999996486
+   ],
+   [
+    "triton_per_fused_exp_mul_sub_sum_unsqueeze_25",
+    0.1038085499999781
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_4",
+    0.09407494999998561
+   ],
+   [
+    "triton_per_fused__to_copy_mean_pow_view_8",
+    0.0901006499999612
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_6",
+    0.08969725000005146
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_3",
+    0.08552500000003556
+   ]
+  ]
+ },
+ "stats": {
+  "rounds": 23,
+  "tokens_per_round": 4.0,
+  "accepted_histogram": {
+   "4": 23
+  }
+ }
+}

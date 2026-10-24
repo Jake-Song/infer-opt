@@ -1,5 +1,8 @@
 """Where the time of one speculative round goes, next to one plain decode step (A100, int8 Qwen3.5-27B + MTP head).
 
+The model is the reference configuration: target and MTP head int8 (group 128), lm_head bf16; ``--mtp-bf16`` keeps
+the MTP head in bf16, ``--lm-head-int8`` quantizes lm_head too.
+
 Both run compiled with CUDA graphs (compile-reduce-overhead, max-autotune) on a real prompt; the CUDA kernels of
 ``--steps`` replays are profiled and grouped into categories by kernel name (GEMV, multi-row GEMV, bf16 matmul,
 delta rule, attention, copies, the rest). Prints ms per step / per round for each category, the top kernels of the
@@ -31,10 +34,10 @@ from validate_qwen3_5_hf import CODE_PROMPT_SOURCE, build_prompts  # noqa: E402
 CATEGORIES = [
     ("gemv_rows", r"_w8a16_group_gemv_rows"),
     ("gemv", r"_w8a16_group_gemv_kernel"),  # before bf16_matmul: cuBLAS has gemv kernels of its own
-    ("delta_rule", r"fused_recurrent|gated_delta|chunk_"),
+    ("delta_rule", r"fused_recurrent|gated_delta|chunk_"),  # FLA's step kernel and _gated_delta_verify_kernel
     ("attention", r"decode_attention"),
     ("bf16_matmul", r"gemm|gemv|sm80_xmma|cutlass|ampere|triton_mm|splitK|mm_"),
-    ("copy", r"copy|Memcpy|memcpy|index_select|gather|scatter"),
+    ("copy", r"fused_copy|Memcpy|memcpy|index_select|gather|scatter"),  # not "_to_copy": that is a dtype cast
     ("reduction", r"triton_red|triton_per|argmax|reduce"),
     ("pointwise", r"triton_poi"),
 ]
@@ -83,6 +86,8 @@ def main() -> None:
     parser.add_argument("--prompt", default="prose_1k")
     parser.add_argument("--group-size", type=int, default=128)
     parser.add_argument("--rows-configs", default=None)
+    parser.add_argument("--mtp-bf16", action="store_true", help="keep the MTP head in bf16")
+    parser.add_argument("--lm-head-int8", action="store_true", help="quantize lm_head too")
     parser.add_argument("--out", default="spec_round_profile.json")
     args = parser.parse_args()
 
@@ -101,7 +106,9 @@ def main() -> None:
     model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels,
                                                    mtp=True)
     model.fuse_projections()
-    print(quantize_linears(model, group_size=args.group_size, exclude=("mtp.",)).summary(), flush=True)
+    exclude = ("mtp.",) if args.mtp_bf16 else ()
+    print(quantize_linears(model, group_size=args.group_size, exclude=exclude, include_lm_head=args.lm_head_int8)
+          .summary(), flush=True)
     torch.cuda.empty_cache()
     max_len = ids.shape[1] + 4 * args.steps * (args.k + 1) + 64
 
@@ -119,7 +126,7 @@ def main() -> None:
             spec.round()
         round_totals = profile(spec.round, args.steps)
 
-    result = {"k": args.k, "prompt": args.prompt, "step": summarize(step_totals, args.steps),
+    result = {"k": args.k, "prompt": args.prompt, "mtp_bf16": args.mtp_bf16, "lm_head_int8": args.lm_head_int8, "step": summarize(step_totals, args.steps),
               "round": summarize(round_totals, args.steps), "stats": spec.stats.as_dict()}
     for label in ("step", "round"):
         print(label, json.dumps(result[label]["by_category_ms"]), f"total {result[label]['total_ms']:.2f} ms", flush=True)

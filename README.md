@@ -167,13 +167,14 @@ multi-token-prediction head (`mtp.*`: one decoder layer on the final hidden stat
 and the GatedDeltaNet layers keep their state after every token, so a rejected draft is undone by picking the state
 instead of recomputing. A whole round (verify, accept, commit, drafts) is one compiled CUDA graph with one host sync. For
 the verify forward the int8 GEMV gained a multi-row form (tensor cores, K split for the 5120-row shapes): 2-4 rows cost
-1.06-1.26x one row. On the int8 27B with the MTP head int8 too and lm_head kept in bf16 as in the published checkpoints
-(A100-SXM4-80GB, `k = 3`, 256 tokens): 19.9 -> **8.7** ms/token on prose, 9.0 on math, 10.6 on code, 11.1 on a chat
-prompt and 16.0 on Korean (15.8 with `k = 2`), 1.25-2.29x against the plain fixed-shape decoder in the same session. The
-MTP head's precision only moves the acceptance, never the output; quantizing lm_head changes the target model, so it
-stays opt-in (`include_lm_head=True`: 8.1 / 8.2 / 10.0 / 10.6 / 14.3 ms/token, 1.36-2.40x).
-`scripts/bench_qwen3_5_spec_decode.py` measures it; results and a per-kernel profile of a round are in
-`notebooks/assets/qwen3_5_27b_int8_spec_a100_20261024/`.
+1.06-1.26x one row, and the GatedDeltaNet layers verify the `k + 1` tokens in one Triton kernel that keeps the state
+after every token (`infer_opt/gated_delta_kernels.py`). On the int8 27B with the MTP head int8 too and lm_head kept in
+bf16 as in the published checkpoints (A100-SXM4-80GB, `k = 3`, 256 tokens): 19.8 -> **7.6** ms/token on prose, 7.8 on
+math, 9.0 on code, 10.2 on a chat prompt and 13.7 on Korean (`k = 2`), 1.45-2.61x against the plain fixed-shape decoder
+in the same session. The MTP head's precision only moves the acceptance, never the output; quantizing lm_head changes the
+target model, so it stays opt-in. `scripts/bench_qwen3_5_spec_decode.py` measures it; results and per-kernel profiles of
+a round are in `notebooks/assets/qwen3_5_27b_int8_spec_gdn_a100_20261025/` (and `..._spec_a100_20261024/` for the
+first version, before the fused GatedDeltaNet kernel).
 
 ### Qwen3.5-27B Hugging Face BF16 with compile + CUDA Graph
 

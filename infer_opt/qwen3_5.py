@@ -312,6 +312,10 @@ class Qwen3_5Attention(nn.Module):
         return self.o_proj(attn_output)
 
 
+def _pow2(n: int) -> bool:
+    return n > 0 and n & (n - 1) == 0
+
+
 def l2norm(x: torch.Tensor, dim: int = -1, eps: float = 1e-6):
     inv_norm = torch.rsqrt((x * x).sum(dim=dim, keepdim=True) + eps)
     return x * inv_norm
@@ -652,12 +656,20 @@ class Qwen3_5GatedDeltaNet(nn.Module):
 
         beta = b.sigmoid()
         g = -self.A_log.float().exp() * F.softplus(a.float() + self.dt_bias)
-        if self.num_v_heads // self.num_k_heads > 1:
+        # verifying on CUDA: one Triton kernel for all T steps, reading each value head's query/key head in place
+        fused_verify = (verify and query.is_cuda and _pow2(self.head_k_dim) and _pow2(self.head_v_dim)
+                        and self.head_v_dim % 8 == 0)
+        if self.num_v_heads // self.num_k_heads > 1 and not fused_verify:
             query = query.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
             key = key.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
 
         recurrent_state = None if fresh else cache.recurrent_states[self.layer_idx]
-        if verify:
+        if fused_verify:
+            from infer_opt.gated_delta_kernels import gated_delta_verify
+
+            core_attn_out = gated_delta_verify(query, key, value, g, beta, recurrent_state,
+                                               cache.spec_states[self.layer_idx])
+        elif verify:
             # one decode step per token, as sequential decoding would run them, keeping the state after each
             rule = fla_recurrent if use_fla_delta else torch_recurrent_gated_delta_rule
             extra = {"output_final_state": True} if use_fla_delta else {}

@@ -362,3 +362,61 @@ k=3(모든 prompt에서 가장 빠름), ms/token(baseline 대비 배수):
   draft마다 읽는 비용(k=3에서 round당 ~4 ms)을 대부분 없애므로, lm_head를 bf16으로 둔 기준 구성에서 효과가 더 크다.
 - 27B의 baseline과 갈라진 자리가 near-tie인지 margin을 기록해 확인. sampling(rejection sampling)과 batch > 1은 없다.
 - 27B 노트북은 아직 661f694를 고정한다.
+
+## 2026-10-25 — speculative verify: GatedDeltaNet T step를 kernel 하나로
+
+**목표:** 전날 round profile에서 GatedDeltaNet verify 경로가 step보다 +5.2 ms였다(layer마다 FLA `fused_recurrent`를 token 수만큼
+부르고, 매번 3 MB state를 읽고 쓰고, 끝 state를 `spec_states[t]`로 복사). FLA kernel은 T token을 한 launch로 돌 수 있지만 마지막
+state만 돌려주므로, 검증에 필요한 token마다의 state를 남기도록 고친다.
+
+숫자는 Colab A100-SXM4-80GB(high-mem), 기준 구성(target·MTP head int8 group 128, lm_head bf16), 전날과 같은 하니스·prompt·튜닝 표
+(`rows_gemv_tune.json`)다. baseline은 같은 세션에서 19.75–19.80 ms/token. 원시 결과는
+`notebooks/assets/qwen3_5_27b_int8_spec_gdn_a100_20261025/`, 로그는 `experiments/qwen3_5_27b_int8/a100_80gb_20261025_spec_gdn/`(git 제외).
+
+### 결과
+
+| prompt | 이전 (k=3) | **fused kernel (k=3)** | round당 token | k=1 / k=2 |
+|---|---:|---:|---:|---:|
+| prose_1k | 8.72 (2.29x) | **7.58 (2.61x)** | 4.00 | 13.00 / 9.46 |
+| math | 8.96 (2.23x) | **7.81 (2.53x)** | 3.89 | 12.99 / 9.64 |
+| code_1k | 10.55 (1.89x) | **9.02 (2.20x)** | 3.36 | 13.19 / 10.15 |
+| chat_long | 11.07 (1.80x) | **10.20 (1.94x)** | 2.97 | 13.81 / 11.01 |
+| korean | 15.99 (1.25x) | 14.13 (1.40x) | 2.15 | 15.34 / **13.67 (1.45x)** |
+
+- round 시간: k=1/2/3에서 28.4 / 32.2 / 35.0 → **25.9 / 28.1 / 30.3 ms**(−2.5 / −4.1 / −4.7). 예상(3–4 ms)보다 조금 더 줄었다.
+- lm_head를 bf16으로 둔 채 prose가 전날 lm_head int8 구성(8.07)보다 빠르다.
+- 테스트: 로컬(0.8B, 2080)에서 eager와 cudagraph 결과가 같고, A100에서 FLA의 한 step씩 T번과 출력·state가 같다
+  (`test_cuda_gated_delta_verify_matches_fla_steps`).
+
+### 바꾼 것
+
+- **`infer_opt/gated_delta_kernels.py`(`gated_delta_verify`):** FLA(fla-core 0.6.0)의 `fused_recurrent_gated_delta_rule_fwd_kernel`과
+  같은 수식·연산 순서·launch 모양(program마다 value head 하나의 `[K, 8]` state block, warp 1개)에, token마다 state를
+  `states[t]`에 쓰는 것만 더했다. state는 HBM에서 한 번 읽고 T token 동안 register에 둔다. query/key는 value head `h`의
+  head `h // (HV/H)`를 바로 읽어 `repeat_interleave` 복사도 없앴다. `torch.library.triton_op`(states를 mutate)이라 compile과
+  CUDA graph에 들어간다.
+- **`Qwen3_5GatedDeltaNet.forward`:** verify이고 CUDA이며 head 크기가 2의 거듭제곱(V는 8의 배수)이면 이 kernel을 쓴다.
+  CPU는 이전의 token별 torch 경로 그대로다.
+- `scripts/profile_qwen3_5_spec_round.py`: 기본이 기준 구성(MTP int8, lm_head bf16)이고, 분류에서 `_to_copy`(dtype 변환)를
+  copy로 세지 않는다.
+
+### round profile (k=3, 기준 구성, 모두 수락, kernel 시간)
+
+| 항목 | step | round | 내용 |
+|---|---:|---:|---|
+| int8 GEMV | 16.04 | 18.86 | verify 4행 18.32 + draft의 MTP layer 1행 0.53 |
+| bf16 matmul | 1.89 | **6.30** | lm_head 4회(verify 1 + draft 3), 한 번에 ~1.39 ms |
+| GatedDeltaNet delta rule | 0.34 | 0.81 | fused kernel, layer당 한 번 |
+| copy | 0.17 | 0.51 | commit 0.31 포함 |
+| pointwise + reduction | 1.40 | 2.59 | norm, gate, conv, argmax |
+| 합계 | 19.95 | 29.24 | bench의 round 30.3 ms는 host 틈 포함 |
+
+- 남은 overhead(+9.3 ms) 중 가장 큰 것은 **draft의 lm_head(3 × 1.39 = 4.2 ms)**다. verify의 lm_head 한 번은 step에도 있다.
+- fused delta rule은 0.81 ms(48 layer, 755 MB: state 읽기 151 MB + 쓰기 4 × 151 MB)로 ~0.93 TB/s다.
+
+### 남은 일
+
+- draft용 축소 vocabulary lm_head(자주 나오는 token 32k 행 정도만): draft 3번이 4.2 → ~0.6 ms가 되면 prose k=3이 ~6.7 ms/token
+  예상. 검증은 전체 vocabulary라 출력은 같다. 어떤 token을 고를지(빈도 표)가 정할 거리다.
+- baseline과 갈라진 자리가 near-tie인지 27B에서 확인(chat_long은 계속 70번째에서 갈라진다).
+- 세션 비용 ~6.4 compute unit(123.96 → 117.52).

@@ -204,3 +204,75 @@ def test_cuda_speculative_modes_match_eager(mode):
     assert torch.equal(fast.generate(ids, 40), want)
     assert fast.stats.as_dict() == eager.stats.as_dict()
     torch._dynamo.reset()
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="Triton kernel")
+@pytest.mark.parametrize("tokens", [1, 2, 4])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float16])
+def test_cuda_gated_delta_verify_matches_sequential_steps(tokens, dtype):
+    from infer_opt.gated_delta_kernels import gated_delta_verify
+    from infer_opt.qwen3_5 import torch_recurrent_gated_delta_rule
+
+    torch.manual_seed(0)
+    batch, heads, value_heads, dk, dv = 2, 4, 12, 64, 32  # 3 value heads per query/key head, like the 27B
+    q, k = (torch.randn(batch, tokens, heads, dk, device="cuda", dtype=dtype) for _ in range(2))
+    v = torch.randn(batch, tokens, value_heads, dv, device="cuda", dtype=dtype)
+    g = -torch.rand(batch, tokens, value_heads, device="cuda")  # log decay, fp32 as in the model
+    beta = torch.rand(batch, tokens, value_heads, device="cuda", dtype=dtype)
+    h0 = torch.randn(batch, value_heads, dk, dv, device="cuda")
+    states = torch.empty(tokens, batch, value_heads, dk, dv, device="cuda")
+    out = gated_delta_verify(q, k, v, g, beta, h0, states)
+    state = h0
+    rep = value_heads // heads
+    for t in range(tokens):
+        step = slice(t, t + 1)
+        want, state = torch_recurrent_gated_delta_rule(
+            q[:, step].repeat_interleave(rep, 2).float(), k[:, step].repeat_interleave(rep, 2).float(),
+            v[:, step].float(), g=g[:, step], beta=beta[:, step].float(), initial_state=state,
+            use_qk_l2norm_in_kernel=True)
+        assert torch.allclose(out[:, step].float(), want, atol=2e-3 if dtype == torch.float16 else 1e-5), t
+        assert torch.allclose(states[t], state, atol=1e-5), t
+    assert out.dtype == dtype and out.shape == v.shape
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="the fused verify kernel")
+@pytest.mark.parametrize("accepted", [1, 3])
+def test_cuda_verify_then_commit_matches_sequential_decode(accepted):
+    model = make_model().float().cuda()
+    ids = torch.randint(0, 97, (1, 30), device="cuda")
+    with torch.no_grad():
+        seq, spec = model.new_cache(1, 40), model.new_cache(1, 40)
+        spec.allocate_spec_buffers(4)
+        model(ids[:, :20], seq)
+        model(ids[:, :20], spec)
+        want = torch.cat([model.decode_step(ids[:, i : i + 1], seq) for i in range(20, 20 + accepted)], dim=1)
+        got = model.lm_head(model.model.language_model.forward_verify(ids[:, 20:24], spec))
+        assert torch.allclose(got[:, :accepted], want, atol=1e-4)
+        spec.commit(torch.tensor([accepted], device="cuda"))
+        spec.seen_tokens += accepted
+        for a, b in zip(linear_states(spec), linear_states(seq)):
+            assert torch.allclose(a, b, atol=1e-5)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="Triton kernel")
+def test_cuda_gated_delta_verify_matches_fla_steps():
+    fla = pytest.importorskip("fla.ops.gated_delta_rule")
+    from infer_opt.gated_delta_kernels import gated_delta_verify
+
+    torch.manual_seed(0)
+    batch, tokens, heads, value_heads, dk, dv = 1, 4, 16, 48, 128, 128  # the 27B layer
+    q, k = (torch.randn(batch, tokens, heads, dk, device="cuda", dtype=torch.bfloat16) for _ in range(2))
+    v = torch.randn(batch, tokens, value_heads, dv, device="cuda", dtype=torch.bfloat16)
+    g = -torch.rand(batch, tokens, value_heads, device="cuda")
+    beta = torch.rand(batch, tokens, value_heads, device="cuda", dtype=torch.bfloat16)
+    h0 = torch.randn(batch, value_heads, dk, dv, device="cuda")
+    states = torch.empty(tokens, batch, value_heads, dk, dv, device="cuda")
+    out = gated_delta_verify(q, k, v, g, beta, h0, states)
+    state = h0
+    for t in range(tokens):  # what verifying did before: one FLA decode step per token
+        step = slice(t, t + 1)
+        want, state = fla.fused_recurrent_gated_delta_rule(
+            q[:, step].contiguous(), k[:, step].contiguous(), v[:, step].contiguous(), g=g[:, step],
+            beta=beta[:, step], initial_state=state, output_final_state=True, use_qk_l2norm_in_kernel=True)
+        assert torch.allclose(out[:, step].float(), want.float(), atol=1e-2, rtol=1e-2), t
+        assert torch.allclose(states[t], state, atol=1e-5, rtol=1e-5), t
