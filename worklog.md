@@ -296,20 +296,25 @@ greedy로만 검증한다(출력은 target의 greedy와 같아야 한다).
 
 ### 결과
 
+**기준 구성은 int8+mtp**(target과 MTP head는 int8, lm_head는 bf16)다. lm_head는 공개 체크포인트와 같이 bf16으로 둔다:
+MTP head의 정밀도는 acceptance만 바꾸고 출력은 바꾸지 않지만, lm_head를 양자화하면 target 모델 자체가 바뀐다. lm_head int8은 이전 gate를
+통과했으나(KL 비율 0.67) 기본이 아니라 선택 사항이다.
+
 k=3(모든 prompt에서 가장 빠름), ms/token(baseline 대비 배수):
 
-| prompt | int8 | int8+mtp | int8+mtp+lm_head | round당 token (마지막 열) |
+| prompt | int8 | **int8+mtp (기준)** | int8+mtp+lm_head (선택) | round당 token (기준) |
 |---|---:|---:|---:|---:|
 | baseline | 19.92–20.02 | 19.87–19.96 | 19.30–19.39 | 1 |
-| prose_1k | 8.82 (2.27x) | 8.72 (2.29x) | **8.07 (2.40x)** | 4.00 |
-| math | 9.09 (2.20x) | 8.96 (2.23x) | **8.24 (2.35x)** | 3.89 |
-| code_1k | 10.55 (1.90x) | 10.55 (1.89x) | **9.99 (1.94x)** | 3.21 |
-| chat_long | 11.78 (1.69x) | 11.07 (1.80x) | **10.64 (1.81x)** | 3.04 |
-| korean | 15.00 (1.33x) | 15.99 (1.25x) | **14.30 (1.36x)** | 2.26 |
+| prose_1k | 8.82 (2.27x) | **8.72 (2.29x)** | 8.07 (2.40x) | 4.00 |
+| math | 9.09 (2.20x) | **8.96 (2.23x)** | 8.24 (2.35x) | 3.89 |
+| code_1k | 10.55 (1.90x) | **10.55 (1.89x)** | 9.99 (1.94x) | 3.31 |
+| chat_long | 11.78 (1.69x) | **11.07 (1.80x)** | 10.64 (1.81x) | 3.16 |
+| korean | 15.00 (1.33x) | **15.99 (1.25x)** | 14.30 (1.36x) | 2.18 |
 
 - int8 = target만 int8, int8+mtp = MTP head도, int8+mtp+lm_head = lm_head(target과 draft가 공유)도 int8.
-- round 시간(int8+mtp+lm_head): k=1/2/3에서 27.3 / 30.1 / 32.3 ms(step 19.3). lm_head를 int8로 하면 draft마다 한 번씩 읽으므로
-  k가 클수록 이득이 크다(k=3에서 35.3 → 32.3). MTP head int8은 시간·acceptance 모두 거의 그대로다.
+- 기준 구성의 korean은 k=2가 조금 더 빠르다(15.81, 1.26x). lm_head를 int8로 하면 0.4–0.7 ms/token(5–8%) 더 빨라진다.
+- round 시간: 기준 구성 k=1/2/3에서 28.2–28.5 / 32.0–32.3 / 34.9–35.0 ms(step 19.9), lm_head int8이면 27.3 / 30.1 / 32.3 ms(step 19.3).
+  lm_head는 draft마다 한 번씩 읽으므로 int8의 이득은 k가 클수록 크다. MTP head int8은 시간·acceptance 모두 거의 그대로다.
 - 한국어는 acceptance가 낮다(k=1에서 round 중 31%가 draft 거부). 영어 prose는 k=3에서 모든 round가 4 token을 받았다.
 - baseline과 token이 갈라지는 prompt가 있다(chat_long 70번째, korean, code_1k의 일부 k). 0.8B fp16에서 같은 현상을 보면 갈라진 자리의
   top-2 logit 차이가 정확히 0이었다(T-token forward와 1-token forward의 반올림 차이로 동률이 뒤집힘). 27B에서는 아직 확인하지 않았다.
@@ -352,7 +357,8 @@ k=3(모든 prompt에서 가장 빠름), ms/token(baseline 대비 배수):
 ### 남은 일
 
 - GatedDeltaNet verify를 layer당 kernel 하나로: state를 register에 두고 T token을 돌며 token마다의 state를 바로 쓰기(최소 151 MB 읽기 +
-  T×151 MB 쓰기). round당 3–4 ms, prose k=3 기준 8.1 → ~7 ms/token 예상.
-- draft용 축소 vocabulary lm_head(자주 나오는 token 행만, FR-Spec 방식): 검증은 전체 vocabulary라 출력은 같다. round당 ~1.5–2 ms.
+  T×151 MB 쓰기). round당 3–4 ms, 기준 구성 prose k=3에서 8.7 → ~7.7 ms/token 예상.
+- draft용 축소 vocabulary lm_head(자주 나오는 token 행만, FR-Spec 방식): 검증은 전체 vocabulary라 출력은 같다. bf16 lm_head를
+  draft마다 읽는 비용(k=3에서 round당 ~4 ms)을 대부분 없애므로, lm_head를 bf16으로 둔 기준 구성에서 효과가 더 크다.
 - 27B의 baseline과 갈라진 자리가 near-tie인지 margin을 기록해 확인. sampling(rejection sampling)과 batch > 1은 없다.
 - 27B 노트북은 아직 661f694를 고정한다.
