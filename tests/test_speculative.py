@@ -276,3 +276,45 @@ def test_cuda_gated_delta_verify_matches_fla_steps():
             beta=beta[:, step], initial_state=state, output_final_state=True, use_qk_l2norm_in_kernel=True)
         assert torch.allclose(out[:, step].float(), want.float(), atol=1e-2, rtol=1e-2), t
         assert torch.allclose(states[t], state, atol=1e-5, rtol=1e-5), t
+
+
+def test_read_safetensors_reads_only_the_prefix(tmp_path):
+    from safetensors.torch import save_file
+
+    from infer_opt.hub import read_safetensors
+
+    tensors = {"mtp.fc.weight": torch.randn(3, 4).bfloat16(), "mtp.norm.weight": torch.arange(5, dtype=torch.float32),
+               "model.x": torch.ones(2, dtype=torch.int8), "mtp.empty": torch.empty(0, 3)}
+    save_file(tensors, str(tmp_path / "s.safetensors"), metadata={"format": "pt"})
+    with open(tmp_path / "s.safetensors", "rb") as f:
+        got = read_safetensors(f, "mtp.")
+    assert set(got) == {"mtp.fc.weight", "mtp.norm.weight", "mtp.empty"}
+    for name, t in got.items():
+        assert t.dtype == tensors[name].dtype and torch.equal(t, tensors[name])
+
+
+def test_attach_mtp_to_a_quantized_checkpoint(tmp_path):
+    from infer_opt.quant import quantize_linears, save_quantized
+
+    source = make_model().float()
+    mtp_state = {f"mtp.{k}": v for k, v in source.mtp.state_dict().items()}
+    target = Qwen3_5ForCausalLM(tiny_config()).float().eval()  # the same weights, without the MTP head
+    target.load_state_dict({k: v for k, v in source.state_dict().items() if not k.startswith("mtp.")})
+    quantize_linears(target, group_size=32, min_out_features=16)
+    save_quantized(target, tmp_path)
+    c = target.config
+    text = {f.name: getattr(c, f.name) for f in dataclasses.fields(c)}
+    text["rope_parameters"] = {"rope_theta": text.pop("rope_theta"), "mrope_section": text.pop("mrope_section"),
+                               "partial_rotary_factor": text.pop("partial_rotary_factor")}
+    (tmp_path / "config.json").write_text(json.dumps({"text_config": text}))
+
+    loaded = Qwen3_5ForCausalLM.from_quantized_dir(tmp_path, dtype=torch.float32)
+    assert loaded.mtp is None
+    loaded.attach_mtp(mtp_state)
+    ids = torch.randint(0, 97, (1, 10))
+    with torch.no_grad():
+        h = torch.randn(1, 10, 64)
+        assert torch.equal(loaded.mtp_hidden(ids, h, loaded.new_mtp_cache(10)),
+                           source.mtp_hidden(ids, h, source.new_mtp_cache(10)))
+    assert torch.equal(MTPSpeculativeDecoder(loaded, max_seq_len=30, k=2).generate(ids, 20),
+                       loaded.generate_greedy(ids, 20))

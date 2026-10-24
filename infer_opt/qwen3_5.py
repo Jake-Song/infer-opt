@@ -855,6 +855,20 @@ class Qwen3_5ForCausalLM(nn.Module):
         weight = self.model.language_model.embed_tokens.weight  # lm_head may be quantized; the embedding never is
         return Qwen3_5Cache.allocate(self.config, batch_size, max_seq_len, weight.dtype, weight.device)
 
+    @torch.no_grad()
+    def attach_mtp(self, state: dict[str, torch.Tensor]) -> "Qwen3_5ForCausalLM":
+        """Add the MTP head from its checkpoint tensors (``mtp.*`` keys, as in the Hugging Face shards) to a loaded
+        model, e.g. one from :meth:`from_quantized_dir`, whose checkpoint has no MTP head
+        (:func:`infer_opt.hub.fetch_hub_tensors` reads them from the original repo). The head takes the embedding's
+        dtype and device; quantize it afterwards if wanted."""
+        weight = self.model.language_model.embed_tokens.weight
+        with torch.device("meta"):
+            mtp = Qwen3_5MTP(self.config)
+        mtp.load_state_dict({k.removeprefix("mtp."): v for k, v in state.items() if k.startswith("mtp.")},
+                            strict=True, assign=True)
+        self.mtp = mtp.to(device=weight.device, dtype=weight.dtype)
+        return self
+
     def new_mtp_cache(self, max_seq_len: int) -> Qwen3_5Cache:
         """Static KV cache of the MTP layer (batch 1)."""
         weight = self.model.language_model.embed_tokens.weight
