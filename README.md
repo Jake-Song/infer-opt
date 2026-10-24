@@ -161,6 +161,17 @@ Since then the fixed-shape decoder compiles with persistent reductions for rows 
 A/B on the Hub checkpoint: 20.31 -> 19.86 ms/token; the benchmark above now reads int8 20.0, int8 + lm_head 19.5 ms/token
 (bf16 35.1), and the gate passed (KL ratio 0.58). Measurements are in `notebooks/assets/qwen3_5_27b_int8_norm_a100_20261024/`.
 
+**MTP speculative decoding** (`infer_opt/speculative.py`, greedy, batch 1). Every Qwen3.5 checkpoint ships a
+multi-token-prediction head (`mtp.*`: one decoder layer on the final hidden state, sharing the embedding and lm_head;
+`from_pretrained_dir(..., mtp=True)`). It drafts `k` tokens; one fixed-shape forward of the `k + 1` tokens verifies them,
+and the GatedDeltaNet layers keep their state after every token, so a rejected draft is undone by picking the state
+instead of recomputing. A whole round (verify, accept, commit, drafts) is one compiled CUDA graph with one host sync. For
+the verify forward the int8 GEMV gained a multi-row form (tensor cores, K split for the 5120-row shapes): 2-4 rows cost
+1.06-1.26x one row. On the int8 27B (MTP head and lm_head int8 too, A100-SXM4-80GB, `k = 3`, 256 tokens): 19.4 ->
+**8.1** ms/token on prose, 8.2 on math, 10.0 on code, 10.6 on a chat prompt and 14.3 on Korean (1.36-2.40x), against
+the plain fixed-shape decoder in the same session. `scripts/bench_qwen3_5_spec_decode.py` measures it;
+results and a per-kernel profile of a round are in `notebooks/assets/qwen3_5_27b_int8_spec_a100_20261024/`.
+
 ### Qwen3.5-27B Hugging Face BF16 with compile + CUDA Graph
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_hf_colab.ipynb)

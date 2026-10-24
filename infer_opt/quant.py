@@ -8,8 +8,8 @@ eagerly it materializes a bf16 copy of the weight on every call and is slower th
 With ``group_size`` the scale is per output channel *and* per ``group_size`` input columns (``scale`` is
 ``[out, in // group_size]``). On Qwen3.5-9B MLP weights a group of 128 has about half the squared weight error of
 one scale per row; one outlier then only coarsens its own 128 columns. The scale can no longer multiply the output:
-one token on CUDA runs the Triton GEMV in :mod:`infer_opt.quant_kernels`, anything else dequantizes the weight
-before the matmul.
+one token on CUDA runs the Triton GEMV in :mod:`infer_opt.quant_kernels` (a few tokens, as when verifying drafts, its
+multi-row form), anything else dequantizes the weight before the matmul.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ __all__ = ["Int8Linear", "int8_linear", "quantize_int8", "dequantize_int8", "qua
 QUANTIZATION_FILE = "quantization.json"
 
 INT8_MAX = 127
+_GEMV_ROWS = 8  # infer_opt.quant_kernels.MAX_ROWS, without importing triton here
 _ROW_CHUNK = 16384  # bounds the fp32 temporary when quantizing a vocab-sized matrix
 
 
@@ -69,8 +70,9 @@ def int8_linear(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, bias
 
     A per-channel scale multiplies the output, so the int8 -> x.dtype cast is the only elementwise work on the
     weight and can be absorbed into the matmul kernel. A group-wise scale varies along the reduction: one token on
-    CUDA goes to the Triton GEMV (inductor's own forms of it were 1.4-2x slower than per-channel on an A100), any
-    other input dequantizes the weight before the matmul (prefill, where the matmul is compute-bound, and CPU).
+    CUDA goes to the Triton GEMV (inductor's own forms of it were 1.4-2x slower than per-channel on an A100), 2-8 tokens
+    to its multi-row form, any other input dequantizes the weight before the matmul (prefill, where the matmul is
+    compute-bound, and CPU).
     """
     if scale.dim() == 1:
         y = F.linear(x, weight.to(x.dtype)) * scale.to(x.dtype)
@@ -78,9 +80,18 @@ def int8_linear(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, bias
         from infer_opt.quant_kernels import w8a16_group_gemv  # imports triton, which a CPU-only install may lack
 
         y = w8a16_group_gemv(x, weight, scale)
+    elif x.is_cuda and x.numel() <= _GEMV_ROWS * x.shape[-1] and _rows_supported(weight, scale):
+        from infer_opt.quant_kernels import w8a16_group_gemv_rows
+
+        y = w8a16_group_gemv_rows(x, weight, scale)
     else:
         y = F.linear(x, dequantize_int8(weight, scale, x.dtype))
     return y if bias is None else y + bias.to(x.dtype)
+
+
+def _rows_supported(weight: torch.Tensor, scale: torch.Tensor) -> bool:
+    group = weight.shape[1] // scale.shape[1]  # quant_kernels.rows_supported, without importing triton here
+    return group >= 16 and group & (group - 1) == 0
 
 
 class Int8Linear(nn.Module):
@@ -130,6 +141,7 @@ def quantize_linears(
     include_lm_head: bool = False,
     min_out_features: int = 256,
     group_size: int | None = None,
+    exclude: tuple[str, ...] = (),
 ) -> QuantizationReport:
     """Replace ``nn.Linear`` modules by :class:`Int8Linear`, one at a time so only one weight is duplicated.
 
@@ -137,11 +149,14 @@ def quantize_linears(
     its logits go straight to sampling. Linears with fewer than ``min_out_features`` outputs (the 32-wide
     delta-rule gate projections) are kept: their weights are tiny, so quantizing them saves nothing.
     ``group_size`` selects group-wise scales (see :func:`quantize_int8`); a Linear whose ``in_features`` it does
-    not divide is kept in its original dtype.
+    not divide is kept in its original dtype. Modules whose name starts with one of ``exclude`` are kept too.
     """
     report = QuantizationReport()
     targets = [(name, module) for name, module in model.named_modules() if isinstance(module, nn.Linear)]
     for name, module in targets:
+        if exclude and name.startswith(exclude):
+            report.skipped[name] = "excluded"
+            continue
         if name.endswith("lm_head") and not include_lm_head:
             report.skipped[name] = "lm_head kept in bf16"
             continue

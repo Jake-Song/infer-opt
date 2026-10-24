@@ -5,7 +5,9 @@ Only the transformers dependencies were removed; the math is unchanged:
   * kernel-hub dispatch is dropped: the torch fallbacks are the default, and
     ``set_kernels("fla")`` switches GatedDeltaNet to flash-linear-attention Triton kernels
   * the cache is a plain Qwen3_5Cache (KV for full attention, conv + recurrent state for
-    GatedDeltaNet), dynamic or preallocated (static); attention-mask utilities (padding), vision tower and MTP head are not included
+    GatedDeltaNet), dynamic or preallocated (static); attention-mask utilities (padding) and the vision tower are not included
+  * the multi-token-prediction head (``mtp.*``) is loaded only on request (``mtp=True``), as the drafter of
+    :mod:`infer_opt.speculative`
   * attention uses torch SDPA with is_causal=True (inputs are unpadded); the fixed-shape decode step attends with
     plain fp32 reductions over the grouped query heads instead (no repeat_kv)
   * ``fuse_projections()`` optionally stacks the projections that share an input (gate+up, q+k+v, in_proj_qkv+z)
@@ -16,6 +18,7 @@ so ``load_state_dict`` takes the safetensors keys as they are.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -59,6 +62,7 @@ class Qwen3_5TextConfig:
     partial_rotary_factor: float
     mrope_section: list[int]
     tie_word_embeddings: bool = True
+    mtp_num_hidden_layers: int = 0
     # GatedDeltaNet kernels: "torch" (reference), "fla" (flash-linear-attention delta rule + causal conv),
     # or "fla-delta" (FLA delta rule only, torch conv)
     kernels: str = "torch"
@@ -97,6 +101,7 @@ class Qwen3_5TextConfig:
             partial_rotary_factor=rope.get("partial_rotary_factor", 1.0),
             mrope_section=list(rope.get("mrope_section", [11, 11, 10])),
             tie_word_embeddings=text.get("tie_word_embeddings", raw.get("tie_word_embeddings", True)),
+            mtp_num_hidden_layers=text.get("mtp_num_hidden_layers", 0),
         )
 
 
@@ -234,7 +239,7 @@ class Qwen3_5Attention(nn.Module):
     def fuse_projections(self) -> bool:
         return _fuse_into(self, "qkv_proj", ("q_proj", "k_proj", "v_proj"))
 
-    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool = False):
+    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool | str = False):
         input_shape = hidden_states.shape[:-1]
         hidden_shape = (*input_shape, -1, self.head_dim)
 
@@ -253,30 +258,35 @@ class Qwen3_5Attention(nn.Module):
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
         if decode:
-            # fixed shapes: write at the device-side position, attend over the whole buffer, mask the unfilled tail
+            # fixed shapes: write at the device-side position, attend over the whole buffer, mask the unfilled tail.
+            # T > 1 tokens (verifying drafts) sit at position..position+T-1, token t seeing keys up to position + t.
+            batch, heads, tokens, dim = query_states.shape
             position = cache.position
-            cache.keys[self.layer_idx].index_copy_(2, position, key_states)
-            cache.values[self.layer_idx].index_copy_(2, position, value_states)
+            index = position if tokens == 1 else position + torch.arange(tokens, device=position.device)
+            cache.keys[self.layer_idx].index_copy_(2, index, key_states)
+            cache.values[self.layer_idx].index_copy_(2, index, value_states)
             key_states, value_states = cache.keys[self.layer_idx], cache.values[self.layer_idx]
             max_len = key_states.shape[2]
             # One query row per head: group the query heads by their KV head, so the cache is read once per KV head.
             # repeat_kv would copy the cache once per query head, and SDPA's kernels parallelize over query rows (one
             # here): on the 27B (24 query / 4 KV heads, head_dim 256) that path took ~110 us per layer for a 4.5 MB cache.
             # On CUDA a split-K Triton kernel; elsewhere the same math as fp32 reductions.
-            batch, heads, _, dim = query_states.shape
             if query_states.is_cuda and dim & (dim - 1) == 0:
                 from infer_opt.attention_kernels import decode_attention
 
-                query = query_states.reshape(batch, -1, self.num_key_value_groups, dim)
-                attn_output = decode_attention(query, key_states, value_states, position, self.scaling)
+                query = query_states.reshape(batch, -1, self.num_key_value_groups * tokens, dim)
+                attn_output = decode_attention(query, key_states, value_states, position, self.scaling, tokens)
             else:
-                query = query_states.reshape(batch, -1, self.num_key_value_groups, 1, dim).float()
-                scores = (query * key_states.unsqueeze(2).float()).sum(-1) * self.scaling  # [B, KV heads, groups, L]
-                unfilled = torch.arange(max_len, device=hidden_states.device) > position
+                query = query_states.reshape(batch, -1, self.num_key_value_groups, tokens, 1, dim).float()
+                keys = key_states[:, :, None, None].float()
+                scores = (query * keys).sum(-1) * self.scaling  # [B, KV heads, groups, T, L]
+                last = position + torch.arange(tokens, device=position.device)
+                unfilled = torch.arange(max_len, device=hidden_states.device) > last[:, None]  # [T, L]
                 probs = scores.masked_fill(unfilled, float("-inf")).softmax(-1)
-                attn_output = (probs.unsqueeze(-1) * value_states.unsqueeze(2).float()).sum(-2)  # [B, KV heads, groups, D]
+                values = value_states[:, :, None, None].float()
+                attn_output = (probs.unsqueeze(-1) * values).sum(-2)  # [B, KV heads, groups, T, D]
                 attn_output = attn_output.to(value_states.dtype)
-            attn_output = attn_output.view(batch, heads, 1, dim)
+            attn_output = attn_output.view(batch, heads, tokens, dim)
         else:
             if cache is not None:
                 key_states, value_states = cache.update_kv(self.layer_idx, key_states, value_states)
@@ -446,6 +456,11 @@ class Qwen3_5Cache:
     Static (``Qwen3_5Cache.allocate``): every buffer is allocated once for ``max_seq_len``;
     K/V are written in place at ``seen_tokens`` and states are updated with ``copy_``, so a
     step allocates nothing and the addresses stay fixed (CUDA-graph friendly).
+
+    Verifying ``T`` drafted tokens (``allocate_spec_buffers``, ``forward_verify``) leaves the GatedDeltaNet states
+    alone and writes every candidate next to them: the ``kernel - 1 + T`` conv inputs and the recurrent state after
+    each token. :meth:`commit` then keeps the accepted prefix. K/V past the accepted tokens need no undoing: they
+    lie past the position, so they are masked and later overwritten.
     """
 
     def __init__(self, num_layers: int):
@@ -457,6 +472,9 @@ class Qwen3_5Cache:
         self.max_seq_len: int | None = None
         # static caches only: the write index as a device tensor, so a captured graph can advance it
         self.position: torch.Tensor | None = None
+        # allocate_spec_buffers only: [B, conv_dim, kernel - 1 + T] and [T, B, v_heads, Dk, Dv] per linear layer
+        self.spec_conv: list[torch.Tensor | None] = [None] * num_layers
+        self.spec_states: list[torch.Tensor | None] = [None] * num_layers
 
     @classmethod
     def allocate(cls, config: Qwen3_5TextConfig, batch_size: int, max_seq_len: int, dtype, device) -> "Qwen3_5Cache":
@@ -480,6 +498,24 @@ class Qwen3_5Cache:
                     config.linear_value_head_dim, dtype=torch.float32, device=device,
                 )
         return cache
+
+    def allocate_spec_buffers(self, tokens: int) -> None:
+        """Room for verifying ``tokens`` tokens at a time (static caches)."""
+        for i, (conv, state) in enumerate(zip(self.conv_states, self.recurrent_states)):
+            if conv is not None:
+                self.spec_conv[i] = conv.new_zeros(*conv.shape[:-1], conv.shape[-1] + tokens)
+                self.spec_states[i] = state.new_zeros(tokens, *state.shape)
+
+    def commit(self, accepted: torch.Tensor) -> None:
+        """Keep the first ``accepted`` (a one-element device tensor, 1..T) of the tokens the last ``forward_verify``
+        ran: their conv inputs and recurrent state become the layer state and the position moves past them. Runs on
+        the device without a sync; ``seen_tokens`` is the caller's to advance."""
+        for i, conv in enumerate(self.spec_conv):
+            if conv is not None:
+                window = accepted + torch.arange(self.conv_states[i].shape[-1], device=accepted.device)
+                self.conv_states[i].copy_(conv.index_select(-1, window))
+                self.recurrent_states[i].copy_(self.spec_states[i].index_select(0, accepted - 1).squeeze(0))
+        self.position.add_(accepted)
 
     @property
     def is_static(self) -> bool:
@@ -561,7 +597,7 @@ class Qwen3_5GatedDeltaNet(nn.Module):
     def fuse_projections(self) -> bool:
         return _fuse_into(self, "in_proj_qkvz", ("in_proj_qkv", "in_proj_z"))
 
-    def forward(self, hidden_states: torch.Tensor, cache: Qwen3_5Cache | None = None, decode: bool = False):
+    def forward(self, hidden_states: torch.Tensor, cache: Qwen3_5Cache | None = None, decode: bool | str = False):
         batch_size, seq_len, _ = hidden_states.shape
         use_fla_conv = self.kernels == "fla"
         use_fla_delta = self.kernels in ("fla", "fla-delta")
@@ -581,7 +617,8 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         # an empty cache (seen_tokens == 0) holds all-zero states: pass None instead of reading them
         fresh = cache is None or (not decode and cache.seen_tokens == 0)
         conv_state = None if fresh else cache.conv_states[self.layer_idx]
-        if use_fla_conv:
+        verify = decode == "verify"  # forward_verify: T tokens whose states are kept per token, not committed
+        if use_fla_conv and not verify:
             # FLA keeps a state of `kernel` inputs; ours holds kernel - 1, so pad one zero column
             initial = None if conv_state is None else F.pad(conv_state, (1, 0))
             mixed_qkv, final = fla_conv(
@@ -595,10 +632,15 @@ class Qwen3_5GatedDeltaNet(nn.Module):
             if conv_state is None:
                 conv_state = x.new_zeros(batch_size, self.conv_dim, self.conv_kernel_size - 1)
             conv_input = torch.cat([conv_state, x], dim=-1)
-            if cache is not None:
+            if verify:  # every token's window is kept; commit() picks the accepted one
+                cache.spec_conv[self.layer_idx].copy_(conv_input)
+            elif cache is not None:
                 cache.set_state(cache.conv_states, self.layer_idx, conv_input[:, :, -(self.conv_kernel_size - 1):])
             if seq_len == 1:  # one output per channel: a dot product over the kernel window, which inductor can fuse
                 conv_out = (conv_input.float() * weight.float()).sum(-1, keepdim=True).to(weight.dtype)
+            elif verify:  # the same dot products, one per token
+                windows = conv_input.unfold(-1, self.conv_kernel_size, 1)  # [B, conv_dim, T, kernel]
+                conv_out = (windows.float() * weight.float()[:, None]).sum(-1).to(weight.dtype)
             else:
                 conv_out = F.conv1d(conv_input.to(weight.dtype), weight=weight.unsqueeze(1), bias=None, groups=self.conv_dim)
             mixed_qkv = F.silu(conv_out).to(hidden_states.dtype).transpose(1, 2)
@@ -615,7 +657,23 @@ class Qwen3_5GatedDeltaNet(nn.Module):
             key = key.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
 
         recurrent_state = None if fresh else cache.recurrent_states[self.layer_idx]
-        if use_fla_delta:
+        if verify:
+            # one decode step per token, as sequential decoding would run them, keeping the state after each
+            rule = fla_recurrent if use_fla_delta else torch_recurrent_gated_delta_rule
+            extra = {"output_final_state": True} if use_fla_delta else {}
+            states = cache.spec_states[self.layer_idx]
+            outputs = []
+            for t in range(seq_len):
+                step = slice(t, t + 1)
+                out, recurrent_state = rule(
+                    query[:, step].contiguous(), key[:, step].contiguous(), value[:, step].contiguous(),
+                    g=g[:, step], beta=beta[:, step], initial_state=recurrent_state, use_qk_l2norm_in_kernel=True,
+                    **extra,
+                )
+                states[t].copy_(recurrent_state)
+                outputs.append(out)
+            core_attn_out = torch.cat(outputs, dim=1)
+        elif use_fla_delta:
             rule = fla_recurrent if seq_len == 1 else fla_chunk
             core_attn_out, last_recurrent_state = rule(
                 query.contiguous(), key.contiguous(), value.contiguous(), g=g, beta=beta,
@@ -627,7 +685,7 @@ class Qwen3_5GatedDeltaNet(nn.Module):
             core_attn_out, last_recurrent_state = rule(
                 query, key, value, g=g, beta=beta, initial_state=recurrent_state, use_qk_l2norm_in_kernel=True
             )
-        if cache is not None:
+        if cache is not None and not verify:
             cache.set_state(cache.recurrent_states, self.layer_idx, last_recurrent_state)
 
         core_attn_out = core_attn_out.reshape(-1, self.head_v_dim)
@@ -670,7 +728,7 @@ class Qwen3_5DecoderLayer(nn.Module):
         self.input_layernorm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
-    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool = False):
+    def forward(self, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None, decode: bool | str = False):
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
         if self.block_type == "linear_attention":
@@ -721,6 +779,44 @@ class Qwen3_5TextModel(nn.Module):
         cache.position.add_(1)
         return self.norm(hidden_states)
 
+    def forward_verify(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
+        """``T`` tokens at ``cache.position + 0..T-1`` with fixed shapes, to check drafted tokens. K/V are written; the
+        GatedDeltaNet layers run one decode step per token and keep every candidate state in the cache's spec buffers
+        (:meth:`Qwen3_5Cache.allocate_spec_buffers`). Nothing is committed: :meth:`Qwen3_5Cache.commit` keeps the
+        accepted prefix and moves the position."""
+        hidden_states = self.embed_tokens(input_ids)
+        batch, tokens = input_ids.shape
+        positions = cache.position + torch.arange(tokens, device=input_ids.device)
+        position_embeddings = self.rotary_emb(hidden_states, positions.view(1, 1, tokens).expand(3, batch, tokens))
+        for layer in self.layers:
+            hidden_states = layer(hidden_states, position_embeddings, cache, decode="verify")
+        return self.norm(hidden_states)
+
+
+class Qwen3_5MTP(nn.Module):
+    """The multi-token-prediction head: from the final (normed) hidden state ``h_j`` of position ``j`` and the
+    embedding of token ``x_{j+1}`` it predicts ``x_{j+2}``, with one full-attention decoder layer of its own (own KV
+    cache) and the target's embedding, rotary table and ``lm_head``:
+    ``norm(layer(fc([pre_fc_norm_embedding(emb(x_{j+1})), pre_fc_norm_hidden(h_j)])))``. Its output also stands in for
+    ``h_{j+1}`` to draft one more token. Module names follow the checkpoint (``mtp.*``)."""
+
+    def __init__(self, config: Qwen3_5TextConfig):
+        super().__init__()
+        if config.mtp_num_hidden_layers != 1:
+            raise ValueError(f"only one MTP layer is supported, the config has {config.mtp_num_hidden_layers}")
+        # the layer indexes its own one-layer cache
+        self.config = dataclasses.replace(config, num_hidden_layers=1, layer_types=["full_attention"])
+        self.fc = nn.Linear(2 * config.hidden_size, config.hidden_size, bias=False)
+        self.pre_fc_norm_embedding = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.pre_fc_norm_hidden = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.layers = nn.ModuleList([Qwen3_5DecoderLayer(self.config, 0)])
+        self.norm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+
+    def forward(self, inputs_embeds, hidden_states, position_embeddings, cache: Qwen3_5Cache | None = None,
+                decode: bool = False) -> torch.Tensor:
+        fused = torch.cat([self.pre_fc_norm_embedding(inputs_embeds), self.pre_fc_norm_hidden(hidden_states)], dim=-1)
+        return self.norm(self.layers[0](self.fc(fused), position_embeddings, cache, decode))
+
 
 class _Backbone(nn.Module):
     """Holds ``language_model`` so state-dict keys read ``model.language_model.*``."""
@@ -731,13 +827,14 @@ class _Backbone(nn.Module):
 
 
 class Qwen3_5ForCausalLM(nn.Module):
-    def __init__(self, config: Qwen3_5TextConfig):
+    def __init__(self, config: Qwen3_5TextConfig, mtp: bool = False):
         super().__init__()
         self.config = config
         self.model = _Backbone(config)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
         if config.tie_word_embeddings:
             self.lm_head.weight = self.model.language_model.embed_tokens.weight
+        self.mtp = Qwen3_5MTP(config) if mtp else None
 
     def new_cache(self, batch_size: int = 1, max_seq_len: int | None = None) -> Qwen3_5Cache:
         """Dynamic cache by default; pass ``max_seq_len`` for preallocated (static) buffers."""
@@ -745,6 +842,29 @@ class Qwen3_5ForCausalLM(nn.Module):
             return Qwen3_5Cache(self.config.num_hidden_layers)
         weight = self.model.language_model.embed_tokens.weight  # lm_head may be quantized; the embedding never is
         return Qwen3_5Cache.allocate(self.config, batch_size, max_seq_len, weight.dtype, weight.device)
+
+    def new_mtp_cache(self, max_seq_len: int) -> Qwen3_5Cache:
+        """Static KV cache of the MTP layer (batch 1)."""
+        weight = self.model.language_model.embed_tokens.weight
+        return Qwen3_5Cache.allocate(self.mtp.config, 1, max_seq_len, weight.dtype, weight.device)
+
+    def mtp_hidden(self, input_ids: torch.LongTensor, hidden_states: torch.Tensor, cache: Qwen3_5Cache,
+                   decode: bool = False) -> torch.Tensor:
+        """Run the MTP head on the pairs ``(hidden_states[:, i], input_ids[:, i])``; ``lm_head`` of the result gives
+        the drafts. Like the target: without ``decode`` it appends to the cache at ``seen_tokens`` (prefill); with
+        ``decode`` the ``T`` pairs sit at ``cache.position + 0..T-1`` with fixed shapes and nothing advances."""
+        lm = self.model.language_model
+        embeds = lm.embed_tokens(input_ids)
+        batch, tokens = input_ids.shape
+        start = cache.position if decode else cache.seen_tokens
+        positions = torch.arange(tokens, device=input_ids.device) + start
+        position_embeddings = lm.rotary_emb(embeds, positions.view(1, 1, tokens).expand(3, batch, tokens))
+        out = self.mtp(embeds, hidden_states, position_embeddings, cache, decode)
+        if not decode:
+            cache.seen_tokens += tokens
+            if cache.is_static:
+                cache.position.fill_(cache.seen_tokens)
+        return out
 
     def set_kernels(self, kernels: str) -> "Qwen3_5ForCausalLM":
         if kernels not in KERNEL_CHOICES:
@@ -765,7 +885,7 @@ class Qwen3_5ForCausalLM(nn.Module):
         ~26 us of the 140 us its two GEMVs take. The state-dict keys change: save checkpoints before fusing.
         Returns the number of fused groups."""
         return sum(m.fuse_projections() for m in self.modules()
-                   if isinstance(m, (Qwen3_5MLP, Qwen3_5Attention, Qwen3_5GatedDeltaNet)))
+                   if isinstance(m, (Qwen3_5MLP, Qwen3_5Attention, Qwen3_5GatedDeltaNet)))  # the MTP layer's too
 
     def forward(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache | None = None) -> torch.Tensor:
         return self.lm_head(self.model.language_model(input_ids, cache))
@@ -818,24 +938,25 @@ class Qwen3_5ForCausalLM(nn.Module):
 
     @classmethod
     def from_pretrained_dir(
-        cls, path: str | Path, dtype=torch.bfloat16, device="cpu", kernels: str = "torch"
+        cls, path: str | Path, dtype=torch.bfloat16, device="cpu", kernels: str = "torch", mtp: bool = False
     ) -> "Qwen3_5ForCausalLM":
         """Load safetensors shards from a local HF checkpoint dir; keys are used as-is.
 
         Tensors are read straight onto ``device``, so a large checkpoint (52 GiB for Qwen3.5-27B) is not staged in host
-        memory first."""
+        memory first. ``mtp`` also loads the multi-token-prediction head (:class:`Qwen3_5MTP`)."""
         from safetensors import safe_open
 
         path = Path(path)
         config = Qwen3_5TextConfig.from_json(path / "config.json")
         with torch.device("meta"):
-            model = cls(config)
+            model = cls(config, mtp=mtp)
+        skipped = ("model.visual.",) if mtp else ("model.visual.", "mtp.")
         state = {}
         for shard in sorted(path.glob("*.safetensors")):
             with safe_open(shard, framework="pt", device=str(device)) as f:
                 for key in f.keys():
-                    # vision tower and multi-token-prediction head are not part of the text model
-                    if key.startswith(("model.visual.", "mtp.")):
+                    # the vision tower is not part of the text model, the MTP head only on request
+                    if key.startswith(skipped):
                         continue
                     state[key] = f.get_tensor(key)
         model.load_state_dict(state, strict=False, assign=True)

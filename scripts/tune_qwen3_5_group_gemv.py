@@ -7,6 +7,12 @@ module of that shape in turn, so the weights together exceed L2 as in a decode s
 with the rule and with the measured best configurations.
 
     python scripts/tune_qwen3_5_group_gemv.py --repo Qwen/Qwen3.5-9B --out group_gemv_tune.json
+
+``--rows 2,3,4`` tunes the multi-row kernel (verifying drafts) instead: both forms of ``w8a16_group_gemv_rows`` over
+their grids for every shape and row count, against the one-row kernel with its rule. The ``rows_best`` table of the
+output loads into ``quant_kernels.ROWS_LAUNCH_CONFIGS`` (``bench_qwen3_5_spec_decode.py --rows-configs``).
+
+    python scripts/tune_qwen3_5_group_gemv.py --repo Qwen/Qwen3.5-27B --fuse --rows 2,3,4 --out rows_gemv_tune.json
 """
 
 from __future__ import annotations
@@ -30,6 +36,52 @@ from infer_opt.quant import Int8Linear, quantize_linears  # noqa: E402
 from infer_opt.qwen3_5 import Qwen3_5ForCausalLM  # noqa: E402
 
 GRID = list(itertools.product((1, 2, 4, 8, 16), (128, 256, 512, 1024), (2, 4, 8)))
+# the multi-add form only below sm80: on an A100 it was 2-7x slower than the tensor-core form on every 27B shape
+DOT_GRID = [("dot", n, w, st, sp) for n, w, st, sp in itertools.product((16, 32, 64), (2, 4, 8), (3, 4), (1, 2, 4, 8))]
+FMA_GRID = [("fma", n, k, w) for n, k, w in itertools.product((1, 2, 4, 8), (256, 512, 1024), (2, 4, 8))]
+
+
+@torch.no_grad()
+def tune_rows(by_shape, row_counts, iters, device) -> dict:
+    """Best multi-row configuration per (rows, shape), next to the one-row kernel's time on the same modules."""
+    result, best_table = {}, []
+    for key, modules in sorted(by_shape.items(), key=lambda kv: -kv[0][0] * kv[0][1] * len(kv[1])):
+        n, k, group = key
+        dtype = modules[0].scale.dtype
+        x1 = torch.randn(1, 1, k, device=device, dtype=dtype)
+        one_us = graph_time_ms(lambda i: quant_kernels.w8a16_group_gemv(x1, modules[i].weight, modules[i].scale),
+                               len(modules), iters, device) * 1e3
+        for m in row_counts:
+            x = torch.randn(1, m, k, device=device, dtype=dtype)
+            rule = quant_kernels.rows_launch_config(m, n, k, group, device)
+            times = {}
+            grid = DOT_GRID if torch.cuda.get_device_capability(device)[0] >= 8 else FMA_GRID
+            for config in dict.fromkeys([rule, *grid]):
+                if config[0] == "fma" and (k % config[2] or config[1] * config[2] < 256 * config[3]):
+                    continue
+                if config[0] == "dot" and len(config) > 4 and (k // group) % config[4]:
+                    continue
+                quant_kernels.ROWS_LAUNCH_CONFIGS[(m, *key)] = config
+                try:
+                    times[config] = graph_time_ms(
+                        lambda i: quant_kernels.w8a16_group_gemv_rows(x, modules[i].weight, modules[i].scale),
+                        len(modules), iters, device) * 1e3
+                except Exception:  # noqa: BLE001 - out of resources for large tiles
+                    pass
+            del quant_kernels.ROWS_LAUNCH_CONFIGS[(m, *key)]
+            ranked = sorted(times.items(), key=lambda kv: kv[1])
+            best, best_us = ranked[0]
+            best_table.append([m, n, k, group, list(best)])
+            by_form = {f: min((t for c, t in times.items() if c[0] == f), default=None) for f in ("dot", "fma")}
+            by_split = {sp: min((t for c, t in times.items() if c[0] == "dot" and c[4:5] == (sp,)), default=None)
+                        for sp in (1, 2, 4, 8)}
+            result[str((m, *key))] = {"count": len(modules), "one_row_us": one_us, "rule": rule,
+                                      "rule_us": times.get(rule), "best": best, "best_us": best_us,
+                                      "best_by_form_us": by_form, "best_by_split_us": by_split, "top5": ranked[:5]}
+            print(f"{n:>7} x {k:<6} x{len(modules):<3} rows {m}: best {best} {best_us:7.1f} us"
+                  f" ({best_us / one_us:4.2f}x one row {one_us:6.1f}), by split {by_split},"
+                  f" rule {times.get(rule, float('nan')):7.1f}", flush=True)
+    return {"rows_shapes": result, "rows_best": best_table}
 
 
 def main() -> None:
@@ -42,13 +94,16 @@ def main() -> None:
     parser.add_argument("--prompt-tokens", type=int, default=1024)
     parser.add_argument("--new-tokens", type=int, default=128)
     parser.add_argument("--fuse", action="store_true", help="stack gate+up, q+k+v and in_proj_qkv+z first")
+    parser.add_argument("--rows", default="", help="tune the multi-row kernel for these row counts instead, e.g. 2,3,4")
     parser.add_argument("--out", default="group_gemv_tune.json")
     args = parser.parse_args()
 
     from huggingface_hub import snapshot_download
 
     path = args.weights or snapshot_download(args.repo, allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
-    model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels)
+    # the MTP head (drafts) only matters for the multi-row kernel: its fc is a shape of its own
+    model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels,
+                                                   mtp=bool(args.rows))
     print(quantize_linears(model, include_lm_head=True, group_size=args.group_size).summary(), flush=True)
     if args.fuse:
         print("fused groups", model.fuse_projections(), flush=True)
@@ -61,6 +116,10 @@ def main() -> None:
             by_shape[(module.out_features, module.in_features, module.group_size)].append(module)
 
     result = {"device": torch.cuda.get_device_name(), "torch": torch.__version__, "shapes": {}}
+    if args.rows:
+        result.update(tune_rows(by_shape, [int(m) for m in args.rows.split(",")], args.iters, device))
+        Path(args.out).write_text(json.dumps(result, indent=1))
+        return
     best_table = {}
     with torch.no_grad():
         for key, modules in sorted(by_shape.items(), key=lambda kv: -kv[0][0] * kv[0][1] * len(kv[1])):

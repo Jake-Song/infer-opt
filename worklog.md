@@ -282,3 +282,77 @@ kernel 시간은 CUDA graph 20 step profile의 step 평균이다. KL은 base 실
 
 - GEMV 밖 kernel 약 3.3 ms(이번 변경 후). in_proj_a/b(bf16 48행)를 int8 qkvz GEMV에 합치는 것, norm을 GEMV 앞부분에 넣는 것이 후보다.
 - 27B 노트북은 아직 661f694를 고정한다. 이 변경으로 다시 고정할지 정해야 한다. 9B와 T4에서는 재 보지 않았다.
+
+## 2026-10-24 — Qwen3.5 MTP self-speculative decoding (greedy)
+
+**목표:** int8 27B의 decode(19.4–20.0 ms/token)는 GEMV가 이미 천장 근처라, 한 번 읽는 weight로 여러 token을 얻는 쪽이 남은 지렛대다.
+모든 Qwen3.5 체크포인트에 있는 MTP head(`mtp.*`, decoder layer 1개 + fc + norm 3개, embedding과 lm_head는 target과 공유)를 draft로 쓰고,
+greedy로만 검증한다(출력은 target의 greedy와 같아야 한다).
+
+숫자는 모두 Colab A100-SXM4-80GB(high-mem), torch 2.11, `fla-delta:compile-reduce-overhead`, max-autotune, `fuse_projections()`,
+256 token 생성, 같은 세션에서 잰 plain fixed-shape decoder(baseline)와 비교했다. bf16 `Qwen/Qwen3.5-27B`를 MTP head와 함께 읽고 제자리
+양자화(group 128)했다(Hub int8 체크포인트에는 MTP head가 없다). 원시 결과는 `notebooks/assets/qwen3_5_27b_int8_spec_a100_20261024/`,
+로그와 로컬 실험 스크립트는 `experiments/qwen3_5_27b_int8/a100_80gb_20261024_spec/`(git 제외).
+
+### 결과
+
+k=3(모든 prompt에서 가장 빠름), ms/token(baseline 대비 배수):
+
+| prompt | int8 | int8+mtp | int8+mtp+lm_head | round당 token (마지막 열) |
+|---|---:|---:|---:|---:|
+| baseline | 19.92–20.02 | 19.87–19.96 | 19.30–19.39 | 1 |
+| prose_1k | 8.82 (2.27x) | 8.72 (2.29x) | **8.07 (2.40x)** | 4.00 |
+| math | 9.09 (2.20x) | 8.96 (2.23x) | **8.24 (2.35x)** | 3.89 |
+| code_1k | 10.55 (1.90x) | 10.55 (1.89x) | **9.99 (1.94x)** | 3.21 |
+| chat_long | 11.78 (1.69x) | 11.07 (1.80x) | **10.64 (1.81x)** | 3.04 |
+| korean | 15.00 (1.33x) | 15.99 (1.25x) | **14.30 (1.36x)** | 2.26 |
+
+- int8 = target만 int8, int8+mtp = MTP head도, int8+mtp+lm_head = lm_head(target과 draft가 공유)도 int8.
+- round 시간(int8+mtp+lm_head): k=1/2/3에서 27.3 / 30.1 / 32.3 ms(step 19.3). lm_head를 int8로 하면 draft마다 한 번씩 읽으므로
+  k가 클수록 이득이 크다(k=3에서 35.3 → 32.3). MTP head int8은 시간·acceptance 모두 거의 그대로다.
+- 한국어는 acceptance가 낮다(k=1에서 round 중 31%가 draft 거부). 영어 prose는 k=3에서 모든 round가 4 token을 받았다.
+- baseline과 token이 갈라지는 prompt가 있다(chat_long 70번째, korean, code_1k의 일부 k). 0.8B fp16에서 같은 현상을 보면 갈라진 자리의
+  top-2 logit 차이가 정확히 0이었다(T-token forward와 1-token forward의 반올림 차이로 동률이 뒤집힘). 27B에서는 아직 확인하지 않았다.
+
+### 바꾼 것
+
+- **`Qwen3_5MTP`, `from_pretrained_dir(..., mtp=True)`, `mtp_hidden()`:** MTP head는 `h' = norm(layer(fc([norm(emb(x_{j+1})),
+  norm(h_j)])))`. 기본은 `mtp=None`이라 state dict와 기존 동작은 그대로다.
+- **`forward_verify()` + `Qwen3_5Cache.allocate_spec_buffers()/commit(n)`:** T token을 fixed shape로 검증한다. full attention은
+  position..position+T-1에 K/V를 쓰고 token t는 position+t까지 본다(거부된 K/V는 position 뒤라 가려지고 나중에 덮인다).
+  GatedDeltaNet은 token마다 한 step씩 돌려 conv 입력 창 전체와 token마다의 recurrent state를 spec buffer에 남기고, `commit(n)`이
+  device 위에서 n번째 것을 고른다. 되돌리기에 재계산이 없다.
+- **`decode_attention(..., tokens)`:** 한 KV head의 G·T query 행이 tl.dot 하나를 공유하고 행마다 key 한계가 다르다. key가 하나도 없는
+  행(-inf max)은 빈 partial로 처리한다. T=1 코드 경로는 그대로다.
+- **`w8a16_group_gemv_rows`(2–8행):** 두 형태. tensor core 형태는 int8 값이 bf16에서 정확하므로 scale group(128열)마다 `tl.dot`을 하고
+  그 부분합에 scale을 곱한다. 출력 5120행 shape(down_proj, o_proj, MTP fc)는 program이 적어 K를 4개로 나눈다(fp32 부분합 + 합).
+  multiply-add 형태는 sm80 미만용이다. 규칙은 `rows_launch_config`, 튜닝은 `tune_qwen3_5_group_gemv.py --rows 2,3,4`.
+- **`infer_opt/speculative.py`:** `spec_round()`가 verify → accept → commit → MTP catch-up(`(h[p+i], g[i])` T쌍, 받아들인 위치는
+  모두 맞는 쌍) → draft k−1개 → 다음 입력을 입력 buffer에 쓰기까지 한 함수다. `MTPSpeculativeDecoder`가 이것을 eager / compile /
+  compile-reduce-overhead / cudagraph로 돌리고 round마다 host sync는 한 번(`n`과 `g`를 읽음)이다.
+- `quantize_linears(exclude=...)`, `scripts/bench_qwen3_5_spec_decode.py`, `scripts/profile_qwen3_5_spec_round.py`, `tests/test_speculative.py`.
+
+### 알게 된 것
+
+- **MTP 입력 규약은 재서 정했다.** 0.8B에서 teacher-forced depth-1 acceptance: target의 final-norm 뒤 hidden + `[embedding, hidden]`
+  순서 0.86, norm 앞 hidden 0.54, 순서를 바꾸면 0.07/0.06. vLLM 규약과 같다.
+- **multi-row GEMV를 fp32 multiply-add로 하면 x를 읽는 양이 문제다.** program당 출력 1행이면 program마다 x의 모든 행을 다시 읽는다
+  (weight 1바이트당 2M바이트). 2080에서 2/4행이 1행의 1.6/2.4배였고, A100에서는 tensor core 형태보다 2–7배 느렸다.
+- **2080(sm75)에서 Triton `tl.dot`은 tensor core를 쓰지 않아** 25배 느렸다. sm75 측정으로 A100 kernel을 고르면 안 된다.
+- **split-K는 program 수를 늘려 메모리 병렬성을 올린다.** down_proj(5120×17408): 쪼개지 않으면 BLOCK_N 16에서 program 320개,
+  step마다 2 KB tile이라 1.55배. K를 4로 나누고 BLOCK_N 64면 program 수는 같고 tile이 8 KB라 1.13배. 행이 많은 shape는 쪼개면 느려진다.
+  3행 GEMV 합계: 1행 15.7 ms에 대해 쪼개기 전 20.3, 후 18.2 ms.
+- **round profile(k=3, int8, MTP·lm_head bf16, 모두 수락):** step 20.07 ms, round 33.85 ms(kernel 시간). 증가분 +13.8 ms 중
+  multi-row GEMV +2.3, bf16 matmul +6.0(draft lm_head 3회 ~1.4 ms씩, bf16 MTP layer ~0.5 ms × 3), GatedDeltaNet verify 경로 +5.2
+  (token별 state 복사 1.7 ms, recurrence kernel 4회 0.34 → 1.22 ms, token별로 나뉜 pointwise·dtype 변환). profile의 분류 정규식이
+  `_to_copy`(dtype 변환)도 copy로 셌으니 GatedDeltaNet 몫은 근사다.
+- Colab 운영: `pkill -f pipeline.sh`를 subprocess shell에서 부르면 자기 shell을 죽이고 대상은 살아남는다. 첫 bench가 그렇게 13분 남아
+  37 GiB를 잡고 있어 재튜닝이 OOM이 났다. PID로 죽인다. 세션 비용 ~10 compute unit(134.1 → 124.0).
+
+### 남은 일
+
+- GatedDeltaNet verify를 layer당 kernel 하나로: state를 register에 두고 T token을 돌며 token마다의 state를 바로 쓰기(최소 151 MB 읽기 +
+  T×151 MB 쓰기). round당 3–4 ms, prose k=3 기준 8.1 → ~7 ms/token 예상.
+- draft용 축소 vocabulary lm_head(자주 나오는 token 행만, FR-Spec 방식): 검증은 전체 vocabulary라 출력은 같다. round당 ~1.5–2 ms.
+- 27B의 baseline과 갈라진 자리가 near-tie인지 margin을 기록해 확인. sampling(rejection sampling)과 batch > 1은 없다.
+- 27B 노트북은 아직 661f694를 고정한다.

@@ -1,0 +1,240 @@
+{
+ "k": 3,
+ "prompt": "prose_1k",
+ "step": {
+  "total_ms": 20.070002550000055,
+  "by_category_ms": {
+   "gemv": 16.030456900000072,
+   "bf16_matmul": 1.8611440000000317,
+   "copy": 1.5719928499999758,
+   "delta_rule": 0.33828364999997623,
+   "attention": 0.11879320000001635,
+   "pointwise": 0.11086299999997899,
+   "reduction": 0.038468950000007315
+  },
+  "top_kernels_ms": [
+   [
+    "_w8a16_group_gemv_kernel",
+    16.030456900000072
+   ],
+   [
+    "triton_red_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_34",
+    1.4056188499999998
+   ],
+   [
+    "fused_recurrent_gated_delta_rule_fwd_kernel",
+    0.33828364999997623
+   ],
+   [
+    "triton_poi_fused_copy__9",
+    0.29818769999998607
+   ],
+   [
+    "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_3",
+    0.15511884999998432
+   ],
+   [
+    "triton_per_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mean_mm_mul_neg_pow_rsqrt_sigmoid_silu_softplus_s",
+    0.14665479999998315
+   ],
+   [
+    "_decode_attention_kernel",
+    0.11879320000001635
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_31",
+    0.11504520000001067
+   ],
+   [
+    "triton_poi_fused_mul_silu_split_13",
+    0.11086299999997899
+   ],
+   [
+    "triton_per_fused__to_copy__unsafe_view_clone_div_exp_mul_sigmoid_split_split_with_sizes_sub_sum_transpose_unsqueeze_view",
+    0.11058575000001875
+   ],
+   [
+    "triton_per_fused__to_copy_empty_like_mean_pow_view_10",
+    0.10470130000001109
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_20",
+    0.0944157500000335
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_19",
+    0.09202954999997155
+   ],
+   [
+    "triton_poi_fused__to_copy_add_empty_like_mean_mul_pow_rsqrt_silu_split_with_sizes_view_11",
+    0.09124494999996932
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_17",
+    0.08594490000000869
+   ],
+   [
+    "triton_poi_fused_cat_copy_slice_split_with_sizes_transpose_7",
+    0.08468929999999446
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.08264870000003202
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.08215099999999356
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.08040915000001264
+   ],
+   [
+    "triton_poi_fused_cat_copy_copy__slice_split_with_sizes_transpose_8",
+    0.07431180000002537
+   ],
+   [
+    "triton_per_fused__to_copy__unsafe_view_add_clone_empty_like_exp_expand_mm_mul_neg_sigmoid_silu_softplus_split_with_sizes",
+    0.05885195000001268
+   ],
+   [
+    "triton_poi_fused__to_copy_add_cat_cos_expand_mean_mul_neg_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_un",
+    0.0409034499999917
+   ],
+   [
+    "triton_per_fused_amax_exp_mul_sub_sum_29",
+    0.038468950000007315
+   ],
+   [
+    "triton_poi_fused__to_copy_add_cat_expand_mean_mul_pow_rsqrt_select_sin_slice_split_split_with_sizes_transpose_unsqueeze_",
+    0.031054399999981525
+   ],
+   [
+    "triton_per_fused__to_copy_mean_pow_split_split_with_sizes_view_23",
+    0.03004300000001258
+   ]
+  ]
+ },
+ "round": {
+  "total_ms": 33.84922674999955,
+  "by_category_ms": {
+   "gemv_rows": 18.298804900000004,
+   "bf16_matmul": 7.8868057500000415,
+   "copy": 5.856303749999564,
+   "delta_rule": 1.2175702500000276,
+   "reduction": 0.2328415999999046,
+   "attention": 0.18458760000002122,
+   "pointwise": 0.16858009999999649,
+   "other": 0.0037327999999866735
+  },
+  "top_kernels_ms": [
+   [
+    "_w8a16_group_gemv_rows_kernel",
+    18.298804900000004
+   ],
+   [
+    "triton_red_fused_mm_t_view_63",
+    2.795034900000004
+   ],
+   [
+    "triton_poi_fused_copy__94",
+    1.702529899999911
+   ],
+   [
+    "triton_red_fused__to_copy__unsafe_view_add_mean_mm_mul_pow_rsqrt_t_view_89",
+    1.4150525499999962
+   ],
+   [
+    "triton_tem_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_40",
+    1.3770193499999919
+   ],
+   [
+    "fused_recurrent_gated_delta_rule_fwd_kernel",
+    1.2175702500000276
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_sum_25",
+    0.486238549999955
+   ],
+   [
+    "triton_red_fused__to_copy__unsafe_view_add_mean_mm_mul_pow_rsqrt_t_view_83",
+    0.3998140500000056
+   ],
+   [
+    "void cutlass::Kernel2<cutlass_80_wmma_tensorop_s161616gemm_bf16_32x32_128x2_tn_align8>(cutlass_80_wmma_tensorop_s161616g",
+    0.3895972499999233
+   ],
+   [
+    "triton_per_fused__to_copy_add_mean_mul_pow_rsqrt_sum_26",
+    0.3270374499998585
+   ],
+   [
+    "triton_poi_fused_copy__index_select_squeeze_sub_95",
+    0.26073794999997735
+   ],
+   [
+    "triton_red_fused__unsafe_view_mm_mul_silu_split_t_view_84",
+    0.20695304999999023
+   ],
+   [
+    "triton_per_fused_mm_t_view_1",
+    0.20158310000010343
+   ],
+   [
+    "triton_tem_fused__to_copy__unsafe_view_add_mean_mm_mul_pow_rsqrt_t_view_58",
+    0.20049574999999095
+   ],
+   [
+    "triton_red_fused__to_copy__unsafe_view_add_mean_mm_mul_pow_rsqrt_t_view_71",
+    0.196764699999975
+   ],
+   [
+    "_decode_attention_kernel",
+    0.18458760000002122
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_expand_mul_neg_sigmoid_silu_slice_softplus_split_with_sizes_transpo",
+    0.18391615000000328
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_expand_mul_neg_sigmoid_silu_slice_softplus_split_with_sizes_transpo",
+    0.16573984999992325
+   ],
+   [
+    "triton_poi_fused_mul_silu_split_23",
+    0.1650120999999739
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_expand_mul_neg_sigmoid_silu_slice_softplus_split_with_sizes_transpo",
+    0.16097755000000297
+   ],
+   [
+    "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_unfold_unsqueeze_4",
+    0.16067749999993886
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_clone_mul_silu_split_with_sizes_view_21",
+    0.1588055000000324
+   ],
+   [
+    "triton_red_fused__unsafe_view_argmax_mm_64",
+    0.14788494999999383
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_expand_mul_neg_sigmoid_silu_slice_softplus_split_with_sizes_transpo",
+    0.13164870000007894
+   ],
+   [
+    "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_expand_mul_neg_sigmoid_silu_slice_softplus_split_with_sizes_transpo",
+    0.12611959999999672
+   ]
+  ]
+ },
+ "stats": {
+  "rounds": 23,
+  "tokens_per_round": 4.0,
+  "accepted_histogram": {
+   "4": 23
+  }
+ }
+}
