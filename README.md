@@ -178,10 +178,22 @@ first version, before the fused GatedDeltaNet kernel).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_int8_spec_colab.ipynb)
 
-[`qwen3_5_27b_int8_spec_colab.ipynb`](notebooks/qwen3_5_27b_int8_spec_colab.ipynb) (Korean) runs it on Colab: the int8
-checkpoint from the Hub, plus the MTP head read from the original shards with range requests (`infer_opt.hub`, 0.8 GB of
-the 17 GB of shards that hold it) and attached with `attach_mtp`. It generates with both decoders and compares their speed
-and tokens. It needs an A100 (40 GB or more).
+[`qwen3_5_27b_int8_spec_colab.ipynb`](notebooks/qwen3_5_27b_int8_spec_colab.ipynb) (Korean) runs the self-contained
+[`Jakemu/Qwen3.5-27B-int8-g128-mtp`](https://huggingface.co/Jakemu/Qwen3.5-27B-int8-g128-mtp) checkpoint on Colab.
+Its 14 target shards are unchanged from the published INT8 model; one additional 0.402 GiB shard contains the
+group-128 INT8 MTP head. `from_quantized_dir` restores it automatically from `quantization.json` (`mtp: true`), with
+lm_head still in bf16. The notebook pins both code and weights, generates with both decoders, and compares their
+speed and tokens. It needs an A100 (40 GB or more); no original BF16 weights or runtime quantization are needed.
+
+`scripts/publish_qwen3_5_mtp.py` reproduces the release by range-reading only the original MTP tensors, quantizing
+the head on CPU, and copying the existing target shards on the Hub. Its manifest records the pinned sources and
+file hashes. `scripts/validate_qwen3_5_mtp_checkpoint.py` compares the bundled checkpoint with the original
+`attach_mtp` workflow on an A100. Older target-only INT8 checkpoints still load without an MTP head.
+
+The bundled release passed on an A100 40GB: all MTP tensors and final-position prefill logits matched the
+separately attached reference, and all 64 generated tokens matched on prose, math and Korean with plain decoding
+and MTP `k=1,3`. Peak allocated memory was 29.90 GiB. This validation used CUDA Graph decoding; the notebook's
+compile mode was checked statically. [Release report and raw results](notebooks/assets/qwen3_5_27b_int8_mtp_a100_20261025/README.md).
 
 ### Qwen3.5-27B Hugging Face BF16 with compile + CUDA Graph
 

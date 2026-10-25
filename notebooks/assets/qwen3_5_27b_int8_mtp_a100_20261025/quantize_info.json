@@ -1,0 +1,26 @@
+{
+  "source": "Qwen/Qwen3.5-27B",
+  "source_revision": "fc05daec18b0a78c049392ed2e771dde82bdf654",
+  "quantized_base": "Jakemu/Qwen3.5-27B-int8-g128",
+  "quantized_base_revision": "8e69ff4b730ad3d372918aee22e094472c1a47ed",
+  "group_size": 128,
+  "mtp": true,
+  "mtp_quantized": true,
+  "lm_head_quantized": false,
+  "code_revision": "eaa6d3551670ca110cfcfff19b35a6d64f420ac5",
+  "mtp_validation": {
+    "summary": "8 Linear -> Int8Linear, 0 kept; 0.791 GiB -> 0.402 GiB",
+    "quantized_modules": [
+      "mtp.fc",
+      "mtp.layers.0.self_attn.q_proj",
+      "mtp.layers.0.self_attn.k_proj",
+      "mtp.layers.0.self_attn.v_proj",
+      "mtp.layers.0.self_attn.o_proj",
+      "mtp.layers.0.mlp.gate_proj",
+      "mtp.layers.0.mlp.up_proj",
+      "mtp.layers.0.mlp.down_proj"
+    ],
+    "saved_tensors": 23,
+    "round_trip_equal": true
+  }
+}

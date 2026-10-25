@@ -1,0 +1,8 @@
+{
+  "session": "mtp-release-20261025",
+  "requested_gpu": "A100",
+  "actual_gpu": "NVIDIA A100-SXM4-40GB",
+  "status": "terminated",
+  "server_observation": "No active sessions found on server.",
+  "recorded_at_utc": "2026-10-25T14:25:10.468565+00:00"
+}

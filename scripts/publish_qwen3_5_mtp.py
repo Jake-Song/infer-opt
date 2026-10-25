@@ -2,6 +2,7 @@
 
 Only the original MTP tensors are downloaded and quantized on CPU. Existing INT8 shards are copied on the Hub.
 Use --prepare-only to inspect the artifacts, then --publish-only to upload the same prepared release.
+Publishing uses the cross-repository copy API from huggingface_hub>=2.2; model loading also works with older clients.
 """
 
 from __future__ import annotations

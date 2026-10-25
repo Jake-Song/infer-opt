@@ -420,3 +420,37 @@ state만 돌려주므로, 검증에 필요한 token마다의 state를 남기도�
   예상. 검증은 전체 vocabulary라 출력은 같다. 어떤 token을 고를지(빈도 표)가 정할 거리다.
 - baseline과 갈라진 자리가 near-tie인지 27B에서 확인(chat_long은 계속 70번째에서 갈라진다).
 - 세션 비용 ~6.4 compute unit(123.96 → 117.52).
+
+## 2026-10-25 — MTP head를 포함한 INT8 checkpoint를 Hugging Face에 공개
+
+**목표:** Colab에서 원본 BF16 shard의 MTP tensor를 따로 읽고 양자화하던 단계를 없앤다.
+공개 모델은 [`Jakemu/Qwen3.5-27B-int8-g128-mtp`](https://huggingface.co/Jakemu/Qwen3.5-27B-int8-g128-mtp),
+검증한 weight revision은 `0d68f2ac933cdc988e1875aecceb0a2c8ff473db`, loader 코드는 `eaa6d3551670ca110cfcfff19b35a6d64f420ac5`다.
+
+### 저장과 배포
+
+- 기존 INT8 모델의 `8e69ff4b730ad3d372918aee22e094472c1a47ed`에서 target shard 14개를 Hub 내부 복사했다.
+  모든 SHA-256이 원본과 같다. lm_head와 작은 delta-rule gate는 BF16 그대로다.
+- 원본 `Qwen/Qwen3.5-27B@fc05daec18b0a78c049392ed2e771dde82bdf654`의 `mtp.*` 15개만 범위 요청으로 읽었다.
+  CPU에서 Linear 8개를 INT8 group 128로 바꾸면 weight·scale·norm 23개, **0.402 GiB**다. 전체 weight는 **28.197 GiB**.
+- `save_quantized`가 `quantization.json`에 실제 head 존재 여부인 `mtp`를 기록하고, `from_quantized_dir`가 자동으로 복원한다.
+  예전 metadata에 이 값이 없으면 head를 만들지 않는다. 원본 config의 `mtp_num_hidden_layers=1`만으로 존재한다고 판단하지 않는다.
+- `scripts/publish_qwen3_5_mtp.py`는 target을 RAM/GPU에 올리지 않는다. 준비와 업로드를 분리할 수 있고, provenance와 파일 hash를 남긴다.
+  공개 card에는 동작하는 코드 SHA를 고정했다. Colab notebook도 이 코드와 검증한 HF weight revision을 고정한다.
+
+### 검증
+
+- 로컬: 관련 CPU test **41 passed**, CUDA test 80개 제외. float/INT8 MTP 저장·복원, tied/untied embedding,
+  dtype 변경, legacy checkpoint, 빠진 tensor, 중복 shard, target shard 보존을 확인했다.
+- Colab **A100-SXM4-40GB**(39.494 GiB), torch **2.11.0+cu130**, FLA **0.6.0**, `fla-delta`, projection fusion,
+  **수동 CUDA Graph**. 원본을 받기 전에 새 checkpoint만으로 모델을 읽고 생성했다.
+- 이어 같은 target shard를 이전 metadata로 읽고 원본 BF16 MTP를 붙여 GPU에서 양자화한 reference와 비교했다.
+  MTP tensor 23개의 dtype·shape·내용이 모두 같다. prefill 마지막 위치 logits도 3개 prompt 모두 **최대 절대 오차 0**이다.
+- `prose_1k`(1057 input token), `math`(43), `korean`(20)에서 각각 64 token 생성. plain, MTP k=1, k=3 모두
+  bundled와 attached의 token ID가 같고, 각 구성 안에서 plain과 speculative의 token ID도 전부 같았다.
+- peak allocated GPU memory **29.897 GiB**. 설치·다운로드·검증은 277초였으며, 종료 후 서버의 active session이 없음을 확인했다.
+
+원시 token ID, tensor hash, 실행 버전, release manifest와 cleanup 기록은
+`notebooks/assets/qwen3_5_27b_int8_mtp_a100_20261025/`에 있다. 이 실행은 checkpoint 포장과 CUDA Graph 경로의 동등성 검증이다.
+BF16 Transformers 정확도 gate와 throughput benchmark는 다시 하지 않았다. notebook의 compile 모드는 schema·구문·revision pin을
+정적으로 검사했으며 notebook 전체를 실행한 것은 아니다. 64 token 밖의 출력이나 다른 prompt의 동률 반올림까지 보장하지 않는다.

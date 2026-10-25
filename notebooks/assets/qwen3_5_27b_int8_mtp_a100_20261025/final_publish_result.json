@@ -1,0 +1,10 @@
+{
+  "repo_id": "Jakemu/Qwen3.5-27B-int8-g128-mtp",
+  "final_revision": "e41d469d00ef99639f592c1cfc5ab6e0a9db75bf",
+  "validated_weight_revision": "0d68f2ac933cdc988e1875aecceb0a2c8ff473db",
+  "code_revision": "eaa6d3551670ca110cfcfff19b35a6d64f420ac5",
+  "weights_unchanged": true,
+  "all_manifest_files_verified": true,
+  "public": true,
+  "url": "https://huggingface.co/Jakemu/Qwen3.5-27B-int8-g128-mtp"
+}
