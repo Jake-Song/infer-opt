@@ -182,7 +182,8 @@ def save_quantized(model: nn.Module, path: str | Path, *, shard_bytes: int = 2 <
     """Write ``model``'s state dict as safetensors shards plus :data:`QUANTIZATION_FILE`, which lists every
     :class:`Int8Linear` with its shape and group size so :func:`prepare_quantized` can rebuild the module tree.
 
-    A tensor shared between two names (tied embeddings) is stored once, under its first name. Returns the shard paths.
+    A tensor shared between two names (tied embeddings) is stored once, under its first name. The ``mtp`` flag
+    records an attached MTP module, including one whose weights are still floating point. Returns the shard paths.
     """
     from safetensors.torch import save_file
 
@@ -210,8 +211,10 @@ def save_quantized(model: nn.Module, path: str | Path, *, shard_bytes: int = 2 <
     for i, shard in enumerate(shards, 1):
         files.append(path / f"model-int8-{i:05d}-of-{len(shards):05d}.safetensors")
         save_file(shard, str(files[-1]))
-    (path / QUANTIZATION_FILE).write_text(json.dumps({"format": "infer_opt.int8", "modules": modules, "tied": tied},
-                                                     indent=1))
+    (path / QUANTIZATION_FILE).write_text(json.dumps({
+        "format": "infer_opt.int8", "modules": modules, "tied": tied,
+        "mtp": getattr(model, "mtp", None) is not None,
+    }, indent=1))
     return files
 
 

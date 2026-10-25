@@ -1,11 +1,9 @@
 """Write the Colab notebook that runs the INT8 Qwen3.5-27B with MTP speculative decoding.
 
-The int8 checkpoint on the Hub (``Jakemu/Qwen3.5-27B-int8-g128``) has no MTP head, so the notebook reads only the
-``mtp.*`` tensors of the original ``Qwen/Qwen3.5-27B`` shards with range requests (``infer_opt.hub``, ~0.8 GB instead of
-the 17 GB of shards that hold them), attaches the head with ``attach_mtp`` and quantizes it like the rest; lm_head stays
-bf16. Writes notebooks/qwen3_5_27b_int8_spec_colab.ipynb.
+The checkpoint includes the group-128 INT8 target and MTP head; lm_head stays bf16. No original BF16 weights or
+runtime quantization are needed. Writes notebooks/qwen3_5_27b_int8_spec_colab.ipynb.
 
-    uv run --group notebooks python scripts/build_qwen3_5_27b_spec_colab_notebook.py --ref <git commit>
+    uv run --group notebooks python scripts/build_qwen3_5_27b_spec_colab_notebook.py --ref <git commit> --model-revision <HF commit>
 """
 
 from __future__ import annotations
@@ -19,19 +17,18 @@ import nbformat
 ROOT = Path(__file__).resolve().parents[1]
 COLAB = "https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/"
 FILE = "qwen3_5_27b_int8_spec_colab.ipynb"
-MODEL_ID = "Jakemu/Qwen3.5-27B-int8-g128"
-ORIGINAL_ID = "Qwen/Qwen3.5-27B"
+MODEL_ID = "Jakemu/Qwen3.5-27B-int8-g128-mtp"
 ROWS_TABLE = "notebooks/assets/qwen3_5_27b_int8_spec_a100_20261024/rows_gemv_tune.json"
 
 
-def cells(ref: str) -> list:
+def cells(ref: str, model_revision: str) -> list:
     md, code = nbformat.v4.new_markdown_cell, nbformat.v4.new_code_cell
     return [
         md(f"""# Qwen3.5-27B INT8 + MTP speculative decoding을 Colab에서 실행하기
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]({COLAB}{FILE})
 
-[`{MODEL_ID}`](https://huggingface.co/{MODEL_ID})(weight-only INT8, group 128)에 Qwen3.5의 **MTP(multi-token prediction) head**를 붙여
+[`{MODEL_ID}`](https://huggingface.co/{MODEL_ID})(weight-only INT8, group 128)에 포함된 **MTP(multi-token prediction) head**로
 **self-speculative decoding**으로 생성합니다.
 
 - MTP head(decoder layer 1개)가 다음 token 몇 개(`k`)를 싸게 추측하고, 본 모델이 그 `k + 1`개를 **forward 한 번**으로 검증합니다.
@@ -43,7 +40,7 @@ def cells(ref: str) -> list:
   영어 산문 **7.6**, 수학 7.8, 코드 9.0, chat 10.2, 한국어 13.7(k=2) ms/token(1.45–2.61배).
 
 **런타임:** 런타임 → 런타임 유형 변경 → **A100 GPU**(compute capability 8.0 이상, GPU 메모리 38 GiB 이상).
-다운로드는 int8 checkpoint 약 30 GB와 MTP head 약 0.8 GB입니다. 셀을 위에서부터 차례로 실행하세요."""),
+다운로드는 MTP head까지 포함한 int8 checkpoint 약 30 GB입니다. 셀을 위에서부터 차례로 실행하세요."""),
         md("## 1. GPU 확인"),
         code("""import torch
 
@@ -68,11 +65,9 @@ sys.path.insert(0, "/content/infer-opt")
 """),
         md(f"""## 3. 모델과 MTP head 불러오기
 
-1. Hub에서 int8 checkpoint를 받아 `from_quantized_dir`로 GPU에 올립니다.
-2. 이 checkpoint에는 MTP head가 없습니다. 원래 모델 [`{ORIGINAL_ID}`](https://huggingface.co/{ORIGINAL_ID})의 shard 4개(17 GB)에
-   흩어져 있는 `mtp.*` tensor 15개만 **범위 요청으로 읽어**(`infer_opt.hub.fetch_hub_tensors`, 약 0.8 GB) `attach_mtp`로 붙입니다.
-3. MTP head의 Linear도 본 모델과 같은 group-128 int8로 양자화합니다. lm_head는 bf16 그대로입니다(본 모델과 MTP head가 함께 씁니다).
-   MTP head의 정밀도는 추측이 맞는 비율만 바꾸고 출력은 바꾸지 않습니다.
+1. Hub의 `{model_revision[:12]}` revision을 받아 `from_quantized_dir`로 GPU에 올립니다.
+2. `quantization.json`의 `mtp: true`에 따라 MTP head도 자동으로 복원합니다. 원래 BF16 모델을 받거나 현장에서 양자화할 필요가 없습니다.
+3. 본 모델과 MTP head는 group-128 int8이며 공유하는 lm_head는 bf16입니다.
 4. `fuse_projections()`로 같은 입력을 읽는 투영을 하나의 행렬곱으로 합칩니다(MTP layer 포함)."""),
         code(f"""import time
 from pathlib import Path
@@ -80,27 +75,22 @@ from pathlib import Path
 from huggingface_hub import snapshot_download
 from transformers import AutoTokenizer
 
-from infer_opt.hub import fetch_hub_tensors
-from infer_opt.quant import Int8Linear, quantize_linears
+from infer_opt.quant import Int8Linear
 from infer_opt.qwen3_5 import Qwen3_5ForCausalLM
 
 t0 = time.perf_counter()
-path = Path(snapshot_download("{MODEL_ID}"))
+MODEL_REVISION = "{model_revision}"
+path = Path(snapshot_download("{MODEL_ID}", revision=MODEL_REVISION))
 size = sum(f.stat().st_size for f in path.glob("*.safetensors"))
 print(f"int8 checkpoint {{size / 2**30:.2f}} GiB, {{time.perf_counter() - t0:.0f}} s")
 
 t0 = time.perf_counter()
 model = Qwen3_5ForCausalLM.from_quantized_dir(path, device="cuda", kernels="fla-delta", dtype=torch.bfloat16)
 tokenizer = AutoTokenizer.from_pretrained(path)
-mtp_state = fetch_hub_tensors("{ORIGINAL_ID}", "mtp.")
-mtp_gib = sum(t.numel() * t.element_size() for t in mtp_state.values()) / 2**30
-model.attach_mtp(mtp_state)
-del mtp_state
-report = quantize_linears(model, group_size=128)  # 이미 int8인 Linear와 lm_head는 건너뛴다: MTP head만 바뀐다
-print("MTP head:", report.summary())
+assert model.mtp is not None, "MTP가 포함된 checkpoint와 이를 지원하는 infer-opt 코드가 필요합니다"
 print("합친 투영 묶음", model.fuse_projections())
 n_int8 = sum(isinstance(m, Int8Linear) for m in model.modules())
-print(f"MTP tensor {{mtp_gib:.2f}} GiB 읽음, 불러오기 {{time.perf_counter() - t0:.0f}} s, Int8Linear {{n_int8}}개, "
+print(f"MTP 포함, 불러오기 {{time.perf_counter() - t0:.0f}} s, Int8Linear {{n_int8}}개, "
       f"GPU 메모리 {{torch.cuda.memory_allocated() / 2**30:.2f}} GiB")
 """),
         md(f"""## 4. Decode 준비
@@ -258,8 +248,9 @@ report(r)"""),
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ref", required=True, help="infer-opt git commit the notebook checks out")
+    parser.add_argument("--model-revision", required=True, help="HF commit of the bundled MTP checkpoint")
     args = parser.parse_args()
-    nb = nbformat.v4.new_notebook(cells=cells(args.ref))
+    nb = nbformat.v4.new_notebook(cells=cells(args.ref, args.model_revision))
     nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
     nb.metadata["accelerator"] = "GPU"
     nb.metadata["colab"] = {"gpuType": "A100", "provenance": []}

@@ -1005,6 +1005,8 @@ class Qwen3_5ForCausalLM(nn.Module):
         Tensors are read straight onto ``device`` with the dtypes they were saved with (int8 weights, bf16 scales and
         the rest), unless ``dtype`` is given: then every floating-point tensor is cast to it and the int8 weights stay
         int8. ``dtype=torch.float16`` is for GPUs without bf16 (Turing: T4, RTX 20xx).
+        An MTP head is restored automatically when ``quantization.json`` records ``mtp: true``. Older checkpoints
+        without this flag retain their original target-only behavior, even if config.json describes an MTP layer.
         """
         from safetensors import safe_open
 
@@ -1014,12 +1016,14 @@ class Qwen3_5ForCausalLM(nn.Module):
         config = Qwen3_5TextConfig.from_json(path / "config.json")
         spec = json.loads((path / QUANTIZATION_FILE).read_text())
         with torch.device("meta"):
-            model = cls(config)
+            model = cls(config, mtp=spec.get("mtp", False))
         prepare_quantized(model, spec)
         state = {}
         for shard in sorted(path.glob("model-int8-*.safetensors")):
             with safe_open(shard, framework="pt", device=str(device)) as f:
                 for key in f.keys():
+                    if key in state:
+                        raise ValueError(f"duplicate checkpoint tensor: {key}")
                     tensor = f.get_tensor(key)
                     state[key] = tensor.to(dtype) if dtype is not None and tensor.is_floating_point() else tensor
         for name, source in spec["tied"].items():
