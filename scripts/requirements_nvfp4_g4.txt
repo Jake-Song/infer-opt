@@ -1,0 +1,9 @@
+# Keep Colab's SM120-capable torch 2.11.0+cu130 installation.
+flashinfer-python==0.6.6
+nvidia-modelopt==0.47.0
+flash-linear-attention==0.6.0
+transformers==5.20.2
+datasets==4.8.5
+safetensors==0.8.0
+huggingface_hub==1.33.0
+pytest>=8

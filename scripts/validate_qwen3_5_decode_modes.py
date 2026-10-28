@@ -48,7 +48,7 @@ DEFAULT_CONFIGS = (
     "fla:sliced-eager,fla:cudagraph,fla:compile-reduce-overhead"
 )
 
-QUANT_LEVELS = ("bf16", "int8", "int8+lm_head")
+QUANT_LEVELS = ("bf16", "int8", "int8+lm_head", "nvfp4")
 
 
 def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
@@ -57,6 +57,7 @@ def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
         mine = [r for r in rows if not r.get("summary") and (r["kernels"], r["mode"], r.get("quant", "bf16")) == (kernels, mode, quant)]
         kls = [r["decode_kl_vs_hf"] for r in mine if "decode_kl_vs_hf" in r]
         return {"prompts": len(mine), "mean_kl": sum(kls) / len(kls) if kls else None,
+                "evaluated_prompts": len(kls), "prompt_names": sorted(r["prompt"] for r in mine),
                 "strong_mismatches": sum(r["tf_mismatch_strong"] for r in mine),
                 "near_tie_mismatches": sum(r["tf_mismatch_near_tie"] for r in mine),
                 "free_run_identical": sum(r["gen_first_mismatch"] is None for r in mine)}
@@ -69,10 +70,17 @@ def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
         if base["mean_kl"] is None or got["mean_kl"] is None:
             gates.append({"config": f"{kernels}:{mode}:{quant}", "error": "no bf16 control with the same kernels:mode"})
             continue
-        ratio = got["mean_kl"] / base["mean_kl"]
+        complete = (got["prompts"] == base["prompts"] and got["prompts"] > 0
+                    and got["evaluated_prompts"] == got["prompts"]
+                    and base["evaluated_prompts"] == base["prompts"]
+                    and got["prompt_names"] == base["prompt_names"]
+                    and not any(r.get("error") for r in rows
+                                if (r.get("kernels"), r.get("mode"), r.get("quant")) == (kernels, mode, quant)))
+        ratio = got["mean_kl"] / base["mean_kl"] if base["mean_kl"] > 0 else float("inf")
         gates.append({"config": f"{kernels}:{mode}:{quant}", "bf16": base, "quantized": got, "kl_ratio": ratio,
                       "pass_kl": ratio <= kl_ratio, "pass_strong": got["strong_mismatches"] == 0,
-                      "pass": ratio <= kl_ratio and got["strong_mismatches"] == 0})
+                      "complete": complete,
+                      "pass": complete and ratio <= kl_ratio and got["strong_mismatches"] == 0})
     return gates
 
 
@@ -91,6 +99,8 @@ def main() -> None:
     parser.add_argument("--fuse", action="store_true", help="model.fuse_projections() for every config (bf16 too)")
     parser.add_argument("--kl-ratio", type=float, default=2.0, help="gate: quantized mean KL / bf16 mean KL")
     parser.add_argument("--prompts", default=None)
+    parser.add_argument("--calibration-samples", type=int, default=128)
+    parser.add_argument("--nvfp4-from", default=None, help="Validate a native packed checkpoint instead of recalibrating")
     parser.add_argument("--out", default="decode_modes.json")
     args = parser.parse_args()
 
@@ -153,7 +163,21 @@ def main() -> None:
             torch._dynamo.reset()
             gc.collect()
             torch.cuda.empty_cache()
-        if quant != quant_done and args.int8_from:
+        if quant != quant_done and quant == "nvfp4":
+            from infer_opt.nvfp4 import quantize_nvfp4
+            from bench_qwen3_5_nvfp4 import calibration_inputs
+            del ours
+            gc.collect()
+            torch.cuda.empty_cache()
+            if args.nvfp4_from:
+                ours = Qwen3_5ForCausalLM.from_quantized_dir(args.nvfp4_from, device="cuda")
+                quant_reports[quant] = {"from": args.nvfp4_from}
+            else:
+                ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, device="cuda", dtype=dtype)
+                ours.fuse_projections()
+                quant_reports[quant] = quantize_nvfp4(ours, calibration_inputs(tok, out.parent, args.calibration_samples))
+            quant_done = quant
+        elif quant != quant_done and args.int8_from:
             if quant != "int8":
                 raise SystemExit("--int8-from provides the int8 config only")
             kernels_now = ours.config.kernels

@@ -1,0 +1,30 @@
+{
+  "reload_logits_identical": true,
+  "weight_bytes": 19253533552,
+  "source_sha256": {
+    "infer_opt/sampling.py": "3af4f2bc9d37092b6cf381095357f49281d284883a0f7c76208186d9917d3d38",
+    "infer_opt/inductor_choices.py": "091a11a0ff80d2b2790f6c86e3639c4c04049743579dedda4cff4ee67322446b",
+    "infer_opt/cli.py": "efbcb351e0990dfd2fe5b0163a2e894b5fbafe62837c7f00feb4cf72dc96efb3",
+    "infer_opt/speculative.py": "02ec33827d9b45a019114a0474a832a17f2b5f9ea923592634e3f8c020cb3ca0",
+    "infer_opt/__init__.py": "a489024701b35d3c2aeb1ecd06f1ca8663e194d24bd2f3a34b1f0fe6629e3482",
+    "infer_opt/opprofile.py": "a404929b70ad6ae4e7fca67846e66a025addda743174dd59db9778f67b5d0907",
+    "infer_opt/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "infer_opt/profiling.py": "b3ed2c6f6670e5b29ecf940effe6d24e260ef79193440fb9fca7b8c1ee81136d",
+    "infer_opt/roofline.py": "78f364b7b3b2ac292540af46d9f9217e41d53e8611ca1fb308a8157df57b5374",
+    "infer_opt/cache.py": "67b1c95198323098a9ff926acf6b4711e3621ca23fb3c210990ba32a1be23a66",
+    "infer_opt/model.py": "65d6e497a81100368dc3d2aabfbd2c03f381690d7faed36263080ec83b2f2455",
+    "infer_opt/hub.py": "073aed00e4610a2979c7d165cb207eb12bc1567566f648bd00fc2227c72d1497",
+    "infer_opt/quant.py": "e76682a5c08be049cb73ca59dc14274c80cd70be1df68eeff2d2d2bc14c9011e",
+    "infer_opt/strategies.py": "82a32998b6b8a8f16747fd8cd7b3348f15c90f53a232eb7ffdd19e3d4f66c616",
+    "infer_opt/regions.py": "6745e4e87fabe81479f8b75618316e92beaa92701a96da3aabeeff4b5d6c761f",
+    "infer_opt/config.py": "62baae8c94c3ef44292dfa3017520fbc292ed6062af30a2aaa8c7a055e14ddf6",
+    "infer_opt/nvfp4.py": "7630a56f6830f48a2ebea6a831bb38f964eee3f5b0de604e441e507474f07820",
+    "infer_opt/qwen3_5.py": "5aa989ab8feccae891933a1924414c5833bd3e5475e153c8334107e6c7c32fc0",
+    "infer_opt/runner.py": "78a360d49e3d9e856c85c1360c6fbe5edb5e39a2f5e3a5a3bd0109f5e006494e",
+    "infer_opt/baseline.py": "1447062285821536132227acc24a9190b3fe05c598f20f7b974a569b8bbd1e60",
+    "infer_opt/gated_delta_kernels.py": "cae95069223238b668f58ca793ada4388c1d18b20e3ac9e54ed11580f528142f",
+    "infer_opt/quant_kernels.py": "d29dcd86150bc9933c3bbaf62b4b69522b5cae60972624ca470aaa8afe2e1961",
+    "infer_opt/paged.py": "4390a3a8d3bea47605f588eb7d09f1feafd71fb7c983d8190192e67371682677",
+    "infer_opt/attention_kernels.py": "655eb74682227484b48fd3015cb116ff3ad98450e3cdcff5f5db14689b5485b6"
+  }
+}

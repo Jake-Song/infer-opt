@@ -1000,7 +1000,7 @@ class Qwen3_5ForCausalLM(nn.Module):
     def from_quantized_dir(
         cls, path: str | Path, device="cpu", kernels: str = "torch", dtype: torch.dtype | None = None
     ) -> "Qwen3_5ForCausalLM":
-        """Load a checkpoint written by :func:`infer_opt.quant.save_quantized` (``config.json`` next to it).
+        """Load an infer-opt INT8 or native NVFP4 checkpoint (``config.json`` next to it).
 
         Tensors are read straight onto ``device`` with the dtypes they were saved with (int8 weights, bf16 scales and
         the rest), unless ``dtype`` is given: then every floating-point tensor is cast to it and the int8 weights stay
@@ -1015,18 +1015,25 @@ class Qwen3_5ForCausalLM(nn.Module):
         path = Path(path)
         config = Qwen3_5TextConfig.from_json(path / "config.json")
         spec = json.loads((path / QUANTIZATION_FILE).read_text())
+        if spec.get("format") == "infer_opt.nvfp4" and dtype not in (None, torch.bfloat16):
+            raise ValueError("native NVFP4 checkpoints currently require BF16 activations")
         with torch.device("meta"):
             model = cls(config, mtp=spec.get("mtp", False))
-        prepare_quantized(model, spec)
+        native = spec.get("format") == "infer_opt.nvfp4"
+        if native:
+            from infer_opt.nvfp4 import prepare_nvfp4
+            prepare_nvfp4(model, spec)
+        else:
+            prepare_quantized(model, spec)
         state = {}
-        for shard in sorted(path.glob("model-int8-*.safetensors")):
+        for shard in sorted(path.glob("model-nvfp4-*.safetensors" if native else "model-int8-*.safetensors")):
             with safe_open(shard, framework="pt", device=str(device)) as f:
                 for key in f.keys():
                     if key in state:
                         raise ValueError(f"duplicate checkpoint tensor: {key}")
                     tensor = f.get_tensor(key)
-                    state[key] = tensor.to(dtype) if dtype is not None and tensor.is_floating_point() else tensor
-        for name, source in spec["tied"].items():
+                    state[key] = tensor.to(dtype) if dtype is not None and tensor.is_floating_point() and not native else tensor
+        for name, source in spec.get("tied", {}).items():
             state[name] = state[source]
         model.load_state_dict(state, strict=True, assign=True)
         # from_pretrained_dir casts the whole model, the rope buffer included; match it so the logits are the same

@@ -1,0 +1,11 @@
+{
+  "session": "nvfp4-84658f451b",
+  "budget_minutes": 60.0,
+  "status": "stopped_by_user",
+  "stage": "nvfp4",
+  "checkpoint_repo": "Jakemu/Qwen3.5-27B-nvfp4-mtp",
+  "checkpoint_revision": "ae669958096ec926a3229601dc854cb6dba71f86",
+  "reason": "User requested finalization; preserve completed measurements",
+  "stop_returncode": 0,
+  "elapsed_seconds": 1182.8712887240017
+}

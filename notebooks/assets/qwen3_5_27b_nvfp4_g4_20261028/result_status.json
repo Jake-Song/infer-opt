@@ -1,0 +1,13 @@
+{
+  "accuracy_passed": false,
+  "accuracy_status": "not_evaluated",
+  "mtp_strong_mismatches": 7,
+  "mtp_cases": 11,
+  "smoke_shapes": 0,
+  "export": {},
+  "measured_precisions": [
+    "nvfp4"
+  ],
+  "published_repo": null,
+  "published_commit": null
+}

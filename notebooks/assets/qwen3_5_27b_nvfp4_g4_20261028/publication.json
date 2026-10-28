@@ -1,0 +1,7 @@
+{
+  "status": "running",
+  "stage": "bf16",
+  "model_revision": "fc05daec18b0a78c049392ed2e771dde82bdf654",
+  "published_repo": "Jakemu/Qwen3.5-27B-nvfp4-mtp",
+  "published_commit": "c94aa9d4e6f6a738c2bb06cc6aa51cbb783c15e3"
+}

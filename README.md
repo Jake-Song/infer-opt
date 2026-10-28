@@ -133,6 +133,41 @@ checkpoint in fp16 (`from_quantized_dir(..., dtype=torch.float16)`; Turing has n
 T4's memory; the int8 one decodes at about 42-44 ms/token there. On an A100, the fp16 run of this checkpoint was as close to
 the Hugging Face bf16 model as the bf16 run (mean decode KL 0.00056 vs 0.00071-0.00077, no confident mismatch).
 
+### Qwen3.5-27B native NVFP4 on Colab G4
+
+An experimental native NVFP4 W4A4 path is available for **RTX PRO 6000 Blackwell
+(SM120)** in `infer_opt.nvfp4`. It uses FlashInfer 0.6.6's explicit CUTLASS backend,
+with 16-value FP8 block scales and calibrated FP32 global scales. Large prefill
+inputs are tiled at 128 rows because an untiled large-M CUDA Graph check failed.
+The MTP head remains group-128 INT8, and lm_head/embeddings/small gates remain BF16.
+This is a custom infer-opt format, not a Transformers or vLLM checkpoint. It loads
+through `Qwen3_5ForCausalLM.from_quantized_dir`; original INT8 checkpoints retain
+their existing loader behavior. CPU installs do not require FlashInfer or ModelOpt.
+
+Run the bounded G4 experiment (the CLI must already be authenticated):
+
+```bash
+python scripts/run_qwen3_5_nvfp4_colab.py --output experiments/nvfp4/my-run --budget-minutes 120
+```
+
+The runner verifies native GEMM/compile/graph correctness before downloading 27B,
+calibrates on 128 independent UltraChat conversations, exports and reloads a packed
+checkpoint, and compares BF16/INT8/NVFP4 plus MTP. It records revisions, calibration
+hashes, repeated timings and the existing HF accuracy gate. An explicitly requested
+`--publish-repo user/repo` publishes the experimental artifact after the reload
+check; the initial card identifies the full accuracy/performance evaluation as
+pending. New sessions are always stopped; `--session` explicitly transfers ownership
+of an existing session to the runner for cleanup. Predicted speedups are not measured
+results, and failed or missing quality checks do not establish an improvement.
+
+The experimental checkpoint is [Jakemu/Qwen3.5-27B-nvfp4-mtp](https://huggingface.co/Jakemu/Qwen3.5-27B-nvfp4-mtp):
+17.93 GiB including MTP, 256 native NVFP4 target Linears, with identical saved/reloaded
+final-position logits on the short release smoke prompt. The G4 native kernel suite
+passed 18 shape cases. Full quality and performance evaluation are separate from
+these storage/kernel checks; artifacts are under `notebooks/assets/qwen3_5_27b_nvfp4_g4_20261028/`.
+Early NVFP4 MTP tests found same-prefix strong top-1 mismatches against one-token
+decoding. Its MTP timing is diagnostic; greedy equivalence has not been established.
+
 ### Qwen3.5-27B weight-only INT8 on Colab
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jake-Song/infer-opt/blob/main/notebooks/qwen3_5_27b_int8_colab.ipynb)
