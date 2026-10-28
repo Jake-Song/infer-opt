@@ -1,0 +1,151 @@
+{
+  "precision": "bf16",
+  "args": {
+    "precision": "bf16",
+    "weights": "/root/.cache/huggingface/hub/models--Qwen--Qwen3.5-27B/snapshots/fc05daec18b0a78c049392ed2e771dde82bdf654",
+    "nvfp4_from": null,
+    "export": null,
+    "export_only": false,
+    "smoke": false,
+    "out": "/content/nvfp4-d364828a34/bf16",
+    "new_tokens": 256,
+    "ks": [],
+    "mode": "compile-reduce-overhead",
+    "warmup": 3,
+    "repeats": 5,
+    "calibration_samples": 128
+  },
+  "prompt_tokens": {
+    "chat_long": 32,
+    "code_1k": 1000,
+    "prose_1k": 1057,
+    "math": 43,
+    "korean": 20
+  },
+  "timing_scope": "decode excludes prefill and first token; MTP includes all emitted round tokens, including final overshoot",
+  "target_precision": "bf16",
+  "mtp_precision": "int8-g128",
+  "lm_head_precision": "bf16",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu130",
+  "rows": [
+    {
+      "prompt": "chat_long",
+      "method": "plain",
+      "median_ms": 35.92583237647048,
+      "min_ms": 35.92566872941158,
+      "max_ms": 35.925936454901496,
+      "samples_ms": [
+        35.92583237647048,
+        35.92574574509747,
+        35.925936454901496,
+        35.925903470587954,
+        35.92566872941158
+      ],
+      "tokens_per_second": 27.835124027771922,
+      "peak_gib": 50.75387144088745
+    },
+    {
+      "prompt": "code_1k",
+      "method": "plain",
+      "median_ms": 36.06778746666618,
+      "min_ms": 36.06734225098027,
+      "max_ms": 36.06803170196055,
+      "samples_ms": [
+        36.06778746666618,
+        36.06787974117651,
+        36.06734225098027,
+        36.06763730980425,
+        36.06803170196055
+      ],
+      "tokens_per_second": 27.725570938450247,
+      "peak_gib": 51.21142339706421
+    },
+    {
+      "prompt": "prose_1k",
+      "method": "plain",
+      "median_ms": 36.074575305881844,
+      "min_ms": 36.07423895686242,
+      "max_ms": 36.07508016862709,
+      "samples_ms": [
+        36.07508016862709,
+        36.074575305881844,
+        36.07423895686242,
+        36.07449507058828,
+        36.07483099215678
+      ],
+      "tokens_per_second": 27.720354058803103,
+      "peak_gib": 51.23774576187134
+    },
+    {
+      "prompt": "math",
+      "method": "plain",
+      "median_ms": 35.92711981176513,
+      "min_ms": 35.92650679215694,
+      "max_ms": 35.92734522352942,
+      "samples_ms": [
+        35.92734522352942,
+        35.92713373333365,
+        35.92711981176513,
+        35.92650679215694,
+        35.92694377254845
+      ],
+      "tokens_per_second": 27.83412656620829,
+      "peak_gib": 50.75906991958618
+    },
+    {
+      "prompt": "korean",
+      "method": "plain",
+      "median_ms": 35.924662050980686,
+      "min_ms": 35.92435369803966,
+      "max_ms": 35.92470298823511,
+      "samples_ms": [
+        35.92470298823511,
+        35.92468730588218,
+        35.924662050980686,
+        35.92435369803966,
+        35.92436130588259
+      ],
+      "tokens_per_second": 27.836030818630945,
+      "peak_gib": 50.74872922897339
+    }
+  ],
+  "prefill": [
+    {
+      "tokens": 512,
+      "samples_ms": [
+        105.82073000000491,
+        105.85280000009334,
+        105.84044900019762,
+        105.901829000004,
+        105.86547000002611
+      ],
+      "median_ms": 105.85280000009334,
+      "scope": "eager model forward including lm_head, excluding cache allocation and tokenization"
+    },
+    {
+      "tokens": 1024,
+      "samples_ms": [
+        190.0658370000201,
+        190.22071800009144,
+        189.82115800008614,
+        190.27385700019295,
+        189.88654700001462
+      ],
+      "median_ms": 190.0658370000201,
+      "scope": "eager model forward including lm_head, excluding cache allocation and tokenization"
+    },
+    {
+      "tokens": 4096,
+      "samples_ms": [
+        778.0510430000049,
+        777.1379230000548,
+        779.3461019998631,
+        779.0429429999222,
+        778.2126729998708
+      ],
+      "median_ms": 778.2126729998708,
+      "scope": "eager model forward including lm_head, excluding cache allocation and tokenization"
+    }
+  ]
+}

@@ -59,3 +59,9 @@ were stopped. Native checkpoint download from the Hub and generation succeeded.
 
 Raw partial results are `nvfp4_measurements.json` and `bf16_measurements.json`.
 `report.md` and `result_status.json` distinguish measured and missing evidence.
+
+## Completed follow-up
+
+The [completed same-session evaluation](../qwen3_5_27b_nvfp4_g4_completion_20261028/README.md)
+finishes the INT8 comparison, full model accuracy gate, all MTP cases, prefill and
+Linear profiling. The partial measurements above remain the historical record.

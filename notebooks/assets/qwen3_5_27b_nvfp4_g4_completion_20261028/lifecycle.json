@@ -1,0 +1,13 @@
+{
+  "session": "nvfp4-d364828a34",
+  "budget_minutes": 120.0,
+  "status": "finished",
+  "stop_returncode": 0,
+  "elapsed_seconds": 3841.4417053790003,
+  "stage": "nvfp4",
+  "checkpoint_repo": "Jakemu/Qwen3.5-27B-nvfp4-mtp",
+  "checkpoint_revision": "08a9f4929e2033ddd5e81f0ab8b31072e7437e1a",
+  "int8_revision": "e41d469d00ef99639f592c1cfc5ab6e0a9db75bf",
+  "model_revision": "fc05daec18b0a78c049392ed2e771dde82bdf654",
+  "supervisor_note": "Auxiliary and original local supervisors overlapped. Worker finished and final ZIP was retrieved before the session was terminated. The late local retrieval error is preserved in supervisor_race.json."
+}

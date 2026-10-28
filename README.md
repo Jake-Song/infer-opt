@@ -150,7 +150,22 @@ Run the bounded G4 experiment (the CLI must already be authenticated):
 python scripts/run_qwen3_5_nvfp4_colab.py --output experiments/nvfp4/my-run --budget-minutes 120
 ```
 
-The runner verifies native GEMM/compile/graph correctness before downloading 27B,
+To evaluate the existing published checkpoint without repeating calibration/export:
+
+```bash
+python scripts/run_qwen3_5_nvfp4_colab.py \
+  --checkpoint-repo Jakemu/Qwen3.5-27B-nvfp4-mtp \
+  --output experiments/nvfp4/checkpoint-evaluation --budget-minutes 120
+```
+
+This mode profiles the native target Linears, runs the nine-prompt HF accuracy gate
+against BF16 and the published INT8 checkpoint, then measures all three precisions
+on the same G4. Decode uses five prompts, three warmups and five repetitions of
+256 output tokens; INT8/NVFP4 additionally run MTP k=1/2/3. The prefill sweep uses
+512/1024/4096 tokens. Prefill includes the model forward and lm_head, excluding
+tokenization and cache allocation; it is not a serving TTFT measurement.
+
+Without `--checkpoint-repo`, the runner verifies native GEMM/compile/graph correctness before downloading 27B,
 calibrates on 128 independent UltraChat conversations, exports and reloads a packed
 checkpoint, and compares BF16/INT8/NVFP4 plus MTP. It records revisions, calibration
 hashes, repeated timings and the existing HF accuracy gate. An explicitly requested
@@ -159,14 +174,46 @@ check; the initial card identifies the full accuracy/performance evaluation as
 pending. New sessions are always stopped; `--session` explicitly transfers ownership
 of an existing session to the runner for cleanup. Predicted speedups are not measured
 results, and failed or missing quality checks do not establish an improvement.
+While the worker runs, the supervisor retrieves a partial artifact snapshot every
+minute; a lost runtime leaves the latest retrieved evidence in the output directory.
+
+For the accuracy ablation with MLP-only NVFP4, run:
+
+```bash
+python3 scripts/run_qwen3_5_nvfp4_colab.py --mlp-only \
+  --output experiments/nvfp4/mlp-only --budget-minutes 120
+```
+
+This rebuilds from the original BF16 weights, pins the same 128 calibration token
+sequences, keeps 128 attention projections in BF16, and packs 128 MLP Linears as
+native W4A4. It checks save/reload and compares BF16, full NVFP4 and MLP-only NVFP4
+on all nine accuracy prompts in one run. The HF reference uses cached forwards for
+both tokens and their mismatch margins (`hf-cached-greedy-v2`); older full-sequence
+reference KL values are a different protocol. This mode performs no throughput or
+standalone MTP-head benchmark.
 
 The experimental checkpoint is [Jakemu/Qwen3.5-27B-nvfp4-mtp](https://huggingface.co/Jakemu/Qwen3.5-27B-nvfp4-mtp):
 17.93 GiB including MTP, 256 native NVFP4 target Linears, with identical saved/reloaded
 final-position logits on the short release smoke prompt. The G4 native kernel suite
 passed 18 shape cases. Full quality and performance evaluation are separate from
 these storage/kernel checks; artifacts are under `notebooks/assets/qwen3_5_27b_nvfp4_g4_20261028/`.
-Early NVFP4 MTP tests found same-prefix strong top-1 mismatches against one-token
-decoding. Its MTP timing is diagnostic; greedy equivalence has not been established.
+The [completed same-session G4 evaluation](notebooks/assets/qwen3_5_27b_nvfp4_g4_completion_20261028/README.md)
+measured all 45 decode cases and nine prefill cases. Plain decode was **35.92–36.08
+ms/token BF16, 20.89–20.92 INT8, and 22.44–22.46 NVFP4**. The current native NVFP4
+path was about 7.4% slower than INT8. The full nine-prompt HF accuracy gate **failed
+for NVFP4** (mean KL 51.8x the BF16 control, 30 strong teacher-forced mismatches);
+INT8 passed (1.02x, zero strong mismatches). The BF16 control itself had one strong
+mismatch on prose. All 15 NVFP4 MTP configurations diverged from plain greedy;
+MTP timings are diagnostic and do not establish a quality-preserving speedup.
+Raw repeated measurements, accuracy rows, kernel profile and cleanup evidence are
+preserved with that report.
+
+The [MLP-only follow-up](notebooks/assets/qwen3_5_27b_nvfp4_mlp_g4_20261028/README.md)
+kept 128 attention projections in BF16 and quantized only 128 MLP Linears. Under
+the corrected cached-HF reference, mean KL fell from 0.04707 to 0.02373 and strong
+mismatches from 29 to 12, but the accuracy gate still failed (14.56x the BF16 KL).
+Weight files grew to 27.589 GiB. Both full and MLP-only checkpoints were evaluated
+with the same new reference in that run; the older reference's ratios differ.
 
 ### Qwen3.5-27B weight-only INT8 on Colab
 

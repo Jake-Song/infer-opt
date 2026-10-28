@@ -1,0 +1,99 @@
+{
+  "scope": "Post-hoc analysis of saved measurements and source; no new GPU ablation performed",
+  "total_teacher_forced_tokens": 1728,
+  "teacher_forced_mismatches": 79,
+  "nvfp4_modules": 256,
+  "nonpositive_or_nonfinite_saved_scales": 0,
+  "prompts": [
+    {
+      "prompt": "short",
+      "input_tokens": 5,
+      "bf16_kl": 0.00045785377733409405,
+      "nvfp4_kl": 0.02428414672613144,
+      "kl_ratio": 53.03908786671732,
+      "strong_mismatches": 3,
+      "near_tie_mismatches": 3,
+      "first_free_run_mismatch_zero_based": 40
+    },
+    {
+      "prompt": "hello",
+      "input_tokens": 1,
+      "bf16_kl": null,
+      "nvfp4_kl": null,
+      "kl_ratio": null,
+      "strong_mismatches": 2,
+      "near_tie_mismatches": 10,
+      "first_free_run_mismatch_zero_based": 2
+    },
+    {
+      "prompt": "korean",
+      "input_tokens": 20,
+      "bf16_kl": 0.00041212435462512076,
+      "nvfp4_kl": 0.03696921467781067,
+      "kl_ratio": 89.70402807530957,
+      "strong_mismatches": 5,
+      "near_tie_mismatches": 15,
+      "first_free_run_mismatch_zero_based": 1
+    },
+    {
+      "prompt": "math",
+      "input_tokens": 43,
+      "bf16_kl": 0.00034402983146719635,
+      "nvfp4_kl": 0.15284974873065948,
+      "kl_ratio": 444.2921361755046,
+      "strong_mismatches": 0,
+      "near_tie_mismatches": 2,
+      "first_free_run_mismatch_zero_based": 31
+    },
+    {
+      "prompt": "chat",
+      "input_tokens": 23,
+      "bf16_kl": 0.00041777431033551693,
+      "nvfp4_kl": 0.0547453835606575,
+      "kl_ratio": 131.0405695282967,
+      "strong_mismatches": 3,
+      "near_tie_mismatches": 7,
+      "first_free_run_mismatch_zero_based": 71
+    },
+    {
+      "prompt": "chat_long",
+      "input_tokens": 32,
+      "bf16_kl": 0.0004844820068683475,
+      "nvfp4_kl": 0.03506632521748543,
+      "kl_ratio": 72.37900421555656,
+      "strong_mismatches": 4,
+      "near_tie_mismatches": 7,
+      "first_free_run_mismatch_zero_based": 9
+    },
+    {
+      "prompt": "prose_1k",
+      "input_tokens": 1057,
+      "bf16_kl": 0.00013473971921484917,
+      "nvfp4_kl": 0.003245150437578559,
+      "kl_ratio": 24.084586612534093,
+      "strong_mismatches": 3,
+      "near_tie_mismatches": 0,
+      "first_free_run_mismatch_zero_based": 152
+    },
+    {
+      "prompt": "code_1k",
+      "input_tokens": 1000,
+      "bf16_kl": 0.004931777715682983,
+      "nvfp4_kl": 0.06285915523767471,
+      "kl_ratio": 12.74573974365947,
+      "strong_mismatches": 3,
+      "near_tie_mismatches": 2,
+      "first_free_run_mismatch_zero_based": 30
+    },
+    {
+      "prompt": "code_1_5k",
+      "input_tokens": 1500,
+      "bf16_kl": 0.0001760802697390318,
+      "nvfp4_kl": 0.01117732748389244,
+      "kl_ratio": 63.47859132916104,
+      "strong_mismatches": 7,
+      "near_tie_mismatches": 3,
+      "first_free_run_mismatch_zero_based": 0
+    }
+  ]
+}

@@ -19,10 +19,10 @@ from bench_qwen3_5_spec_decode import baseline, speculative, PROMPTS
 from validate_qwen3_5_hf import build_prompts, CODE_PROMPT_SOURCE
 
 
-def calibration_inputs(tok, out: Path, samples=128):
+def calibration_inputs(tok, out: Path, samples=128, revision=None):
     from datasets import load_dataset
     from huggingface_hub import HfApi
-    revision = HfApi().dataset_info("HuggingFaceH4/ultrachat_200k").sha
+    revision = revision or HfApi().dataset_info("HuggingFaceH4/ultrachat_200k").sha
     ds = load_dataset("HuggingFaceH4/ultrachat_200k", split="train_sft", revision=revision, streaming=True)
     ids, hashes = [], []
     for row in ds:
@@ -125,7 +125,8 @@ def measure(args):
     if args.precision == "int8":
         quant = quantize_linears(model, group_size=128).summary()
     elif args.precision == "nvfp4" and not args.nvfp4_from:
-        quant = quantize_nvfp4(model, calibration_inputs(tok, args.out, args.calibration_samples))
+        quant = quantize_nvfp4(model, calibration_inputs(tok, args.out, args.calibration_samples,
+                                                        revision=args.calibration_revision), scope=args.nvfp4_scope)
     (args.out / "quantization.json").write_text(json.dumps(quant, indent=2))
     if args.export:
         import shutil
@@ -156,10 +157,14 @@ def measure(args):
     prompts = {n: tok(texts[n], return_tensors="pt").input_ids.cuda() for n in PROMPTS}
     max_len = max(t.shape[1] for t in prompts.values()) + args.new_tokens + 16
     result = {"precision": args.precision, "args": {k:str(v) if isinstance(v, Path) else v for k,v in vars(args).items()},
+              "prompt_tokens": {name:ids.shape[1] for name,ids in prompts.items()},
+              "timing_scope": "decode excludes prefill and first token; MTP includes all emitted round tokens, including final overshoot",
               "target_precision": args.precision, "mtp_precision": "int8-g128", "lm_head_precision": "bf16",
               "gpu":torch.cuda.get_device_name(), "torch":str(torch.__version__), "rows":[], "prefill":[]}
     def save():
-        (args.out / "measurements.json").write_text(json.dumps(result, indent=2))
+        temporary=args.out / "measurements.tmp"
+        temporary.write_text(json.dumps(result, indent=2))
+        temporary.replace(args.out / "measurements.json")
     import torch._inductor.config as ic
     ic.max_autotune = True
     ic.coordinate_descent_tuning = True
@@ -203,6 +208,8 @@ def measure(args):
         torch.cuda.empty_cache()
     for length in [512,1024,4096]:
         ids = tok((texts["prose_1k"] * 8), return_tensors="pt").input_ids[:, :length].cuda()
+        if ids.shape[1] != length:
+            raise ValueError(f"prefill requires {length} tokens, got {ids.shape[1]}")
         values=[]
         for i in range(args.warmup + args.repeats):
             cache=model.new_cache(1,length+8)
@@ -212,7 +219,8 @@ def measure(args):
             torch.cuda.synchronize()
             if i>=args.warmup:
                 values.append((time.perf_counter()-t)*1000)
-        result["prefill"].append({"tokens":length,"samples_ms":values,"median_ms":statistics.median(values)})
+        result["prefill"].append({"tokens":ids.shape[1],"samples_ms":values,"median_ms":statistics.median(values),
+                                  "scope":"eager model forward including lm_head, excluding cache allocation and tokenization"})
         save()
     return result
 
@@ -233,6 +241,8 @@ def main():
     p.add_argument("--warmup",type=int,default=3)
     p.add_argument("--repeats",type=int,default=5)
     p.add_argument("--calibration-samples",type=int,default=128)
+    p.add_argument("--nvfp4-scope",choices=["all","mlp"],default="all")
+    p.add_argument("--calibration-revision",default=None)
     a=p.parse_args()
     a.out.mkdir(parents=True,exist_ok=True)
     require_sm120()

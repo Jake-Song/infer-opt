@@ -454,3 +454,57 @@ state만 돌려주므로, 검증에 필요한 token마다의 state를 남기도�
 `notebooks/assets/qwen3_5_27b_int8_mtp_a100_20261025/`에 있다. 이 실행은 checkpoint 포장과 CUDA Graph 경로의 동등성 검증이다.
 BF16 Transformers 정확도 gate와 throughput benchmark는 다시 하지 않았다. notebook의 compile 모드는 schema·구문·revision pin을
 정적으로 검사했으며 notebook 전체를 실행한 것은 아니다. 64 token 밖의 출력이나 다른 prompt의 동률 반올림까지 보장하지 않는다.
+
+## 2026-10-28 — G4 NVFP4 실험 비교·검증 완료
+
+RTX PRO 6000 Blackwell Server Edition SM120(94.97 GiB), torch 2.11.0+cu130 한 세션에서
+BF16/INT8/NVFP4를 비교했다. Decode 45 case, prefill 9 case(512/1024/4096 토큰), target Linear 256개
+프로파일을 완료했다. Decode는 256개 출력 토큰, warmup 3회와 측정 5회이며 prefill·첫 토큰 시간은 제외한다.
+
+- Plain decode 중앙값 범위: BF16 **35.925–36.075 ms/token**, INT8 **20.894–20.918**, NVFP4 **22.436–22.463**.
+  현재 NVFP4 구현은 INT8보다 약 7.4% 느리다.
+- 전체 모델 HF 정확도 gate: INT8 통과(KL/BF16 **1.023**, strong mismatch **0**), NVFP4 실패(**51.801**, **30**).
+  9개 prompt의 최대 192개 생성 토큰을 검사했다. BF16 대조군도 prose_1k에서 strong mismatch 1개가 있었다.
+- `hello`는 1토큰 입력이라 prompt decode KL 구간이 없다. 이를 미완료로 처리하던 집계 오류를 수정했다.
+  KL은 비교 가능한 8개 prompt에서 계산하고 teacher-forced/free-run은 9개 모두 포함한다. 기존 임계값은 유지했다.
+- NVFP4 MTP k=1/2/3 × 5 prompt 모두 plain과 출력이 달랐다. Same-prefix 최대 64개 위치 진단의
+  strong mismatch 합은 7(k별 중복 포함)이다. INT8은 6/15개가 갈라졌고 진단 strong mismatch는 0이었다.
+  MTP 헤드 단독 검증은 사용자 요청대로 제외했다.
+- 첫 실행은 세션 소실로 최종 자료를 회수하지 못했다. 실행기에 1분 간격 partial snapshot 회수와 세션 소실 감지를
+  추가하고 JSON을 원자적으로 저장했다. 두 번째 실행의 모든 측정 파일은 회수한 최종 ZIP과 바이트가 같다.
+- 종료 시 로컬 감독 프로세스 두 개의 회수 시도가 겹친 오류는 별도 보존했다. 원격 worker는 finished였고,
+  최종 자료 회수·세션 종료 후 서버 active session **0개**를 확인했다.
+- 관련 CPU 회귀 테스트 **13 passed**. 실제 측정 코드 해시는 source manifest와 일치한다.
+
+자료: `notebooks/assets/qwen3_5_27b_nvfp4_g4_completion_20261028/`.
+현재 체크포인트를 품질을 유지한 INT8 대체 경로로 판정하지 않는다.
+
+## 2026-10-28 — MLP-only NVFP4 첫 정확도 개선 시도
+
+원본 BF16에서 다시 보정해 MLP gate/up/down 128개만 W4A4로 저장하고, attention projection 128개는
+BF16으로 유지했다. UltraChat revision과 128개 입력 token hash가 앞선 전체 NVFP4 보정과 정확히 같다.
+저장 파일의 attention dtype과 packed module 범위를 검사했으며, 재로딩 전후 smoke logits도 일치했다.
+가중치 파일은 **27.589 GiB**다.
+
+HF 기준은 `hf-cached-greedy-v2`로 수정했다. 정답 토큰과 mismatch margin을 같은 cached greedy logits에서
+얻고, prompt decode KL 기준도 prefix prefill 뒤 한 토큰씩 실행해 얻는다. 이전 full-sequence logits 기반
+margin과 혼용하지 않는다. 같은 G4 세션에서 BF16·전체 W4A4·MLP-only를 모두 재검증했다.
+
+| 구성 | 평균 prompt-decode KL vs HF | KL/BF16 | Strong / near-tie | Free-run 완전 일치 |
+|---|---:|---:|---:|---:|
+| BF16 | 0.00163033 | 1.000 | 0 / 6 | 6/9 |
+| 전체 NVFP4 | 0.04707331 | 28.874 | 29 / 49 | 0/9 |
+| MLP-only NVFP4 | 0.02373341 | 14.557 | 12 / 33 | 0/9 |
+
+MLP-only에서 평균 KL은 49.6% 감소했지만 기존 기준(KL/BF16 ≤ 2, strong 0개)은 여전히 실패했다.
+Attention 복구와 그 구성에서의 MLP activation scale 재보정 효과이며, W4/A4의 개별 원인을 분리한 결과는 아니다.
+일부 prompt는 KL이 증가했으므로 모든 입력에서 개선됐다고 해석하지 않는다. 이번에는 추가 ablation이나
+성능 측정을 진행하지 않았다.
+
+- G4 RTX PRO 6000 Blackwell Server Edition SM120, 94.97 GiB, torch 2.11.0+cu130.
+- 9 prompt × 3 config 완료, 각 192개 생성 토큰. 1토큰 입력 hello는 prompt-decode KL에서만 제외한다.
+- 원격 worker 1,293.7초, 설치·할당·회수·종료 포함 1,388.7초. 세션 종료 후 서버 active session 0개 확인.
+- 관련 CPU 회귀 테스트 **18 passed**. 실제 측정 소스는 업로드 manifest와 일치하며 최종 ZIP과 원시 JSON이 같다.
+
+코드에 `nvfp4_targets(..., scope='mlp')`, export 옵션 `--nvfp4-scope mlp`, G4 실행기 `--mlp-only`를 추가했다.
+자료와 재현 명령은 `notebooks/assets/qwen3_5_27b_nvfp4_mlp_g4_20261028/README.md`에 있다.

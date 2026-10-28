@@ -39,6 +39,42 @@ def test_gate_rejects_incomplete_precision():
     assert module.quantization_gate(rows,2)[0]['pass']
 
 
+def test_gate_allows_single_token_prompt_without_prompt_decode_kl():
+    import sys
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+    from validate_qwen3_5_decode_modes import quantization_gate
+    rows=[]
+    for quant in ['bf16','nvfp4']:
+        for prompt,tokens in [('hello',1),('short',5)]:
+            r=dict(kernels='fla-delta',mode='compile',quant=quant,prompt=prompt,tokens=tokens,
+                   tf_mismatch_strong=0,tf_mismatch_near_tie=0,gen_first_mismatch=None)
+            if tokens>1:
+                r['decode_kl_vs_hf']=.001
+            rows.append(r)
+    gate=quantization_gate(rows,2)[0]
+    assert gate['pass'] and gate['complete']
+    assert gate['quantized']['prompts']==2
+    assert gate['quantized']['evaluated_prompts']==1
+    # The one-token prompt's teacher-forced errors must still fail the gate.
+    rows[2]['tf_mismatch_strong']=1
+    assert not quantization_gate(rows,2)[0]['pass']
+    rows[2]['tf_mismatch_strong']=0
+    # Missing KL on an eligible prompt must not be silently ignored.
+    rows[-1].pop('decode_kl_vs_hf')
+    assert not quantization_gate(rows,2)[0].get('pass',False)
+
+
+def test_gate_rejects_failed_bf16_control():
+    import sys
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+    from validate_qwen3_5_decode_modes import quantization_gate
+    rows=[dict(kernels='fla-delta',mode='compile',quant=q,prompt='short',tokens=5,
+               decode_kl_vs_hf=.001,tf_mismatch_strong=0,tf_mismatch_near_tie=0,gen_first_mismatch=None)
+          for q in ['bf16','nvfp4']]
+    rows.append(dict(kernels='fla-delta',mode='compile',quant='bf16',summary=True,error='failed'))
+    assert not quantization_gate(rows,2)[0]['pass']
+
+
 def test_native_checkpoint_restores_packed_buffers_without_gpu(tmp_path):
     from tests.test_qwen3_5 import make_model
     from tests.test_quant import write_hf_config

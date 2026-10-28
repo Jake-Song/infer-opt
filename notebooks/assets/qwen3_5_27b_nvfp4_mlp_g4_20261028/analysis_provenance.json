@@ -1,0 +1,10 @@
+{
+  "measurement_sources_match_runtime_manifest": [
+    "infer_opt/nvfp4.py",
+    "scripts/bench_qwen3_5_nvfp4.py",
+    "scripts/validate_qwen3_5_decode_modes.py",
+    "scripts/run_qwen3_5_nvfp4_mlp_worker.py"
+  ],
+  "report_generator_sha256": "f53af6d635be74028acc0189255788527a22c5f704bc6cbc327e325ed50beb0c",
+  "mean_kl_reduction_fraction": 0.4958202436717214
+}

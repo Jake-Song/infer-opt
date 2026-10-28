@@ -1,0 +1,9 @@
+{
+  "session": "nvfp4-53febd70b9",
+  "observed_at": "2026-10-28T23:34:24.844769+09:00",
+  "server_active_sessions": 0,
+  "server_response": "No active sessions found on server.",
+  "stop_returncode": 0,
+  "final_zip_sha256": "6238bc170c9f30d490b938d60c5be0428259cbdb423aab3760ab44f87e4de089",
+  "final_zip_evidence_verified": true
+}

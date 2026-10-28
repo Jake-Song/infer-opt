@@ -48,7 +48,40 @@ DEFAULT_CONFIGS = (
     "fla:sliced-eager,fla:cudagraph,fla:compile-reduce-overhead"
 )
 
-QUANT_LEVELS = ("bf16", "int8", "int8+lm_head", "nvfp4")
+QUANT_LEVELS = ("bf16", "int8", "int8+lm_head", "nvfp4", "nvfp4-mlp")
+
+
+@torch.no_grad()
+def hf_cached_reference(hf, ids, decode_positions, new_tokens):
+    """Use cached HF forwards for prompt logits, greedy tokens and their margins.
+
+    Prompt decode and generation each start from the same prefix split as the
+    corresponding infer-opt check. No full-sequence logits supply generation margins.
+    """
+    T = ids.shape[1]
+    split = max(T - decode_positions, 1)
+    prompt_logits = []
+    if split < T:
+        output = hf(input_ids=ids[:, :split], use_cache=True)
+        past = output.past_key_values
+        for i in range(split, T):
+            output = hf(input_ids=ids[:, i:i+1], past_key_values=past, use_cache=True)
+            past = output.past_key_values
+            prompt_logits.append(output.logits[:, -1:].float().cpu())
+        del output, past
+    output = hf(input_ids=ids, use_cache=True)
+    tokens, margins = [], []
+    for i in range(new_tokens):
+        logits = output.logits[:, -1:].float()
+        token = logits.argmax(-1)
+        top = logits.topk(2, dim=-1).values
+        tokens.append(token)
+        margins.append((top[..., 0] - top[..., 1]).reshape(-1))
+        if i + 1 < new_tokens:
+            output = hf(input_ids=token, past_key_values=output.past_key_values, use_cache=True)
+    return {"ids": ids, "T": T, "split": split, "new_ref": torch.cat(tokens, dim=1),
+            "hf_decode_logits": torch.cat(prompt_logits, dim=1).to(ids.device) if prompt_logits else None,
+            "margins": torch.cat(margins).cpu()}
 
 
 def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
@@ -58,6 +91,9 @@ def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
         kls = [r["decode_kl_vs_hf"] for r in mine if "decode_kl_vs_hf" in r]
         return {"prompts": len(mine), "mean_kl": sum(kls) / len(kls) if kls else None,
                 "evaluated_prompts": len(kls), "prompt_names": sorted(r["prompt"] for r in mine),
+                # A one-token prompt has no post-prefill prompt position to decode.
+                # It still participates in the teacher-forced and free-run checks.
+                "decode_eligible_prompts": sum(r.get("tokens", 2) > 1 for r in mine),
                 "strong_mismatches": sum(r["tf_mismatch_strong"] for r in mine),
                 "near_tie_mismatches": sum(r["tf_mismatch_near_tie"] for r in mine),
                 "free_run_identical": sum(r["gen_first_mismatch"] is None for r in mine)}
@@ -71,11 +107,12 @@ def quantization_gate(rows: list[dict], kl_ratio: float) -> list[dict]:
             gates.append({"config": f"{kernels}:{mode}:{quant}", "error": "no bf16 control with the same kernels:mode"})
             continue
         complete = (got["prompts"] == base["prompts"] and got["prompts"] > 0
-                    and got["evaluated_prompts"] == got["prompts"]
-                    and base["evaluated_prompts"] == base["prompts"]
+                    and got["evaluated_prompts"] == got["decode_eligible_prompts"]
+                    and base["evaluated_prompts"] == base["decode_eligible_prompts"]
                     and got["prompt_names"] == base["prompt_names"]
                     and not any(r.get("error") for r in rows
-                                if (r.get("kernels"), r.get("mode"), r.get("quant")) == (kernels, mode, quant)))
+                                if (r.get("kernels"), r.get("mode")) == (kernels, mode)
+                                and r.get("quant", "bf16") in ("bf16", quant)))
         ratio = got["mean_kl"] / base["mean_kl"] if base["mean_kl"] > 0 else float("inf")
         gates.append({"config": f"{kernels}:{mode}:{quant}", "bf16": base, "quantized": got, "kl_ratio": ratio,
                       "pass_kl": ratio <= kl_ratio, "pass_strong": got["strong_mismatches"] == 0,
@@ -101,6 +138,7 @@ def main() -> None:
     parser.add_argument("--prompts", default=None)
     parser.add_argument("--calibration-samples", type=int, default=128)
     parser.add_argument("--nvfp4-from", default=None, help="Validate a native packed checkpoint instead of recalibrating")
+    parser.add_argument("--nvfp4-mlp-from", default=None, help="MLP-only native checkpoint; config quant is nvfp4-mlp")
     parser.add_argument("--out", default="decode_modes.json")
     args = parser.parse_args()
 
@@ -120,17 +158,9 @@ def main() -> None:
     with torch.no_grad():
         for name, text in prompts.items():
             ids = tok(text, return_tensors="pt", add_special_tokens=False).input_ids.cuda()
-            T = ids.shape[1]
-            split = max(T - args.decode_positions, 1)
-            hf_gen = hf.generate(ids, max_new_tokens=args.new_tokens, do_sample=False)
-            full = hf(input_ids=hf_gen).logits.float()  # one pass over prompt + generation
-            top2 = full[0, T - 1 : -1].topk(2, -1).values
-            refs[name] = {
-                "ids": ids, "T": T, "split": split, "new_ref": hf_gen[:, T:],
-                "hf_decode_logits": full[:, split:T].clone() if split < T else None,  # a view would keep all of full alive
-                "margins": (top2[:, 0] - top2[:, 1]).cpu(),
-            }
-            del full
+            refs[name] = hf_cached_reference(hf, ids, args.decode_positions, args.new_tokens)
+            print(json.dumps({"reference_prompt": name, "tokens": ids.shape[1],
+                              "generated_tokens": refs[name]["new_ref"].shape[1]}), flush=True)
     del hf
     torch.cuda.empty_cache()
     # loaded after the HF reference is freed so two copies of a large model never share the GPU
@@ -145,8 +175,13 @@ def main() -> None:
     quant_reports = {}
 
     def save():
-        out.write_text(json.dumps({"args": vars(args), "layers": ours.config.layer_summary(), "quantization": quant_reports,
+        temporary=out.with_suffix('.tmp')
+        temporary.write_text(json.dumps({"args": vars(args), "reference_protocol": "hf-cached-greedy-v2",
+                                   "reference_tokens": {n:r["new_ref"][0].tolist() for n,r in refs.items()},
+                                   "reference_margins": {n:r["margins"].tolist() for n,r in refs.items()},
+                                   "layers": ours.config.layer_summary(), "quantization": quant_reports,
                                    "gate": quantization_gate(rows, args.kl_ratio), "rows": rows}, indent=1))
+        temporary.replace(out)
 
     import torch._inductor.config as inductor_config
 
@@ -163,19 +198,21 @@ def main() -> None:
             torch._dynamo.reset()
             gc.collect()
             torch.cuda.empty_cache()
-        if quant != quant_done and quant == "nvfp4":
+        if quant != quant_done and quant in ("nvfp4", "nvfp4-mlp"):
             from infer_opt.nvfp4 import quantize_nvfp4
             from bench_qwen3_5_nvfp4 import calibration_inputs
             del ours
             gc.collect()
             torch.cuda.empty_cache()
-            if args.nvfp4_from:
-                ours = Qwen3_5ForCausalLM.from_quantized_dir(args.nvfp4_from, device="cuda")
-                quant_reports[quant] = {"from": args.nvfp4_from}
+            source = args.nvfp4_from if quant == "nvfp4" else args.nvfp4_mlp_from
+            if source:
+                ours = Qwen3_5ForCausalLM.from_quantized_dir(source, device="cuda")
+                quant_reports[quant] = {"from": source}
             else:
                 ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, device="cuda", dtype=dtype)
                 ours.fuse_projections()
-                quant_reports[quant] = quantize_nvfp4(ours, calibration_inputs(tok, out.parent, args.calibration_samples))
+                quant_reports[quant] = quantize_nvfp4(ours, calibration_inputs(tok, out.parent, args.calibration_samples),
+                                                      scope="mlp" if quant == "nvfp4-mlp" else "all")
             quant_done = quant
         elif quant != quant_done and args.int8_from:
             if quant != "int8":

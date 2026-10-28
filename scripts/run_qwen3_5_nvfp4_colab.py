@@ -13,7 +13,32 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def worker_code(run_id, seconds, checkpoint_repo=None):
+def snapshot_code(root, archive):
+    """Collect partial evidence while the worker runs in its own process."""
+    return ("from pathlib import Path\nimport zipfile\n"
+            + f"root=Path({str(root)!r})\narchive=Path({str(archive)!r})\n"
+            + "temporary=archive.with_suffix('.tmp')\n"
+            + "with zipfile.ZipFile(temporary,'w',zipfile.ZIP_DEFLATED) as z:\n"
+            + "    for f in root.rglob('*'):\n"
+            + "        if f.is_file() and f.suffix in ('.json','.log','.txt'):\n"
+            + "            z.write(f,str(f.relative_to(root)))\n"
+            + "temporary.replace(archive)\n")
+
+
+def extract_results(archive, output):
+    import zipfile
+    with zipfile.ZipFile(archive) as z:
+        if any(Path(n).is_absolute() or '..' in Path(n).parts for n in z.namelist()):
+            raise ValueError('unsafe ZIP')
+        z.extractall(output)
+
+
+def worker_code(run_id, seconds, checkpoint_repo=None, mlp_only=False):
+    if mlp_only:
+        return ("import os,sys,runpy\nos.chdir('/content/infer-opt-nvfp4')\n"
+                + f"sys.argv=['run_qwen3_5_nvfp4_mlp_worker.py','--root','/content/{run_id}',"
+                + f"'--budget-seconds',{str(seconds)!r}]\n"
+                + "runpy.run_path('scripts/run_qwen3_5_nvfp4_mlp_worker.py',run_name='__main__')\n")
     if checkpoint_repo:
         return ("import os,sys,runpy\nos.chdir('/content/infer-opt-nvfp4')\n"
                 +f"sys.argv=['run_qwen3_5_nvfp4_worker.py','--root','/content/{run_id}',"
@@ -140,13 +165,19 @@ def main():
     p.add_argument('--budget-minutes',type=float,default=120)
     p.add_argument('--publish-repo',help='Publish the validated native checkpoint to this authorized HF model repo')
     p.add_argument('--checkpoint-repo',help='Evaluate this existing native Hub checkpoint instead of quantizing again')
+    p.add_argument('--mlp-only',action='store_true',help='Recalibrate MLP-only NVFP4 and compare accuracy to BF16 and full NVFP4')
     a=p.parse_args()
+    if a.mlp_only and (a.checkpoint_repo or a.publish_repo):
+        p.error('--mlp-only is a local accuracy experiment; do not combine with checkpoint/publication options')
     if not 15<=a.budget_minutes<=120: p.error('budget must be 15..120 minutes')
     a.output.mkdir(parents=True,exist_ok=False)
     started=time.monotonic()
     run_id='nvfp4-'+uuid.uuid4().hex[:10]
     session=a.session or run_id
     state={'session':session,'budget_minutes':a.budget_minutes,'status':'starting'}
+    import os
+    (a.output/'supervisor.json').write_text(json.dumps({'pid':os.getpid(),'session':session,
+        'run_id':run_id,'started_unix':time.time(),'mlp_only':a.mlp_only},indent=2))
     def cmd(*args,check=True,timeout=120):
         r=subprocess.run(['colab',*args],capture_output=True,text=True,timeout=timeout)
         with (a.output/'colab.log').open('a') as f: f.write(r.stdout+r.stderr)
@@ -187,7 +218,7 @@ def main():
                 os.unlink(secret_path)
         bootstrap=a.output/'bootstrap.py'
         remaining=int(a.budget_minutes*60-(time.monotonic()-started)-600)
-        worker=worker_code(run_id,remaining,a.checkpoint_repo)
+        worker=worker_code(run_id,remaining,a.checkpoint_repo,mlp_only=a.mlp_only)
         bootstrap.write_text('import tarfile, pathlib, subprocess, sys\n'
             +"dest=pathlib.Path('/content/infer-opt-nvfp4'); dest.mkdir(exist_ok=True)\n"
             +f"with tarfile.open('/content/{run_id}.tar.gz') as t: t.extractall(dest,filter='data')\n"
@@ -195,18 +226,32 @@ def main():
             +f"log=open('/content/{run_id}-supervisor.log','w')\n"
             +"subprocess.Popen([sys.executable,str(p)],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)\n")
         cmd('exec','-s',session,'-f',str(bootstrap),'--timeout','60')
+        snapshot=a.output/'snapshot.py'
+        snapshot.write_text(snapshot_code('/content/'+run_id,'/content/'+run_id+'-partial.zip'))
+        last_snapshot=0
+        last_progress=None
         while time.monotonic()-started<a.budget_minutes*60-300:
             r=cmd('download','-s',session,f'content/{run_id}/done.json',str(a.output/'done.json'),check=False)
             if r.returncode==0: break
-            cmd('download','-s',session,f'content/{run_id}/progress.json',str(a.output/'progress.json'),check=False)
-            if (a.output/'progress.json').exists(): print((a.output/'progress.json').read_text(),flush=True)
+            if "Session '" in r.stdout+r.stderr and 'not found' in r.stdout+r.stderr:
+                raise RuntimeError('Colab session disappeared; latest partial snapshot is preserved locally')
+            if time.monotonic()-last_snapshot>=60:
+                cmd('exec','-s',session,'-f',str(snapshot),'--timeout','30')
+                cmd('download','-s',session,f'content/{run_id}-partial.zip',str(a.output/'partial.zip'))
+                extract_results(a.output/'partial.zip',a.output)
+                last_snapshot=time.monotonic()
+            if (a.output/'progress.json').exists():
+                progress=(a.output/'progress.json').read_text()
+                if progress!=last_progress:
+                    print(progress,flush=True)
+                    last_progress=progress
             time.sleep(20)
         cmd('download','-s',session,f'content/{run_id}.zip',str(a.output/'results.zip'))
-        import zipfile
-        with zipfile.ZipFile(a.output/'results.zip') as z:
-            if any(Path(n).is_absolute() or '..' in Path(n).parts for n in z.namelist()): raise ValueError('unsafe ZIP')
-            z.extractall(a.output)
+        extract_results(a.output/'results.zip',a.output)
         state.update(json.loads((a.output/'done.json').read_text()))
+    except KeyboardInterrupt:
+        state.update(status='interrupted',error='Local supervisor interrupted; see partial evidence')
+        raise
     except Exception as exc:
         state.update(status='failed',error=str(exc))
         raise
@@ -215,7 +260,10 @@ def main():
             state['stop_returncode']=cmd('stop','-s',session,check=False).returncode
         state['elapsed_seconds']=time.monotonic()-started
         (a.output/'lifecycle.json').write_text(json.dumps(state,indent=2))
-        from summarize_qwen3_5_nvfp4 import summarize
+        if a.mlp_only:
+            from summarize_qwen3_5_nvfp4_mlp import summarize
+        else:
+            from summarize_qwen3_5_nvfp4 import summarize
         summarize(a.output)
     return 0 if state['status']=='finished' else 1
 

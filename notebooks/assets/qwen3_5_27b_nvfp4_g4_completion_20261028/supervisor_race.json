@@ -1,0 +1,8 @@
+{
+  "session": "nvfp4-d364828a34",
+  "budget_minutes": 120.0,
+  "status": "failed",
+  "error": "colab download failed: \n[colab] A new version of Colab CLI is available: 0.7.5 (current: 0.7.4)\n[colab] Run 'colab update' to update.\n[colab] To silence this check, set \"enable_update_check\": false in ~/.config/colab-cli/settings.json\n\n[colab] Session 'nvfp4-d364828a34' not found.\n",
+  "stop_returncode": 0,
+  "elapsed_seconds": 3841.4417053790003
+}

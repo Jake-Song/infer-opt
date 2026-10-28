@@ -1,0 +1,45 @@
+{
+  "experiment_complete": true,
+  "accuracy_passed": false,
+  "accuracy_complete": true,
+  "accuracy_status": "failed",
+  "comparison_accuracy_complete": true,
+  "mtp_strong_mismatches": 7,
+  "mtp_cases": 15,
+  "mtp_expected_cases": 15,
+  "mtp_divergent_cases": 15,
+  "mtp_greedy_equivalent": false,
+  "coverage": {
+    "bf16": {
+      "decode_cases": 5,
+      "expected_decode_cases": 5,
+      "decode_complete": true,
+      "prefill_cases": 3,
+      "prefill_complete": true
+    },
+    "int8": {
+      "decode_cases": 20,
+      "expected_decode_cases": 20,
+      "decode_complete": true,
+      "prefill_cases": 3,
+      "prefill_complete": true
+    },
+    "nvfp4": {
+      "decode_cases": 20,
+      "expected_decode_cases": 20,
+      "decode_complete": true,
+      "prefill_cases": 3,
+      "prefill_complete": true
+    }
+  },
+  "profile_complete": true,
+  "smoke_shapes": 0,
+  "export": {},
+  "measured_precisions": [
+    "bf16",
+    "int8",
+    "nvfp4"
+  ],
+  "checkpoint_repo": "Jakemu/Qwen3.5-27B-nvfp4-mtp",
+  "checkpoint_revision": "08a9f4929e2033ddd5e81f0ab8b31072e7437e1a"
+}

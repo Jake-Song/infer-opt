@@ -51,8 +51,18 @@ class Nvfp4Linear(nn.Module):
         return y if self.bias is None else y + self.bias
 
 
+def nvfp4_targets(model: nn.Module, scope: str = "all") -> list[str]:
+    """Select native layers explicitly; calibration and packing must use this same set."""
+    if scope not in ("all", "mlp"):
+        raise ValueError(f"unknown NVFP4 scope: {scope}")
+    return [n for n, m in model.named_modules() if isinstance(m, nn.Linear)
+            and not n.startswith("mtp.") and not n.endswith("lm_head")
+            and m.out_features >= 256 and m.in_features % 16 == 0
+            and (scope == "all" or ".mlp." in n)]
+
+
 @torch.no_grad()
-def quantize_nvfp4(model: nn.Module, calibration: list[torch.Tensor]) -> dict:
+def quantize_nvfp4(model: nn.Module, calibration: list[torch.Tensor], scope: str = "all") -> dict:
     """Calibrate fused BF16 target linears, then replace fake quantization by packed W4A4.
 
     MTP must already be INT8. Small gates and lm_head stay BF16.
@@ -63,9 +73,7 @@ def quantize_nvfp4(model: nn.Module, calibration: list[torch.Tensor]) -> dict:
     from modelopt.torch.export.quant_utils import get_activation_scaling_factor, get_weight_scaling_factor_2
 
     require_sm120()
-    names = [n for n, m in model.named_modules() if isinstance(m, nn.Linear)
-             and not n.startswith("mtp.") and not n.endswith("lm_head")
-             and m.out_features >= 256 and m.in_features % 16 == 0]
+    names = nvfp4_targets(model, scope)
     if not names or not calibration:
         raise ValueError("NVFP4 requires target linears and calibration inputs")
     cfg = copy.deepcopy(mtq.NVFP4_DEFAULT_CFG)
@@ -85,7 +93,7 @@ def quantize_nvfp4(model: nn.Module, calibration: list[torch.Tensor]) -> dict:
             m(ids)
 
     mtq.quantize(model, cfg, forward_loop)
-    report = {"format": "nvfp4-w4a4", "backend": "cutlass", "modules": {}, "bytes": 0}
+    report = {"format": "nvfp4-w4a4", "scope": scope, "backend": "cutlass", "modules": {}, "bytes": 0}
     for name in names:
         m = model.get_submodule(name)
         ws = get_weight_scaling_factor_2(m).float().reshape(1).clamp_min(1e-30)

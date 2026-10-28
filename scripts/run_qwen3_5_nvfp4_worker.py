@@ -37,7 +37,10 @@ def main():
         from huggingface_hub import HfApi,snapshot_download
         assert 'RTX PRO 6000' in torch.cuda.get_device_name() and torch.cuda.get_device_capability()==(12,0)
         (a.root/'environment.json').write_text(json.dumps({'gpu':torch.cuda.get_device_name(),
-            'torch':str(torch.__version__),'packages':{d.metadata['Name']:d.version for d in metadata.distributions()}},indent=2))
+            'capability':torch.cuda.get_device_capability(),
+            'memory_gib':torch.cuda.get_device_properties(0).total_memory/2**30,
+            'torch':str(torch.__version__),'cuda':torch.version.cuda,
+            'packages':{d.metadata['Name']:d.version for d in metadata.distributions()}},indent=2))
         status['stage']='download_native'
         save()
         api=HfApi()
@@ -45,24 +48,29 @@ def main():
         checkpoint=snapshot_download(a.checkpoint_repo,revision=rev)
         status['checkpoint_revision']=rev
         provenance=json.loads((Path(checkpoint)/'source_revision.json').read_text())
-        run(['scripts/bench_qwen3_5_nvfp4.py','--precision','nvfp4','--weights',checkpoint,
-             '--nvfp4-from',checkpoint,'--out',str(a.root/'nvfp4')],'nvfp4')
+        run(['scripts/profile_qwen3_5_nvfp4.py','--checkpoint',checkpoint,
+             '--out',str(a.root/'linear_profile.json')],'linear_profile')
         status['stage']='download_int8'
         save()
         int8_repo='Jakemu/Qwen3.5-27B-int8-g128-mtp'
         int8_rev=api.model_info(int8_repo).sha
         int8=snapshot_download(int8_repo,revision=int8_rev)
         status['int8_revision']=int8_rev
-        run(['scripts/bench_qwen3_5_nvfp4.py','--precision','int8','--weights',int8,
-             '--nvfp4-from',int8,'--out',str(a.root/'int8')],'int8')
         status['stage']='download_reference'
         save()
         weights=snapshot_download(provenance['model'],revision=provenance['revision'],
                                   allow_patterns=['*.safetensors','*.json','*.txt','*.jinja','LICENSE'])
+        status['model_revision']=provenance['revision']
+        # Evaluate quality before spending the remaining budget on repeated timings.
+        # A failed quality gate is a completed experiment, not a subprocess failure.
         run(['scripts/validate_qwen3_5_decode_modes.py','--weights',weights,'--repo',provenance['model'],
              '--configs','fla-delta:compile-reduce-overhead:bf16,fla-delta:compile-reduce-overhead:int8,fla-delta:compile-reduce-overhead:nvfp4',
-             '--group-size','128','--fuse','--autotune','--nvfp4-from',checkpoint,
+             '--group-size','128','--fuse','--autotune','--nvfp4-from',checkpoint,'--int8-from',int8,
              '--out',str(a.root/'accuracy.json')],'accuracy')
+        for precision,source in [('bf16',weights),('int8',int8),('nvfp4',checkpoint)]:
+            run(['scripts/bench_qwen3_5_nvfp4.py','--precision',precision,'--weights',source,
+                 '--out',str(a.root/precision)]
+                + (['--ks',''] if precision=='bf16' else ['--nvfp4-from',source]),precision)
         status['status']='finished'
     except Exception as exc:
         status.update(status='failed',error=type(exc).__name__+': '+str(exc))

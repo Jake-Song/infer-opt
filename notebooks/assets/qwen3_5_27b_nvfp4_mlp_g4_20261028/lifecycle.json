@@ -1,0 +1,12 @@
+{
+  "session": "nvfp4-53febd70b9",
+  "budget_minutes": 120.0,
+  "status": "finished",
+  "stage": "accuracy",
+  "scope": "mlp",
+  "model_revision": "fc05daec18b0a78c049392ed2e771dde82bdf654",
+  "full_checkpoint_revision": "08a9f4929e2033ddd5e81f0ab8b31072e7437e1a",
+  "accuracy_passed": false,
+  "elapsed_seconds": 1388.6597153270013,
+  "stop_returncode": 0
+}
