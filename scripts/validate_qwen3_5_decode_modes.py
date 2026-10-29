@@ -12,6 +12,9 @@ torch.compile(mode="max-autotune") (max_autotune and coordinate descent tuning),
 ``--dtype float16`` runs our model (control and quantized) in fp16 against the bf16 HF reference, as on GPUs without
 bf16; ``--int8-from`` takes the int8 configs from a checkpoint written by scripts/quantize_qwen3_5.py (a directory or a
 Hub repo) instead of quantizing in place, so the published artifact itself is checked.
+quant ``int4`` / ``int4-clip`` reloads the bf16 weights and quantizes them to group-wise 4-bit (``--int4-group-size``;
+``-clip`` searches each group's range, see infer_opt.quant.quantize_int4); ``--int4-from`` takes ``int4`` from a
+checkpoint instead.
 At the end the script evaluates the quantization gate against the bf16 config with the same kernels:mode in this run:
 mean decode KL <= ``--kl-ratio`` x the bf16 mean, and zero strong teacher-forced mismatches.
 ``--fuse`` stacks the projections that share an input (``Qwen3_5ForCausalLM.fuse_projections``) in every config.
@@ -48,7 +51,7 @@ DEFAULT_CONFIGS = (
     "fla:sliced-eager,fla:cudagraph,fla:compile-reduce-overhead"
 )
 
-QUANT_LEVELS = ("bf16", "int8", "int8+lm_head", "nvfp4", "nvfp4-mlp")
+QUANT_LEVELS = ("bf16", "int8", "int8+lm_head", "int4", "int4-clip", "nvfp4", "nvfp4-mlp")
 
 
 @torch.no_grad()
@@ -133,6 +136,10 @@ def main() -> None:
     parser.add_argument("--group-size", type=int, default=0, help="INT8 scale per this many input columns; 0: per channel")
     parser.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float16"], help="dtype of our model")
     parser.add_argument("--int8-from", default=None, help="quantized checkpoint dir or Hub repo for the int8 configs")
+    parser.add_argument("--int4-group-size", type=int, default=128)
+    parser.add_argument("--int4-configs", default=None,
+                        help="tune_qwen3_5_group_gemv.py --bits 4 output: its best table into INT4_LAUNCH_CONFIGS")
+    parser.add_argument("--int4-from", default=None, help="quantized checkpoint dir or Hub repo for the int4 config")
     parser.add_argument("--fuse", action="store_true", help="model.fuse_projections() for every config (bf16 too)")
     parser.add_argument("--kl-ratio", type=float, default=2.0, help="gate: quantized mean KL / bf16 mean KL")
     parser.add_argument("--prompts", default=None)
@@ -141,6 +148,11 @@ def main() -> None:
     parser.add_argument("--nvfp4-mlp-from", default=None, help="MLP-only native checkpoint; config quant is nvfp4-mlp")
     parser.add_argument("--out", default="decode_modes.json")
     args = parser.parse_args()
+    if args.int4_configs:
+        from infer_opt import quant_kernels
+
+        for n, k, group, *config in json.loads(Path(args.int4_configs).read_text())["best"]:
+            quant_kernels.INT4_LAUNCH_CONFIGS[(n, k, group)] = tuple(config)
 
     from huggingface_hub import snapshot_download
     from torch._dynamo.utils import counters
@@ -214,6 +226,22 @@ def main() -> None:
                 quant_reports[quant] = quantize_nvfp4(ours, calibration_inputs(tok, out.parent, args.calibration_samples),
                                                       scope="mlp" if quant == "nvfp4-mlp" else "all")
             quant_done = quant
+        elif quant != quant_done and quant.startswith("int4"):
+            del ours
+            gc.collect()
+            torch.cuda.empty_cache()
+            if quant == "int4" and args.int4_from:
+                src = args.int4_from if Path(args.int4_from).is_dir() else snapshot_download(args.int4_from)
+                ours = Qwen3_5ForCausalLM.from_quantized_dir(src, device="cuda", dtype=dtype)
+                quant_reports[quant] = {"from": args.int4_from}
+            else:
+                ours = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=dtype, device="cuda")
+                report = quantize_linears(ours, bits=4, group_size=args.int4_group_size, clip_search=quant == "int4-clip")
+                quant_reports[quant] = {"summary": report.summary(), "replaced": len(report.replaced),
+                                        "group_size": args.int4_group_size, "clip_search": quant == "int4-clip"}
+                print(quant, report.summary(), flush=True)
+            quant_done = quant
+            torch.cuda.empty_cache()
         elif quant != quant_done and args.int8_from:
             if quant != "int8":
                 raise SystemExit("--int8-from provides the int8 config only")

@@ -5,6 +5,8 @@ One process, one model load, configurations in this order (the quantization is i
   bf16            the control, measured in the same session
   int8            quantize_linears(model)                    -> every Linear except lm_head and the 32-wide gates
   int8+lm_head    quantize_linears(model, include_lm_head=True)
+  int4            quantize_linears(model, bits=4)             -> group-wise 4-bit, min-max range (weights reloaded first)
+  int4-clip       quantize_linears(model, bits=4, clip_search=True)  -> per-group range with the smallest weight error
 
 Every configuration runs the fixed-shape decode through torch.compile with CUDA graphs. ``--autotune`` turns on
 the options of torch.compile(mode="max-autotune"): max_autotune and coordinate_descent_tuning (bench_int8_linear.py
@@ -13,6 +15,8 @@ Numerics are teacher-forced against the bf16 sliced-eager logits that are record
 max |dlogit|, argmax agreement and the mean KL(bf16 || quantized) over the checked steps.
 ``--group-size 128`` quantizes with one scale per 128 input columns instead of one per output channel. ``--fuse`` stacks
 gate+up, q+k+v and in_proj_qkv+z before measuring (quantizing the stacked Linears gives the same int8 values and scales).
+An int4 configuration that follows a quantized one reloads the bf16 weights first. 4-bit always uses groups
+(``--int4-group-size``, 128 by default).
 
     python scripts/bench_qwen3_5_int8_decode.py --repo Qwen/Qwen3.5-9B --kernels fla-delta --autotune --out int8_decode.json
 """
@@ -90,15 +94,27 @@ def main() -> None:
     parser.add_argument("--autotune", action="store_true", help="max-autotune options (max_autotune + coordinate_descent_tuning) for the int8 configurations")
     parser.add_argument("--bf16-autotune", action="store_true", help="also measure bf16 with max_autotune")
     parser.add_argument("--group-size", type=int, default=0, help="INT8 scale per this many input columns; 0: per channel")
-    parser.add_argument("--configs", default="bf16,int8,int8+lm_head")
+    parser.add_argument("--int4-group-size", type=int, default=128)
+    parser.add_argument("--int4-configs", default=None,
+                        help="tune_qwen3_5_group_gemv.py --bits 4 output: its best table into INT4_LAUNCH_CONFIGS")
+    parser.add_argument("--configs", default="bf16,int8,int8+lm_head", help="also: int4, int4-clip")
     parser.add_argument("--fuse", action="store_true", help="model.fuse_projections() before every config")
     parser.add_argument("--out", default="int8_decode.json")
     args = parser.parse_args()
+    if args.int4_configs:
+        from infer_opt import quant_kernels
+
+        for n, k, group, *config in json.loads(Path(args.int4_configs).read_text())["best"]:
+            quant_kernels.INT4_LAUNCH_CONFIGS[(n, k, group)] = tuple(config)
 
     from huggingface_hub import snapshot_download
 
     path = args.weights or snapshot_download(args.repo, allow_patterns=["*.safetensors", "*.json", "*.txt", "*.jinja"])
-    model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels)
+
+    def load():
+        return Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels)
+
+    model = load()
     torch.manual_seed(0)
     ids = torch.randint(1000, 100000, (1, args.prompt_tokens), device="cuda")
     max_len = args.prompt_tokens + args.warmup + args.new_tokens + args.check_steps + 8
@@ -122,18 +138,31 @@ def main() -> None:
         if args.bf16_autotune:
             rows.append(measure(model, "bf16", args, ids, max_len, fed, ref_logits, autotune=True))
             save()
-    for label, kwargs in (("int8", {}), ("int8+lm_head", {"include_lm_head": True})):
+    quantized = False
+    int4 = {"bits": 4, "group_size": args.int4_group_size}
+    for label, kwargs in (("int8", {}), ("int8+lm_head", {"include_lm_head": True}), ("int4", int4),
+                          ("int4-clip", {**int4, "clip_search": True})):
         if label not in wanted:
             continue
         torch._dynamo.reset()  # the compiled step references the bf16 weights; drop it so they are freed when replaced
         gc.collect()
         torch.cuda.empty_cache()
+        if label.startswith("int4") and quantized:  # int8 -> int4 is not a refinement: start from bf16 again
+            del model
+            gc.collect()
+            torch.cuda.empty_cache()
+            model = load()
+            if args.fuse:
+                model.fuse_projections()
         t0 = time.perf_counter()
-        report = quantize_linears(model, group_size=args.group_size or None, **kwargs)
+        kwargs = {"group_size": args.group_size or None, **kwargs}
+        report = quantize_linears(model, **kwargs)
+        quantized = True
         sync()
         reports[label] = {"summary": report.summary(), "seconds": time.perf_counter() - t0,
                           "replaced": len(report.replaced), "skipped": report.skipped,
-                          "group_size": args.group_size or None}
+                          "group_size": kwargs["group_size"], "bits": kwargs.get("bits", 8),
+                          "clip_search": kwargs.get("clip_search", False)}
         print(label, report.summary(), flush=True)
         torch.cuda.empty_cache()
         rows.append(measure(model, label, args, ids, max_len, fed, ref_logits, autotune=args.autotune))

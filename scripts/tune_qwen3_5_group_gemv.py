@@ -8,6 +8,9 @@ with the rule and with the measured best configurations.
 
     python scripts/tune_qwen3_5_group_gemv.py --repo Qwen/Qwen3.5-9B --out group_gemv_tune.json
 
+``--bits 4`` does the same for the 4-bit kernel ``w4a16_group_gemv`` (``BLOCK_K`` counted in weights); its ``best``
+table loads into ``quant_kernels.INT4_LAUNCH_CONFIGS``.
+
 ``--rows 2,3,4`` tunes the multi-row kernel (verifying drafts) instead: both forms of ``w8a16_group_gemv_rows`` over
 their grids for every shape and row count, against the one-row kernel with its rule. The ``rows_best`` table of the
 output loads into ``quant_kernels.ROWS_LAUNCH_CONFIGS`` (``bench_qwen3_5_spec_decode.py --rows-configs``).
@@ -32,10 +35,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from bench_int8_linear import graph_time_ms  # noqa: E402
 from bench_qwen3_5_decode import time_decode  # noqa: E402
 from infer_opt import quant_kernels  # noqa: E402
-from infer_opt.quant import Int8Linear, quantize_linears  # noqa: E402
+from infer_opt.quant import Int4Linear, Int8Linear, quantize_linears  # noqa: E402
 from infer_opt.qwen3_5 import Qwen3_5ForCausalLM  # noqa: E402
 
 GRID = list(itertools.product((1, 2, 4, 8, 16), (128, 256, 512, 1024), (2, 4, 8)))
+INT4_GRID = list(itertools.product((1, 2, 4, 8, 16), (256, 512, 1024), (1, 2, 4, 8)))
 # the multi-add form only below sm80: on an A100 it was 2-7x slower than the tensor-core form on every 27B shape
 DOT_GRID = [("dot", n, w, st, sp) for n, w, st, sp in itertools.product((16, 32, 64), (2, 4, 8), (3, 4), (1, 2, 4, 8))]
 FMA_GRID = [("fma", n, k, w) for n, k, w in itertools.product((1, 2, 4, 8), (256, 512, 1024), (2, 4, 8))]
@@ -95,6 +99,7 @@ def main() -> None:
     parser.add_argument("--new-tokens", type=int, default=128)
     parser.add_argument("--fuse", action="store_true", help="stack gate+up, q+k+v and in_proj_qkv+z first")
     parser.add_argument("--rows", default="", help="tune the multi-row kernel for these row counts instead, e.g. 2,3,4")
+    parser.add_argument("--bits", type=int, default=8, choices=[8, 4], help="4: tune the 4-bit one-row kernel")
     parser.add_argument("--out", default="group_gemv_tune.json")
     args = parser.parse_args()
 
@@ -104,7 +109,7 @@ def main() -> None:
     # the MTP head (drafts) only matters for the multi-row kernel: its fc is a shape of its own
     model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels,
                                                    mtp=bool(args.rows))
-    print(quantize_linears(model, include_lm_head=True, group_size=args.group_size).summary(), flush=True)
+    print(quantize_linears(model, include_lm_head=True, group_size=args.group_size, bits=args.bits).summary(), flush=True)
     if args.fuse:
         print("fused groups", model.fuse_projections(), flush=True)
     torch.cuda.empty_cache()
@@ -112,10 +117,13 @@ def main() -> None:
 
     by_shape = defaultdict(list)
     for module in model.modules():
-        if isinstance(module, Int8Linear) and module.group_size:
+        if isinstance(module, (Int8Linear, Int4Linear)) and module.group_size:
             by_shape[(module.out_features, module.in_features, module.group_size)].append(module)
 
-    result = {"device": torch.cuda.get_device_name(), "torch": torch.__version__, "shapes": {}}
+    result = {"device": torch.cuda.get_device_name(), "torch": torch.__version__, "bits": args.bits, "shapes": {}}
+    int4 = args.bits == 4
+    configs = quant_kernels.INT4_LAUNCH_CONFIGS if int4 else quant_kernels.LAUNCH_CONFIGS
+    rule_of = quant_kernels.int4_launch_config if int4 else quant_kernels.launch_config
     if args.rows:
         result.update(tune_rows(by_shape, [int(m) for m in args.rows.split(",")], args.iters, device))
         Path(args.out).write_text(json.dumps(result, indent=1))
@@ -125,23 +133,26 @@ def main() -> None:
         for key, modules in sorted(by_shape.items(), key=lambda kv: -kv[0][0] * kv[0][1] * len(kv[1])):
             n, k, group = key
             x = torch.randn(1, 1, k, device=device, dtype=torch.bfloat16)
-            nbytes = n * k * (1 + 2 / group)
+            nbytes = n * k * ((0.5 + 4 / group) if int4 else (1 + 2 / group))
 
             def run(i):
+                if int4:
+                    return quant_kernels.w4a16_group_gemv(x, modules[i].weight, modules[i].scale, modules[i].offset)
                 return quant_kernels.w8a16_group_gemv(x, modules[i].weight, modules[i].scale)
 
-            rule = quant_kernels.launch_config(n, k, group)
+            rule = rule_of(n, k, group)
             times = {}
-            for config in dict.fromkeys([rule, *GRID]):
+            for config in dict.fromkeys([rule, *(INT4_GRID if int4 else GRID)]):
                 block_n, block_k, warps = config
-                if k % block_k or block_n * block_k < 256 * warps:  # fewer than 8 weights per thread
+                # int8: fewer than 8 weights per thread; int4: less than one 16-byte load per thread
+                if k % block_k or block_n * block_k < (1024 if int4 else 256) * warps:
                     continue
-                quant_kernels.LAUNCH_CONFIGS[key] = config
+                configs[key] = config
                 try:
                     times[config] = graph_time_ms(run, len(modules), args.iters, device) * 1e3
                 except Exception:  # noqa: BLE001 - out of resources for large tiles
                     pass
-            del quant_kernels.LAUNCH_CONFIGS[key]
+            del configs[key]
             ranked = sorted(times.items(), key=lambda kv: kv[1])
             best, best_us = ranked[0]
             best_table[key] = best
@@ -160,12 +171,13 @@ def main() -> None:
         ids = torch.randint(1000, 100000, (1, args.prompt_tokens), device=device)
         max_len = args.prompt_tokens + args.new_tokens + 16
         for label, table in (("rule", {}), ("best", best_table)):
-            quant_kernels.LAUNCH_CONFIGS.clear()
-            quant_kernels.LAUNCH_CONFIGS.update(table)
+            configs.clear()
+            configs.update(table)
             torch._dynamo.reset()
             result[f"decode_{label}"] = time_decode(model, ids, max_len, "compile-reduce-overhead", args.new_tokens, 3)
             print(label, json.dumps(result[f"decode_{label}"]), flush=True)
-        quant_kernels.LAUNCH_CONFIGS.clear()
+        configs.clear()
+    result["best"] = [[*key, *config] for key, config in best_table.items()]
     Path(args.out).write_text(json.dumps(result, indent=1))
 
 

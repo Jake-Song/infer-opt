@@ -196,8 +196,9 @@ def _fuse_into(module: nn.Module, fused_name: str, names: tuple[str, ...]) -> bo
     """Replace the Linears ``names`` of ``module`` (same input, no bias) by one Linear ``fused_name`` whose output is
     theirs side by side: the weight rows (and int8 scales) stacked. One batch-1 GEMV over the stacked matrix streams
     the same bytes as the separate ones with one launch, ramp and tail instead of several. Returns whether it fused:
-    the parts must be all ``nn.Linear`` of one dtype, or all :class:`~infer_opt.quant.Int8Linear` of one group size."""
-    from infer_opt.quant import Int8Linear
+    the parts must be all ``nn.Linear`` of one dtype, or all :class:`~infer_opt.quant.Int8Linear` (or all
+    :class:`~infer_opt.quant.Int4Linear`) of one group size."""
+    from infer_opt.quant import Int4Linear, Int8Linear
 
     if getattr(module, fused_name) is not None:
         return False
@@ -206,6 +207,8 @@ def _fuse_into(module: nn.Module, fused_name: str, names: tuple[str, ...]) -> bo
         return False
     if all(isinstance(p, Int8Linear) for p in parts) and len({(p.group_size, p.scale.dtype) for p in parts}) == 1:
         fused = Int8Linear(torch.cat([p.weight for p in parts]), torch.cat([p.scale for p in parts]))
+    elif all(isinstance(p, Int4Linear) for p in parts) and len({(p.group_size, p.scale.dtype) for p in parts}) == 1:
+        fused = Int4Linear(*(torch.cat([getattr(p, t) for p in parts]) for t in ("weight", "scale", "offset")))
     elif all(type(p) is nn.Linear for p in parts) and len({p.weight.dtype for p in parts}) == 1:
         weight = torch.cat([p.weight.detach() for p in parts])
         fused = nn.Linear(weight.shape[1], weight.shape[0], bias=False, device="meta")
@@ -1000,11 +1003,11 @@ class Qwen3_5ForCausalLM(nn.Module):
     def from_quantized_dir(
         cls, path: str | Path, device="cpu", kernels: str = "torch", dtype: torch.dtype | None = None
     ) -> "Qwen3_5ForCausalLM":
-        """Load an infer-opt INT8 or native NVFP4 checkpoint (``config.json`` next to it).
+        """Load an infer-opt INT8, INT4 or native NVFP4 checkpoint (``config.json`` next to it).
 
-        Tensors are read straight onto ``device`` with the dtypes they were saved with (int8 weights, bf16 scales and
-        the rest), unless ``dtype`` is given: then every floating-point tensor is cast to it and the int8 weights stay
-        int8. ``dtype=torch.float16`` is for GPUs without bf16 (Turing: T4, RTX 20xx).
+        Tensors are read straight onto ``device`` with the dtypes they were saved with (int8 / packed int4 weights, bf16
+        scales and the rest), unless ``dtype`` is given: then every floating-point tensor is cast to it and the integer
+        weights stay as they are. ``dtype=torch.float16`` is for GPUs without bf16 (Turing: T4, RTX 20xx).
         An MTP head is restored automatically when ``quantization.json`` records ``mtp: true``. Older checkpoints
         without this flag retain their original target-only behavior, even if config.json describes an MTP layer.
         """
@@ -1026,7 +1029,8 @@ class Qwen3_5ForCausalLM(nn.Module):
         else:
             prepare_quantized(model, spec)
         state = {}
-        for shard in sorted(path.glob("model-nvfp4-*.safetensors" if native else "model-int8-*.safetensors")):
+        prefix = {"infer_opt.nvfp4": "nvfp4", "infer_opt.int4": "int4"}.get(spec.get("format"), "int8")
+        for shard in sorted(path.glob(f"model-{prefix}-*.safetensors")):
             with safe_open(shard, framework="pt", device=str(device)) as f:
                 for key in f.keys():
                     if key in state:

@@ -23,6 +23,11 @@ fp16/bf16, so one ``tl.dot`` per scale group of columns gives the group's partia
 those. The multiply-add form is the one-row kernel with a leading dimension of rows; with one output row per program
 every program reads all the rows of ``x`` (2 bytes each per weight byte), which made 2 and 4 rows 1.6x and 2.4x slower
 than one on the RTX 2080 SUPER, so it takes several output rows per program.
+
+:func:`w4a16_group_gemv` is the one-token kernel for 4-bit weights (:class:`infer_opt.quant.Int4Linear`): codes packed
+two per byte (byte ``16 c + i`` holds columns ``32 c + i`` and ``32 c + 16 + i``), asymmetric, one scale and offset per
+group. A thread loads 16 bytes and multiplies their low and high nibbles with two contiguous 16-element runs of ``x``;
+per 32 weights it adds ``scale * sum(q * x) + offset * sum(x)``, so the offset costs one multiply-add per 32 weights.
 """
 
 from __future__ import annotations
@@ -32,13 +37,15 @@ import triton
 import triton.language as tl
 from torch.library import triton_op, wrap_triton
 
-__all__ = ["w8a16_group_gemv", "w8a16_group_gemv_rows", "MAX_ROWS"]
+__all__ = ["w8a16_group_gemv", "w8a16_group_gemv_rows", "w4a16_group_gemv", "MAX_ROWS"]
 
 MAX_ROWS = 8  # w8a16_group_gemv_rows takes up to this many activation rows
 
 
 # (BLOCK_N, BLOCK_K, num_warps) by (N, K, group); overrides launch_config, e.g. for a tuning sweep
 LAUNCH_CONFIGS: dict[tuple[int, int, int], tuple[int, int, int]] = {}
+# (BLOCK_N, BLOCK_K in weights, num_warps) of w4a16_group_gemv by (N, K, group); overrides int4_launch_config
+INT4_LAUNCH_CONFIGS: dict[tuple[int, int, int], tuple[int, int, int]] = {}
 # w8a16_group_gemv_rows by (rows, N, K, group): ("dot", BLOCK_N, num_warps, num_stages, split-K) for the tensor-core
 # form or ("fma", BLOCK_N, BLOCK_K, num_warps) for the fp32 multiply-add form; overrides rows_launch_config
 ROWS_LAUNCH_CONFIGS: dict[tuple[int, int, int, int], tuple] = {}
@@ -100,6 +107,67 @@ def w8a16_group_gemv(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor)
     vec = _pow2_divisor(group, 16)  # one thread's contiguous weights must lie in one group
     wrap_triton(_w8a16_group_gemv_kernel)[(triton.cdiv(n, block_n),)](
         x.contiguous(), weight, scale, y, n, k, group, BLOCK_N=block_n, BLOCK_K=max(block_k, vec), VEC=vec,
+        num_warps=warps, num_stages=2)
+    return y
+
+
+
+def int4_launch_config(n: int, k: int, group: int) -> tuple[int, int, int]:
+    """``(BLOCK_N, BLOCK_K, num_warps)`` for a packed ``[n, k // 2]`` 4-bit weight, ``BLOCK_K`` counted in weights.
+
+    A sweep over the group-128 Qwen3.5-27B shapes (fused, A100 80GB; BLOCK_N 1-16, BLOCK_K 256-1024, 1-8 warps) put
+    (1, 1024, 1) first for every decoder-layer shape: one warp, each thread one 16-byte load per step (decode 21.1 ->
+    18.6 ms/token against the earlier (2, 1024, 2)). The kernel then reaches only 0.72-0.90 TB/s, against 1.25-1.72 for
+    the int8 one: unpacking and the two multiply-adds per byte, not HBM, limit it. ``BLOCK_K`` falls back to the
+    largest power of two dividing ``k``."""
+    if (n, k, group) in INT4_LAUNCH_CONFIGS:
+        return INT4_LAUNCH_CONFIGS[n, k, group]
+    return 1, _pow2_divisor(k, 1024), 1
+
+
+@triton.jit
+def _w4a16_group_gemv_kernel(x_ptr, q_ptr, s_ptr, o_ptr, y_ptr, N, K, GROUP: tl.constexpr,
+                             BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr):
+    NC: tl.constexpr = BLOCK_K // 32  # 32-weight chunks (16 bytes) per row and step
+    pid = tl.program_id(0)
+    rows = pid * BLOCK_N + tl.arange(0, BLOCK_N)
+    row_ok = rows < N
+    jc = tl.arange(0, NC)
+    i = tl.arange(0, 16)
+    q_ptrs = q_ptr + rows[:, None, None].to(tl.int64) * (K // 2) + jc[None, :, None] * 16 + i[None, None, :]
+    x_ptrs = x_ptr + rows[:, None, None] * 0 + jc[None, :, None] * 32 + i[None, None, :]  # low nibbles' columns
+    groups = K // GROUP
+    s_row = s_ptr + rows[:, None, None] * groups  # [BLOCK_N, 1, 1]
+    o_row = o_ptr + rows[:, None, None] * groups
+    g_step = (jc * 32 // GROUP)[None, :, None]  # [1, NC, 1]: a 32-weight chunk lies in one group
+    acc = tl.zeros((BLOCK_N, NC), dtype=tl.float32)
+    for k0 in range(0, K, BLOCK_K):
+        b = tl.load(q_ptrs + k0 // 2, mask=row_ok[:, None, None], other=0, eviction_policy="evict_first")
+        x_lo = tl.load(x_ptrs + k0).to(tl.float32)
+        x_hi = tl.load(x_ptrs + k0 + 16).to(tl.float32)
+        dot = tl.sum((b & 15).to(tl.float32) * x_lo + (b >> 4).to(tl.float32) * x_hi, axis=2)
+        xsum = tl.sum(x_lo + x_hi, axis=2)
+        if BLOCK_K % GROUP == 0:
+            g = k0 // GROUP + g_step
+        else:
+            g = ((k0 + jc * 32) // GROUP)[None, :, None]
+        s = tl.sum(tl.load(s_row + g, mask=row_ok[:, None, None], other=0.0).to(tl.float32), axis=2)
+        o = tl.sum(tl.load(o_row + g, mask=row_ok[:, None, None], other=0.0).to(tl.float32), axis=2)
+        acc += dot * s + xsum * o
+    tl.store(y_ptr + rows, tl.sum(acc, axis=1).to(y_ptr.dtype.element_ty), mask=row_ok)
+
+
+@triton_op("infer_opt::w4a16_group_gemv", mutates_args=())
+def w4a16_group_gemv(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, offset: torch.Tensor) -> torch.Tensor:
+    """``x @ (q * scale + offset)^T`` for one token: ``x`` has ``K`` elements (any leading shape of size 1), ``weight``
+    is the packed uint8 ``[N, K // 2]`` and ``scale``/``offset`` ``[N, K // group_size]`` (group a multiple of 32).
+    Returns ``x``'s leading shape with ``N`` outputs, in ``x.dtype``."""
+    n, k = int(weight.shape[0]), 2 * int(weight.shape[1])
+    group = k // int(scale.shape[1])
+    y = torch.empty(*x.shape[:-1], n, dtype=x.dtype, device=x.device)
+    block_n, block_k, warps = int4_launch_config(n, k, group)
+    wrap_triton(_w4a16_group_gemv_kernel)[(triton.cdiv(n, block_n),)](
+        x.contiguous(), weight, scale, offset, y, n, k, group, BLOCK_N=block_n, BLOCK_K=max(block_k, 32),
         num_warps=warps, num_stages=2)
     return y
 

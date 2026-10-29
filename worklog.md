@@ -508,3 +508,55 @@ Attention 복구와 그 구성에서의 MLP activation scale 재보정 효과이
 
 코드에 `nvfp4_targets(..., scope='mlp')`, export 옵션 `--nvfp4-scope mlp`, G4 실행기 `--mlp-only`를 추가했다.
 자료와 재현 명령은 `notebooks/assets/qwen3_5_27b_nvfp4_mlp_g4_20261028/README.md`에 있다.
+
+## 2026-10-29 — Qwen3.5-27B weight-only INT4 (RTN, GPTQ)
+
+**목표:** group-128 INT4(W4A16)로 27B decode를 INT8보다 빠르게 하고 정확도 gate를 확인한다. 모두 Colab
+**A100-SXM4-80GB**(high-mem), torch 2.11.0+cu130, `fla-delta:compile-reduce-overhead`, max-autotune, `fuse_projections()`,
+원본 `Qwen/Qwen3.5-27B@fc05daec18b0a78c049392ed2e771dde82bdf654`. 원시 결과는 `experiments/qwen3_5_27b_int4/`(git 제외).
+
+### 형식과 kernel
+
+- **`Int4Linear`(`infer_opt/quant.py`):** 0..15 코드 두 개를 한 바이트에(32열 묶음에서 열 `i`와 `i+16`), 그룹 128마다 bf16
+  scale과 offset(비대칭, `w ≈ q·scale + offset`). 저장 형식은 `infer_opt.int4`(`model-int4-*.safetensors`, 모듈별 `bits: 4`),
+  `from_quantized_dir`와 projection fusion이 읽는다. 한 token이 아닌 입력(prefill, verify)은 dequantize 후 matmul이다.
+- **`w4a16_group_gemv`(`infer_opt/quant_kernels.py`):** thread가 16바이트를 읽어 low/high nibble을 `x`의 연속 16개 두 묶음과 곱하고,
+  32개마다 `scale·Σqx + offset·Σx`. 실행 설정 sweep에서 decoder 층 shape 모두 (1, 1024, 1 warp)가 최적이라 규칙으로 정했다.
+- `quantize_int4(clip_search=True)`: 그룹 범위를 100–70%로 줄여 보며 가중치 제곱 오차가 가장 작은 것을 고른다.
+
+### 속도 (1024-token 프롬프트, decode 128 step, 같은 세션)
+
+| | ms/token | peak GiB | KL vs bf16 sliced-eager |
+|---|---:|---:|---:|
+| bf16 | 35.00 | 50.9 | – |
+| int8 g128 | 20.12 | 28.8 | 0.00076 |
+| int4 g128 (min-max) | **19.07** | **18.0** | 0.0136 |
+| int4 g128 clip | 19.32 | 18.0 | 0.0323 |
+
+- 바이트는 절반인데 int8보다 5%만 빠르다. int4 GEMV가 **0.72–0.90 TB/s**(int8은 1.25–1.72)라 HBM이 아니라 nibble 풀기와 바이트당
+  multiply-add 두 번이 한계다. 실행 설정 튜닝 전에는 21.1 ms/token이었다(튜닝 후 18.6, tune 스크립트 측정).
+- 메모리는 확실히 줄었다: 대상 Linear 45.3 → 12.0 GiB, checkpoint 16.8 GiB(lm_head bf16 포함).
+
+### 정확도 gate (HF bf16 대비, 9 prompt, 192 token)
+
+| 구성 | 평균 decode KL | KL/bf16 | strong 불일치 |
+|---|---:|---:|---:|
+| bf16 대조 | 0.000397 | 1 | 0 |
+| int4 RTN min-max | 0.0343 | 86.4 | 17 |
+| int4 RTN clip | 0.0320 | 80.6 | 16 |
+| int4 **GPTQ** (checkpoint) | 0.0344 | 86.8 | 17 |
+
+- 세 구성 모두 **실패**(기준 KL 2배 이하, strong 0). int8은 같은 gate에서 0.6–1.1배였다.
+- clip 탐색은 가중치 오차를 줄이지만 bench KL은 두 배 넘게 나빠졌다(gate에서는 조금 나음). 가중치 오차는 기준으로 맞지 않는다.
+- **GPTQ(`infer_opt/gptq.py`)**: act-order 없이 열 순서대로, 그룹 범위는 그룹 시작 때 갱신된 가중치의 min/max, damp 0.01, block 128.
+  층별 순차(양자화한 층의 출력이 다음 층 입력), 보정은 NVFP4와 같은 UltraChat 128개(최대 512 token). 27B 1129초.
+  저장 형식이 같아 kernel과 loader를 그대로 쓴다. 프롬프트별 KL은 8개 중 6개에서 RTN보다 낮다(chat 0.080 → 0.016,
+  chat_long 0.023 → 0.012, prose_1k 0.0030 → 0.0013). 대신 code_1k가 0.092 → 0.176으로 나빠져 평균이 같다.
+  보정 데이터가 대화뿐이라 코드에서 과적합한 것으로 보이지만 확인하지 않았다.
+- checkpoint는 RTN·GPTQ 모두 다시 읽은 logits가 동일했다. 품질 기준 미달이라 사용자 결정으로 Hub에 올리지 않았다.
+
+### 남은 일
+
+- 정확도: 민감한 Linear를 int8로 두는 혼합 정밀도(어느 층이 KL을 만드는지 측정 먼저), 코드·한국어를 섞은 보정 데이터, AWQ.
+- 속도: int4 GEMV가 대역폭의 절반이다. 바이트당 연산을 줄이는 변환(magic-number로 fp16 두 개 만들기), 또는 tensor-core 형태.
+- 세션 비용 ~10 compute unit(93.0 → 83.2).
