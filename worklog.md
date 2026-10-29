@@ -560,3 +560,47 @@ Attention 복구와 그 구성에서의 MLP activation scale 재보정 효과이
 - 정확도: 민감한 Linear를 int8로 두는 혼합 정밀도(어느 층이 KL을 만드는지 측정 먼저), 코드·한국어를 섞은 보정 데이터, AWQ.
 - 속도: int4 GEMV가 대역폭의 절반이다. 바이트당 연산을 줄이는 변환(magic-number로 fp16 두 개 만들기), 또는 tensor-core 형태.
 - 세션 비용 ~10 compute unit(93.0 → 83.2).
+
+## 2026-10-30 — Qwen 공식 GPTQ-Int4(27B)와 bf16 정확도 비교
+
+**목표:** Qwen이 직접 낸 4bit 체크포인트 `Qwen/Qwen3.5-27B-GPTQ-Int4`(rev `8f0c09f`)가 같은 gate에서 어떤지 보고, 우리 INT4 실패가
+방법 문제인지 기준 문제인지 가른다. Colab **A100-SXM4-80GB**(high-mem), torch 2.11.0+cu130, `fla-delta:compile-reduce-overhead`,
+max-autotune, `fuse_projections()`, 원본 `Qwen/Qwen3.5-27B@fc05dae`. 원시 결과는 `experiments/qwen3_5_27b_int4/a100_80gb_20261030_gptq_official/`.
+
+### 체크포인트
+
+- 공식 INT4는 27B·35B-A3B·122B-A10B·397B-A17B에만 있다(9B 이하 없음). NVFP4는 Qwen 공식이 없고 NVIDIA가 397B·122B만 냈다.
+- **MLP(64층 gate/up/down)만 INT4**, GPTQ sym group 128, `desc_act=false`, damp 0.01. 나머지(GDN 48층, full attention 16층,
+  embed, lm_head, MTP, vision)는 bf16이고 원본과 **비트 단위로 같다**(674개 텐서). 그래서 30.2 GB다: GDN 11.1, MLP int4 8.9,
+  attention 3.4, lm_head 2.5, embed 2.5 GB.
+- 스케일은 GPTQ 기본 `2·absmax/15`(clip 탐색 없음). 그 스케일로 RTN한 코드와 15%가 ±1 다르다: 보정 데이터로 GPTQ를 돌린 것이다.
+  데이터셋은 model card에 없다. 가중치 상대 오차 MLP 평균 0.136(우리 asym RTN 0.10보다 크다, GPTQ라 정상).
+
+### 읽기
+
+- `int4_from_gptq`(`infer_opt/quant.py`): GPTQ `qweight`/`qzeros`/`scales`를 `Int4Linear` 형식으로 바꾼다. `offset = -zero·scale`,
+  fp16 scale을 bf16으로 반올림하는 것만 다르다(vLLM bf16 경로와 같다). act-order는 거부.
+- **sym이면 zero를 8로 고정한다.** 이 파일의 `qzeros`는 `0x88888888`이라 v1 규칙(저장값+1)대로 읽으면 9가 되고 가중치 오차가
+  0.41로 망가진다. vLLM GPTQ-Marlin도 sym에서는 `qzeros`를 무시한다(uint4b8).
+- `Qwen3_5ForCausalLM.from_gptq_dir`: `quantization.json`이 없으면 `from_quantized_dir`가 이리로 보낸다. 그래서 gate·bench 스크립트의
+  `--int4-from`이 그대로 Hub GPTQ 체크포인트를 받는다.
+
+### 정확도 gate (HF bf16 대비, 9 prompt, 192 token)
+
+| 구성 | 평균 decode KL | strong 불일치 |
+|---|---:|---:|
+| bf16 대조(이번 실행) | 0.00073 | 0 |
+| **Qwen 공식 GPTQ-Int4 (MLP만)** | **0.0303** (41.5배) | **12** |
+| 우리 GPTQ (모든 Linear, 10-29) | 0.0344 | 17 |
+| 우리 RTN (모든 Linear, 10-29) | 0.0343 | 17 |
+
+- **실패.** MLP만 양자화했는데도 KL이 모든 Linear INT4보다 12%만 낮다. **KL은 대부분 MLP INT4에서 나온다.** "MLP INT4 + 나머지
+  INT8" 혼합 정밀도만으로는 gate를 넘기 어렵다.
+- 프롬프트별로 공식본이 short·math·code_1_5k에서 낫고 korean(0.048 vs 0.033)·chat에서 나쁘다. code_1k는 0.133(우리 GPTQ 0.176).
+- bf16 대조가 10-29(0.00040)보다 높다. code_1k 하나가 0.0008 → 0.0031이다. HF 기준 token은 두 실행이 같다. 배율보다 절대 KL로 본다.
+- 세션 ~33분(설치·테스트·82 GB 다운로드·가중치 비교·gate).
+
+### 남은 일
+
+- MLP 안에서 어느 층·어느 projection(down_proj 오차가 가장 크다, 최대 0.214)이 KL을 만드는지 측정. 민감한 층만 INT8로.
+- 공식본 속도: token당 읽는 바이트가 우리 INT8과 비슷해 이득이 없을 것으로 보지만 재지 않았다.

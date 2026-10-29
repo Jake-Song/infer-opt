@@ -164,3 +164,72 @@ def test_cuda_int4_gemv_launch_configs_agree(config):
     finally:
         quant_kernels.INT4_LAUNCH_CONFIGS.clear()
     assert torch.allclose(got.float(), expected, atol=2e-2, rtol=2e-3)
+
+
+def gptq_pack(q, zero, scales):
+    """The AutoGPTQ ``gptq`` layout of codes ``q [in, out]``, zero points ``[groups, out]`` and ``scales``."""
+    def words(codes):  # eight codes along dim 0 per int32, code j in bits 4j..4j+3
+        x = sum(codes.long()[j::8] << (4 * j) for j in range(8))
+        return (x - ((x >= 2**31).long() << 32)).to(torch.int32).contiguous()
+
+    return words(q), words((zero - 1).t()).t().contiguous(), scales.half()
+
+
+def test_int4_from_gptq_dequantizes_like_gptq():
+    from infer_opt.quant import int4_from_gptq
+
+    torch.manual_seed(0)
+    in_f, out_f, group = 256, 48, 64
+    q = torch.randint(0, 16, (in_f, out_f))
+    zero = torch.randint(1, 16, (in_f // group, out_f))
+    scales = torch.rand(in_f // group, out_f) * 0.1 + 0.01
+    qweight, qzeros, scales = gptq_pack(q, zero, scales)
+    g_idx = torch.arange(in_f, dtype=torch.int32) // group
+    weight, scale, offset = int4_from_gptq(qweight, qzeros, scales, g_idx, dtype=torch.float32)
+    expected = ((q - zero.repeat_interleave(group, 0)) * scales.float().repeat_interleave(group, 0)).t()
+    assert torch.equal(dequantize_int4(weight, scale, offset, torch.float32), expected)
+    with pytest.raises(ValueError):
+        int4_from_gptq(qweight, qzeros, scales, g_idx.flip(0), dtype=torch.float32)
+    # symmetric: zero 8 whatever qzeros says
+    weight, scale, offset = int4_from_gptq(qweight, qzeros, scales, g_idx, sym=True, dtype=torch.float32)
+    expected = ((q - 8) * scales.float().repeat_interleave(group, 0)).t()
+    assert torch.equal(dequantize_int4(weight, scale, offset, torch.float32), expected)
+
+
+def test_load_gptq_checkpoint_dir(tmp_path):
+    import json
+
+    from safetensors.torch import save_file
+
+    from infer_opt.qwen3_5 import Qwen3_5ForCausalLM
+
+    model = make_model().float()
+    state = {k: v.contiguous() for k, v in model.state_dict().items() if k != "lm_head.weight"}  # tied
+    group = 32
+    for name, m in model.named_modules():
+        if ".mlp." not in name or not isinstance(m, nn.Linear):
+            continue
+        w = m.weight.detach().t()  # symmetric GPTQ: zero 8, scale from each group's absmax
+        scales = (w.view(-1, group, w.shape[1]).abs().amax(1) / 7).half().float()
+        q = (w / scales.repeat_interleave(group, 0)).round().clamp(-8, 7) + 8
+        zero = torch.full_like(scales, 9, dtype=torch.long)  # qzeros words 0x88888888 as in Qwen's checkpoint; ignored
+        del state[f"{name}.weight"]
+        state[f"{name}.qweight"], state[f"{name}.qzeros"], state[f"{name}.scales"] = gptq_pack(q.long(), zero, scales)
+        state[f"{name}.g_idx"] = torch.arange(w.shape[0], dtype=torch.int32) // group
+        with torch.no_grad():
+            m.weight.copy_(((q - 8) * scales.repeat_interleave(group, 0)).t())
+    state["mtp.fc.weight"] = torch.zeros(2, 2)  # skipped, as the vision tower
+    save_file(state, str(tmp_path / "model.safetensors"))
+    write_hf_config(tmp_path, model.config)
+    config = json.loads((tmp_path / "config.json").read_text())
+    config["quantization_config"] = {"quant_method": "gptq", "bits": 4, "group_size": group, "desc_act": False,
+                                     "sym": True}
+    (tmp_path / "config.json").write_text(json.dumps(config))
+
+    loaded = Qwen3_5ForCausalLM.from_quantized_dir(tmp_path, dtype=torch.float32)
+    gate = loaded.model.language_model.layers[0].mlp.gate_proj
+    assert isinstance(gate, Int4Linear) and gate.group_size == group and gate.offset.dtype == torch.float32
+    assert isinstance(loaded.model.language_model.layers[0].linear_attn.out_proj, nn.Linear)
+    ids = torch.randint(0, 97, (1, 30))
+    with torch.no_grad():
+        torch.testing.assert_close(loaded(ids), model(ids))

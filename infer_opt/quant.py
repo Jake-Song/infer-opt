@@ -27,8 +27,8 @@ import torch.nn.functional as F
 from torch import nn
 
 __all__ = ["Int8Linear", "int8_linear", "quantize_int8", "dequantize_int8", "Int4Linear", "int4_linear", "quantize_int4",
-           "dequantize_int4", "pack_int4", "unpack_int4", "quantize_linears", "QuantizationReport", "save_quantized",
-           "prepare_quantized", "QUANTIZATION_FILE"]
+           "dequantize_int4", "int4_from_gptq", "pack_int4", "unpack_int4", "quantize_linears", "QuantizationReport",
+           "save_quantized", "prepare_quantized", "QUANTIZATION_FILE"]
 
 QUANTIZATION_FILE = "quantization.json"
 
@@ -207,6 +207,34 @@ def dequantize_int4(weight: torch.Tensor, scale: torch.Tensor, offset: torch.Ten
     groups = scale.shape[1]
     w = q.view(out_f, groups, in_f // groups).to(dtype) * scale.to(dtype).unsqueeze(-1) + offset.to(dtype).unsqueeze(-1)
     return w.view(out_f, in_f)
+
+
+def int4_from_gptq(qweight: torch.Tensor, qzeros: torch.Tensor, scales: torch.Tensor, g_idx: torch.Tensor | None = None,
+                   sym: bool = False, dtype: torch.dtype = torch.bfloat16
+                   ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """One 4-bit GPTQ Linear (AutoGPTQ / GPTQModel ``gptq`` format) as :func:`quantize_int4` output.
+
+    GPTQ stores ``qweight`` int32 ``[in // 8, out]`` with eight codes per word along the input (code ``j`` in bits
+    ``4j..4j+3``), ``qzeros`` int32 ``[groups, out // 8]`` packed the same way along the output and holding the zero
+    point minus one, and ``scales`` ``[groups, out]``: ``w = (q - zero) * scale``. A symmetric checkpoint's zero is 8
+    whatever ``qzeros`` holds, as vLLM's GPTQ-Marlin reads it (Qwen/Qwen3.5-27B-GPTQ-Int4 stores 8, which the
+    minus-one rule would turn into 9). Here ``offset = -zero * scale``, from the scale rounded to ``dtype``; that
+    rounding (fp16 -> bf16) is the only change, as in vLLM's bf16 GPTQ path. Act-order checkpoints (``g_idx`` not
+    ``i // group_size``) are not supported.
+    """
+    shifts = torch.arange(0, 32, 4, dtype=torch.int32, device=qweight.device)
+    q = ((qweight.unsqueeze(1) >> shifts.view(1, 8, 1)) & 15).reshape(-1, qweight.shape[1])  # [in, out]
+    if sym:
+        zero = torch.full_like(scales, 8, dtype=torch.int32)
+    else:
+        zero = ((qzeros.unsqueeze(2) >> shifts.view(1, 1, 8)) & 15).reshape(qzeros.shape[0], -1) + 1  # [groups, out]
+    in_f, groups = q.shape[0], scales.shape[0]
+    group_size = in_f // groups
+    if g_idx is not None and not torch.equal(g_idx.long().cpu(), torch.arange(in_f) // group_size):
+        raise ValueError("act-order GPTQ (permuted g_idx) is not supported")
+    scale = scales.t().to(dtype).contiguous()
+    offset = (-zero.t().float() * scale.float()).to(dtype).contiguous()
+    return pack_int4(q.t().contiguous()), scale, offset
 
 
 def int4_linear(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, offset: torch.Tensor,

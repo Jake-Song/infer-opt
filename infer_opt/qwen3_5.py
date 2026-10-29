@@ -1003,7 +1003,8 @@ class Qwen3_5ForCausalLM(nn.Module):
     def from_quantized_dir(
         cls, path: str | Path, device="cpu", kernels: str = "torch", dtype: torch.dtype | None = None
     ) -> "Qwen3_5ForCausalLM":
-        """Load an infer-opt INT8, INT4 or native NVFP4 checkpoint (``config.json`` next to it).
+        """Load an infer-opt INT8, INT4 or native NVFP4 checkpoint (``config.json`` next to it), or a GPTQ one
+        (:meth:`from_gptq_dir`, when there is no ``quantization.json``).
 
         Tensors are read straight onto ``device`` with the dtypes they were saved with (int8 / packed int4 weights, bf16
         scales and the rest), unless ``dtype`` is given: then every floating-point tensor is cast to it and the integer
@@ -1016,6 +1017,8 @@ class Qwen3_5ForCausalLM(nn.Module):
         from infer_opt.quant import QUANTIZATION_FILE, prepare_quantized
 
         path = Path(path)
+        if not (path / QUANTIZATION_FILE).exists():  # not ours: a GPTQ checkpoint from the Hub
+            return cls.from_gptq_dir(path, device=device, kernels=kernels, dtype=dtype or torch.bfloat16)
         config = Qwen3_5TextConfig.from_json(path / "config.json")
         spec = json.loads((path / QUANTIZATION_FILE).read_text())
         if spec.get("format") == "infer_opt.nvfp4" and dtype not in (None, torch.bfloat16):
@@ -1047,6 +1050,55 @@ class Qwen3_5ForCausalLM(nn.Module):
         if config.tie_word_embeddings and not spec["modules"].get("lm_head"):
             model.lm_head.weight = model.model.language_model.embed_tokens.weight
         return model.to(device).set_kernels(kernels).eval()
+
+    @classmethod
+    def from_gptq_dir(
+        cls, path: str | Path, device="cpu", kernels: str = "torch", dtype: torch.dtype = torch.bfloat16
+    ) -> "Qwen3_5ForCausalLM":
+        """Load a 4-bit GPTQ checkpoint such as ``Qwen/Qwen3.5-27B-GPTQ-Int4`` (Qwen's own, MLP-only).
+
+        Every Linear stored as ``qweight``/``qzeros``/``scales`` becomes an :class:`~infer_opt.quant.Int4Linear`
+        (:func:`~infer_opt.quant.int4_from_gptq`); the other tensors load as in :meth:`from_pretrained_dir`, cast to
+        ``dtype``. The vision tower and the MTP head are skipped."""
+        from safetensors import safe_open
+
+        from infer_opt.quant import Int4Linear, int4_from_gptq
+
+        path = Path(path)
+        quant = json.loads((path / "config.json").read_text())["quantization_config"]
+        if quant.get("quant_method") != "gptq" or quant.get("bits") != 4 or quant.get("desc_act"):
+            raise ValueError(f"only 4-bit GPTQ without act-order is supported, got {quant}")
+        config = Qwen3_5TextConfig.from_json(path / "config.json")
+        with torch.device("meta"):
+            model = cls(config)
+        state, packed = {}, {}
+        for shard in sorted(path.glob("*.safetensors")):
+            with safe_open(shard, framework="pt", device=str(device)) as f:
+                for key in f.keys():
+                    if key.startswith(("model.visual.", "mtp.")):
+                        continue
+                    module, _, kind = key.rpartition(".")
+                    if kind in ("qweight", "qzeros", "scales", "g_idx"):
+                        packed.setdefault(module, {})[kind] = f.get_tensor(key)
+                    else:
+                        state[key] = f.get_tensor(key)
+        for name, t in packed.items():
+            parent, _, child = name.rpartition(".")
+            bias = state.pop(f"{name}.bias", None)
+            setattr(model.get_submodule(parent), child,
+                    Int4Linear(*int4_from_gptq(t["qweight"], t["qzeros"], t["scales"], t.get("g_idx"),
+                                               quant.get("sym", False), dtype), bias))
+        unexpected = model.load_state_dict(state, strict=False, assign=True).unexpected_keys
+        if unexpected:
+            raise RuntimeError(f"unexpected checkpoint tensors: {unexpected[:8]}")
+        model.model.language_model.rotary_emb = Qwen3_5TextRotaryEmbedding(config)
+        if config.tie_word_embeddings:
+            model.lm_head.weight = model.model.language_model.embed_tokens.weight
+        missing = [k for k, p in model.named_parameters() if p.is_meta]
+        if missing:
+            raise RuntimeError(f"parameters not loaded: {missing}")
+        model.to(device=device, dtype=dtype)
+        return model.set_kernels(kernels).eval()
 
 
 DECODE_MODES = ("eager", "compile", "compile-reduce-overhead", "cudagraph")
