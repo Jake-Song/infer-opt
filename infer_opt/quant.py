@@ -19,6 +19,7 @@ runs :func:`infer_opt.quant_kernels.w4a16_group_gemv`; anything else dequantizes
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -39,6 +40,9 @@ INT4_CLIP_RATIOS = tuple(1 - 0.02 * i for i in range(16))  # quantize_int4(clip_
 _INT4_CHUNK_ELEMENTS = 1 << 24  # bounds the fp32 temporaries of quantize_int4 (the clip search keeps a few)
 _GEMV_ROWS = 8  # infer_opt.quant_kernels.MAX_ROWS, without importing triton here
 _ROW_CHUNK = 16384  # bounds the fp32 temporary when quantizing a vocab-sized matrix
+# one-token group-wise GEMV: "triton" (infer_opt.quant_kernels) or "cuda" (infer_opt.quant_cuda, built on first use);
+# read when int8_linear is traced, so torch._dynamo.reset() after changing it
+INT8_GEMV_BACKEND = os.environ.get("INFER_OPT_INT8_GEMV", "triton")
 
 
 def quantize_int8(weight: torch.Tensor, group_size: int | None = None) -> tuple[torch.Tensor, torch.Tensor]:
@@ -79,12 +83,17 @@ def int8_linear(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, bias
 
     A per-channel scale multiplies the output, so the int8 -> x.dtype cast is the only elementwise work on the
     weight and can be absorbed into the matmul kernel. A group-wise scale varies along the reduction: one token on
-    CUDA goes to the Triton GEMV (inductor's own forms of it were 1.4-2x slower than per-channel on an A100), 2-8 tokens
+    CUDA goes to the Triton GEMV (inductor's own forms of it were 1.4-2x slower than per-channel on an A100) or, with
+    ``INT8_GEMV_BACKEND = "cuda"``, to the CUDA C++ one in :mod:`infer_opt.quant_cuda`, 2-8 tokens
     to its multi-row form, any other input dequantizes the weight before the matmul (prefill, where the matmul is
     compute-bound, and CPU).
     """
     if scale.dim() == 1:
         y = F.linear(x, weight.to(x.dtype)) * scale.to(x.dtype)
+    elif x.is_cuda and x.numel() == x.shape[-1] and INT8_GEMV_BACKEND == "cuda" and _cuda_gemv_supported(x, weight, scale):
+        from infer_opt.quant_cuda import w8a16_group_gemv_cuda
+
+        y = w8a16_group_gemv_cuda(x, weight, scale)
     elif x.is_cuda and x.numel() == x.shape[-1]:
         from infer_opt.quant_kernels import w8a16_group_gemv  # imports triton, which a CPU-only install may lack
 
@@ -96,6 +105,12 @@ def int8_linear(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor, bias
     else:
         y = F.linear(x, dequantize_int8(weight, scale, x.dtype))
     return y if bias is None else y + bias.to(x.dtype)
+
+
+def _cuda_gemv_supported(x: torch.Tensor, weight: torch.Tensor, scale: torch.Tensor) -> bool:
+    k = weight.shape[1]  # quant_cuda.supported, plus one dtype for x and the scale
+    group = k // scale.shape[1]
+    return k % 16 == 0 and group % 16 == 0 and scale.dtype == x.dtype
 
 
 def _rows_supported(weight: torch.Tensor, scale: torch.Tensor) -> bool:

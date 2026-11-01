@@ -17,6 +17,10 @@ max |dlogit|, argmax agreement and the mean KL(bf16 || quantized) over the check
 gate+up, q+k+v and in_proj_qkv+z before measuring (quantizing the stacked Linears gives the same int8 values and scales).
 An int4 configuration that follows a quantized one reloads the bf16 weights first. 4-bit always uses groups
 (``--int4-group-size``, 128 by default).
+``--gemv-backends triton,cuda`` measures every int8 configuration once per one-token GEMV backend (the Triton kernel
+and the CUDA C++ one of infer_opt/quant_cuda.py), on the same quantized weights, as ``int8[triton]``, ``int8[cuda]``;
+a backend may repeat (``triton,cuda,triton``) to see the drift within the session. ``--cuda-configs`` loads the
+``best`` table of bench_int8_gemv_cuda.py into ``quant_cuda.CUDA_LAUNCH_CONFIGS``.
 
     python scripts/bench_qwen3_5_int8_decode.py --repo Qwen/Qwen3.5-9B --kernels fla-delta --autotune --out int8_decode.json
 """
@@ -38,6 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from bench_qwen3_5_decode import make_stepper, prefilled, reference, sync, time_decode  # noqa: E402
+from infer_opt import quant  # noqa: E402
 from infer_opt.quant import quantize_linears  # noqa: E402
 from infer_opt.qwen3_5 import Qwen3_5ForCausalLM  # noqa: E402
 
@@ -61,7 +66,7 @@ def measure(model, label, args, ids, max_len, fed, ref_logits, autotune):
     import torch._inductor.config as inductor_config
     from torch._dynamo.utils import counters
 
-    row = {"config": label, "mode": args.mode, "autotune": autotune}
+    row = {"config": label, "mode": args.mode, "autotune": autotune, "gemv_backend": quant.INT8_GEMV_BACKEND}
     try:
         inductor_config.max_autotune = autotune
         inductor_config.coordinate_descent_tuning = autotune
@@ -99,6 +104,9 @@ def main() -> None:
                         help="tune_qwen3_5_group_gemv.py --bits 4 output: its best table into INT4_LAUNCH_CONFIGS")
     parser.add_argument("--configs", default="bf16,int8,int8+lm_head", help="also: int4, int4-clip")
     parser.add_argument("--fuse", action="store_true", help="model.fuse_projections() before every config")
+    parser.add_argument("--gemv-backends", default="", help="e.g. triton,cuda: measure each int8 config per backend")
+    parser.add_argument("--cuda-configs", default=None,
+                        help="bench_int8_gemv_cuda.py output: its best table into quant_cuda.CUDA_LAUNCH_CONFIGS")
     parser.add_argument("--out", default="int8_decode.json")
     args = parser.parse_args()
     if args.int4_configs:
@@ -106,6 +114,15 @@ def main() -> None:
 
         for n, k, group, *config in json.loads(Path(args.int4_configs).read_text())["best"]:
             quant_kernels.INT4_LAUNCH_CONFIGS[(n, k, group)] = tuple(config)
+    if args.cuda_configs:
+        from infer_opt import quant_cuda
+
+        for n, k, group, *config in json.loads(Path(args.cuda_configs).read_text())["best"]:
+            quant_cuda.CUDA_LAUNCH_CONFIGS[(n, k, group)] = tuple(config)
+    if "cuda" in args.gemv_backends.split(","):
+        from infer_opt import quant_cuda
+
+        quant_cuda._extension()  # build (or load) before the model takes the GPU memory
 
     from huggingface_hub import snapshot_download
 
@@ -165,8 +182,13 @@ def main() -> None:
                           "clip_search": kwargs.get("clip_search", False)}
         print(label, report.summary(), flush=True)
         torch.cuda.empty_cache()
-        rows.append(measure(model, label, args, ids, max_len, fed, ref_logits, autotune=args.autotune))
-        save()
+        backends = args.gemv_backends.split(",") if args.gemv_backends and label.startswith("int8") else [""]
+        for backend in backends:
+            if backend:
+                quant.INT8_GEMV_BACKEND = backend
+            name = f"{label}[{backend}]" if backend else label
+            rows.append(measure(model, name, args, ids, max_len, fed, ref_logits, autotune=args.autotune))
+            save()
 
 
 if __name__ == "__main__":

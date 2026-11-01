@@ -2,6 +2,7 @@ import pytest
 import torch
 from torch import nn
 
+from infer_opt import quant
 from infer_opt.quant import Int8Linear, int8_linear, quantize_int8, quantize_linears
 from tests.test_qwen3_5 import make_model
 
@@ -173,7 +174,11 @@ def test_group_wise_model_is_closer_than_per_channel():
 @pytest.mark.parametrize("out_f,in_f,group_size", [(96, 256, 64), (300, 384, 128), (4096, 1024, 128),
                                                   (640, 17408, 128),  # few rows, long K: the 27B down_proj
                                                   (200, 384, 48), (64, 96, 8)])  # BLOCK_K 128 / 32, VEC 16 / 8
-def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size):
+@pytest.mark.parametrize("backend", ["triton", "cuda"])  # the CUDA kernel leaves groups 48 and 8 to Triton
+def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size, backend, monkeypatch):
+    if backend == "cuda":
+        cuda_extension()
+    monkeypatch.setattr(quant, "INT8_GEMV_BACKEND", backend)
     torch.manual_seed(0)
     dtype = torch.float16  # bf16 Triton kernels need sm80; the local GPU may be older
     linear = nn.Linear(in_f, out_f, bias=True, device="cuda", dtype=dtype)
@@ -187,6 +192,33 @@ def test_cuda_group_gemv_matches_dequantized_matmul(out_f, in_f, group_size):
             assert got.shape == expected.shape and got.dtype == dtype
             assert torch.allclose(got.float(), expected, atol=2e-2, rtol=2e-3)
 
+
+def cuda_extension():
+    """The CUDA C++ GEMV extension, or a skip when it cannot be built here (no nvcc of torch's CUDA major, no ninja)."""
+    from infer_opt import quant_cuda
+
+    try:
+        return quant_cuda._extension()
+    except Exception as exc:  # noqa: BLE001 - any build failure
+        pytest.skip(f"CUDA GEMV extension does not build: {type(exc).__name__}: {str(exc)[:200]}")
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="the CUDA GEMV needs CUDA")
+@pytest.mark.parametrize("out_f,in_f,group_size", [(1023, 5120, 128), (5, 5120, 16), (640, 17408, 128)])
+def test_cuda_gemv_matches_triton_gemv_in_every_compiled_configuration(out_f, in_f, group_size, monkeypatch):
+    from infer_opt import quant_cuda, quant_kernels
+
+    cuda_extension()
+    torch.manual_seed(0)
+    dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    q, scale = quantize_int8(torch.randn(out_f, in_f, device="cuda", dtype=dtype) * 0.02, group_size)
+    x = torch.randn(1, 1, in_f, device="cuda", dtype=dtype)
+    expected = quant_kernels.w8a16_group_gemv(x, q, scale).float()
+    for config in quant_cuda.CONFIGS:  # rows past N (1023 and 5 rows), chunks left over after the unrolled steps
+        monkeypatch.setitem(quant_cuda.CUDA_LAUNCH_CONFIGS, (out_f, in_f, group_size), config)
+        got = quant_cuda.w8a16_group_gemv_cuda(x, q, scale)
+        assert got.shape == expected.shape and got.dtype == dtype
+        assert torch.allclose(got.float(), expected, atol=2e-2, rtol=1e-2), config
 
 
 def write_hf_config(path, c):
