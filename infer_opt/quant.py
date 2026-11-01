@@ -323,6 +323,9 @@ def quantize_linears(
     report = QuantizationReport(bits=bits)
     targets = [(name, module) for name, module in model.named_modules() if isinstance(module, nn.Linear)]
     for name, module in targets:
+        if getattr(getattr(model, "config", None), "num_experts", 0) and name.endswith(("mlp.gate", "mlp.shared_expert_gate")):
+            report.skipped[name] = "MoE routing kept in original precision"
+            continue
         if exclude and name.startswith(exclude):
             report.skipped[name] = "excluded"
             continue
@@ -365,6 +368,13 @@ def save_quantized(model: nn.Module, path: str | Path, *, shard_bytes: int = 2 <
     modules = {name: {"out_features": m.out_features, "in_features": m.in_features, "group_size": m.group_size,
                       "bias": m.bias is not None, **({"bits": 4} if isinstance(m, Int4Linear) else {})}
                for name, m in model.named_modules() if isinstance(m, (Int8Linear, Int4Linear))}
+    from .moe import Int8Experts
+    for name, module in model.named_modules():
+        if isinstance(module, Int8Experts):
+            modules[name] = {"type": "int8_experts", "group_size": module.group_size,
+                             "num_experts": module.gate_up_proj.shape[0],
+                             "hidden_size": module.gate_up_proj.shape[2],
+                             "intermediate_size": module.down_proj.shape[2]}
     fmt = "int4" if any(m.get("bits") == 4 for m in modules.values()) else "int8"
     seen, tied, shards, current, size = {}, {}, [], {}, 0
     for name, tensor in model.state_dict().items():
@@ -399,6 +409,18 @@ def prepare_quantized(model: nn.Module, spec: dict) -> None:
     for name, m in spec["modules"].items():
         parent_name, _, child_name = name.rpartition(".")
         parent = model.get_submodule(parent_name) if parent_name else model
+        if m.get("type") == "int8_experts":
+            from .moe import Int8Experts
+            original = getattr(parent, child_name)
+            device = original.gate_up_proj.device
+            e, h, mid, group = m["num_experts"], m["hidden_size"], m["intermediate_size"], m["group_size"]
+            if tuple(original.gate_up_proj.shape) != (e, 2 * mid, h) or group <= 0 or h % group or mid % group:
+                raise ValueError(f"invalid expert metadata: {name}")
+            q = lambda shape: torch.empty(shape, dtype=torch.int8, device=device)
+            scale = lambda shape: torch.empty(shape, dtype=torch.bfloat16, device=device)
+            setattr(parent, child_name, Int8Experts(q((e, 2 * mid, h)), scale((e, 2 * mid, h // group)),
+                                                   q((e, h, mid)), scale((e, h, mid // group)), group))
+            continue
         device = getattr(parent, child_name).weight.device
         out_f, in_f, group = m["out_features"], m["in_features"], m["group_size"]
         weight = torch.empty(out_f, in_f, dtype=torch.int8, device=device)

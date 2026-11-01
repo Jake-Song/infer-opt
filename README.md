@@ -2,6 +2,11 @@
 
 A compact, correctness-first PyTorch baseline for inference experiments. It uses a modern decoder shape—RMSNorm, RoPE, SwiGLU, grouped-query attention, and a preallocated KV cache—while keeping the optimization boundary explicit.
 
+## Qwen3.5 MoE INT8 + MTP
+
+See [implementation and G4 validation](MOE_STATUS.md) for streaming INT8 conversion,
+MoE/MTP support, kernel tuning, measured performance, and greedy-parity limitations.
+
 ## Setup
 
 The project targets Python 3.13. Install its dependencies with your preferred environment manager, for example:

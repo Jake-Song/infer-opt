@@ -66,6 +66,10 @@ class Qwen3_5TextConfig:
     # GatedDeltaNet kernels: "torch" (reference), "fla" (flash-linear-attention delta rule + causal conv),
     # or "fla-delta" (FLA delta rule only, torch conv)
     kernels: str = "torch"
+    num_experts: int = 0
+    num_experts_per_tok: int = 0
+    moe_intermediate_size: int = 0
+    shared_expert_intermediate_size: int = 0
 
     def layer_summary(self) -> dict:
         """Layer layout for result files: counts plus a one-letter-per-layer pattern (L linear, F full)."""
@@ -85,7 +89,7 @@ class Qwen3_5TextConfig:
         return cls(
             vocab_size=text["vocab_size"],
             hidden_size=text["hidden_size"],
-            intermediate_size=text["intermediate_size"],
+            intermediate_size=text.get("intermediate_size", text.get("moe_intermediate_size", 0)),
             num_hidden_layers=text["num_hidden_layers"],
             num_attention_heads=text["num_attention_heads"],
             num_key_value_heads=text["num_key_value_heads"],
@@ -102,6 +106,10 @@ class Qwen3_5TextConfig:
             mrope_section=list(rope.get("mrope_section", [11, 11, 10])),
             tie_word_embeddings=text.get("tie_word_embeddings", raw.get("tie_word_embeddings", True)),
             mtp_num_hidden_layers=text.get("mtp_num_hidden_layers", 0),
+            num_experts=text.get("num_experts", 0),
+            num_experts_per_tok=text.get("num_experts_per_tok", 0),
+            moe_intermediate_size=text.get("moe_intermediate_size", 0),
+            shared_expert_intermediate_size=text.get("shared_expert_intermediate_size", 0),
         )
 
 
@@ -739,7 +747,11 @@ class Qwen3_5DecoderLayer(nn.Module):
             self.self_attn = Qwen3_5Attention(config, layer_idx)
         else:
             raise ValueError(f"unknown layer type {self.block_type!r}")
-        self.mlp = Qwen3_5MLP(config)
+        if config.num_experts:
+            from .moe import Qwen3_5SparseMoeBlock
+            self.mlp = Qwen3_5SparseMoeBlock(config)
+        else:
+            self.mlp = Qwen3_5MLP(config)
         self.input_layernorm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = Qwen3_5RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
 
@@ -793,6 +805,56 @@ class Qwen3_5TextModel(nn.Module):
             hidden_states = layer(hidden_states, position_embeddings, cache, decode=True)
         cache.position.add_(1)
         return self.norm(hidden_states)
+
+    def forward_verify_consistent(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
+        """Single-token attention/state math with parallel independent routed experts."""
+        start = cache.position.clone()
+        hidden = self.embed_tokens(input_ids)
+        tokens = input_ids.shape[1]
+        for i, layer in enumerate(self.layers):
+            conv = cache.conv_states[i]
+            if conv is not None:
+                cache.spec_conv[i][..., :conv.shape[-1]].copy_(conv)
+            attended = []
+            for t in range(tokens):
+                cache.position.copy_(start + t)
+                part = hidden[:, t:t + 1]
+                normalized = layer.input_layernorm(part)
+                if layer.block_type == "linear_attention":
+                    output = layer.linear_attn(normalized, cache, decode=True)
+                    cache.spec_conv[i][..., conv.shape[-1] + t].copy_(conv[..., -1])
+                    cache.spec_states[i][t].copy_(cache.recurrent_states[i])
+                else:
+                    positions = cache.position.view(1, 1, 1).expand(3, input_ids.shape[0], 1)
+                    rope = self.rotary_emb(part, positions)
+                    output = layer.self_attn(normalized, rope, cache, decode=True)
+                attended.append(part + output)
+            hidden = torch.cat(attended, dim=1)
+            normalized = torch.cat([layer.post_attention_layernorm(hidden[:, t:t + 1])
+                                    for t in range(tokens)], dim=1)
+            hidden = hidden + layer.mlp(normalized, consistent_rows=True)
+        cache.position.copy_(start)
+        return torch.cat([self.norm(hidden[:, t:t + 1]) for t in range(tokens)], dim=1)
+
+    def forward_verify_sequential(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
+        """Verify with the exact single-token target path, retaining rollback states.
+
+        This conservative path trades batched projection reuse for greedy parity.
+        All loop bounds are static, so the whole round remains graph-capturable.
+        """
+        start = cache.position.clone()
+        for i, conv in enumerate(cache.conv_states):
+            if conv is not None:
+                cache.spec_conv[i][..., :conv.shape[-1]].copy_(conv)
+        outputs = []
+        for token in range(input_ids.shape[1]):
+            outputs.append(self.forward_decode(input_ids[:, token:token + 1], cache))
+            for i, conv in enumerate(cache.conv_states):
+                if conv is not None:
+                    cache.spec_conv[i][..., conv.shape[-1] + token].copy_(conv[..., -1])
+                    cache.spec_states[i][token].copy_(cache.recurrent_states[i])
+        cache.position.copy_(start)
+        return torch.cat(outputs, dim=1)
 
     def forward_verify(self, input_ids: torch.LongTensor, cache: Qwen3_5Cache) -> torch.Tensor:
         """``T`` tokens at ``cache.position + 0..T-1`` with fixed shapes, to check drafted tokens. K/V are written; the
@@ -867,8 +929,11 @@ class Qwen3_5ForCausalLM(nn.Module):
         weight = self.model.language_model.embed_tokens.weight
         with torch.device("meta"):
             mtp = Qwen3_5MTP(self.config)
-        mtp.load_state_dict({k.removeprefix("mtp."): v for k, v in state.items() if k.startswith("mtp.")},
-                            strict=True, assign=True)
+        head_state = {k.removeprefix("mtp."): v for k, v in state.items() if k.startswith("mtp.")}
+        if self.config.num_experts:
+            from .moe import normalize_expert_state
+            normalize_expert_state(head_state, self.config)
+        mtp.load_state_dict(head_state, strict=True, assign=True)
         self.mtp = mtp.to(device=weight.device, dtype=weight.dtype)
         return self
 
@@ -987,8 +1052,13 @@ class Qwen3_5ForCausalLM(nn.Module):
                     # the vision tower is not part of the text model, the MTP head only on request
                     if key.startswith(skipped):
                         continue
+                    if key in state:
+                        raise ValueError(f"duplicate checkpoint tensor: {key}")
                     state[key] = f.get_tensor(key)
-        model.load_state_dict(state, strict=False, assign=True)
+        if config.num_experts:
+            from .moe import normalize_expert_state
+            normalize_expert_state(state, config)
+        model.load_state_dict(state, strict=bool(config.num_experts), assign=True)
         # the non-persistent rope buffer is not in the checkpoint and was created on meta
         model.model.language_model.rotary_emb = Qwen3_5TextRotaryEmbedding(config)
         if config.tie_word_embeddings:

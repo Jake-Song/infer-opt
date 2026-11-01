@@ -1,0 +1,13 @@
+...........................                                              [100%]
+=============================== warnings summary ===============================
+tests/test_moe.py: 10 warnings
+  /usr/local/lib/python3.13/dist-packages/torch/_inductor/lowering.py:7836: UserWarning: 
+  Online softmax is disabled on the fly since Inductor decides to
+  split the reduction. Cut an issue to PyTorch if this is an
+  important use case and you want to speed it up with online
+  softmax.
+  
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+27 passed, 10 warnings in 30.97s

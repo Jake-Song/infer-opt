@@ -1,0 +1,68 @@
+........FF.....                                                          [100%]
+=================================== FAILURES ===================================
+_________________ test_mtp_checkpoint_round_trip[False-False] __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_mtp_checkpoint_round_trip0')
+quantized_head = False, tied = False
+
+    @pytest.mark.parametrize("quantized_head", [False, True])
+    @pytest.mark.parametrize("tied", [False, True])
+    def test_mtp_checkpoint_round_trip(tmp_path, quantized_head, tied):
+        source = make_model()
+        model = Qwen3_5ForCausalLM(dataclasses.replace(source.config, tie_word_embeddings=tied), mtp=True).double().eval()
+        model.load_state_dict(source.state_dict())
+        quantize_linears(model, group_size=16, min_out_features=8, exclude=() if quantized_head else ("mtp.",))
+        save_quantized(model, tmp_path, shard_bytes=20_000)
+        write_hf_config(tmp_path, model.config)
+        loaded = Qwen3_5ForCausalLM.from_quantized_dir(tmp_path)
+        assert loaded.mtp is not None
+        assert isinstance(loaded.mtp.fc, Int8Linear) == quantized_head
+        assert (loaded.lm_head.weight is loaded.model.language_model.embed_tokens.weight) == tied
+        for name, tensor in model.state_dict().items():
+            got = loaded.state_dict()[name]
+            assert tensor.dtype == got.dtype and torch.equal(tensor, got), name
+        ids = torch.randint(0, model.config.vocab_size, (1, 9))
+        with torch.no_grad():
+>           assert torch.equal(model(ids), loaded(ids))
+E           assert False
+E            +  where False = <built-in method equal of type object at 0x7807727f1000>(tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64), tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64))
+E            +    where <built-in method equal of type object at 0x7807727f1000> = torch.equal
+E            +    and   tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64) = Qwen3_5ForCausalLM(\n  (model): _Backbone(\n    (language_model): Qwen3_5TextModel(\n      (embed_tokens): Embedding(97, ... Qwen3_5RMSNorm()\n        (post_attention_layernorm): Qwen3_5RMSNorm()\n      )\n    )\n    (norm): Qwen3_5RMSNorm()\n  )\n)(tensor([[ 3, 15, 28, 83, 27, 90, 10, 38, 61]]))
+E            +    and   tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64) = Qwen3_5ForCausalLM(\n  (model): _Backbone(\n    (language_model): Qwen3_5TextModel(\n      (embed_tokens): Embedding(97, ... Qwen3_5RMSNorm()\n        (post_attention_layernorm): Qwen3_5RMSNorm()\n      )\n    )\n    (norm): Qwen3_5RMSNorm()\n  )\n)(tensor([[ 3, 15, 28, 83, 27, 90, 10, 38, 61]]))
+
+tests/test_mtp_checkpoint.py:35: AssertionError
+__________________ test_mtp_checkpoint_round_trip[False-True] __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_mtp_checkpoint_round_trip1')
+quantized_head = True, tied = False
+
+    @pytest.mark.parametrize("quantized_head", [False, True])
+    @pytest.mark.parametrize("tied", [False, True])
+    def test_mtp_checkpoint_round_trip(tmp_path, quantized_head, tied):
+        source = make_model()
+        model = Qwen3_5ForCausalLM(dataclasses.replace(source.config, tie_word_embeddings=tied), mtp=True).double().eval()
+        model.load_state_dict(source.state_dict())
+        quantize_linears(model, group_size=16, min_out_features=8, exclude=() if quantized_head else ("mtp.",))
+        save_quantized(model, tmp_path, shard_bytes=20_000)
+        write_hf_config(tmp_path, model.config)
+        loaded = Qwen3_5ForCausalLM.from_quantized_dir(tmp_path)
+        assert loaded.mtp is not None
+        assert isinstance(loaded.mtp.fc, Int8Linear) == quantized_head
+        assert (loaded.lm_head.weight is loaded.model.language_model.embed_tokens.weight) == tied
+        for name, tensor in model.state_dict().items():
+            got = loaded.state_dict()[name]
+            assert tensor.dtype == got.dtype and torch.equal(tensor, got), name
+        ids = torch.randint(0, model.config.vocab_size, (1, 9))
+        with torch.no_grad():
+>           assert torch.equal(model(ids), loaded(ids))
+E           assert False
+E            +  where False = <built-in method equal of type object at 0x7807727f1000>(tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64), tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64))
+E            +    where <built-in method equal of type object at 0x7807727f1000> = torch.equal
+E            +    and   tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64) = Qwen3_5ForCausalLM(\n  (model): _Backbone(\n    (language_model): Qwen3_5TextModel(\n      (embed_tokens): Embedding(97, ... Qwen3_5RMSNorm()\n        (post_attention_layernorm): Qwen3_5RMSNorm()\n      )\n    )\n    (norm): Qwen3_5RMSNorm()\n  )\n)(tensor([[ 3, 15, 28, 83, 27, 90, 10, 38, 61]]))
+E            +    and   tensor([[[-9.1907e-01,  1.4643e+00,  2.1786e+00,  4.1274e+00,  5.5128e-01,\n          -1.6390e-01,  3.8910e-01, -2.5968...93e+00, -1.5306e+00, -4.5819e-01, -1.7008e+00,  2.0759e+00,\n           1.3966e+00,  2.2257e+00]]], dtype=torch.float64) = Qwen3_5ForCausalLM(\n  (model): _Backbone(\n    (language_model): Qwen3_5TextModel(\n      (embed_tokens): Embedding(97, ... Qwen3_5RMSNorm()\n        (post_attention_layernorm): Qwen3_5RMSNorm()\n      )\n    )\n    (norm): Qwen3_5RMSNorm()\n  )\n)(tensor([[ 3, 15, 28, 83, 27, 90, 10, 38, 61]]))
+
+tests/test_mtp_checkpoint.py:35: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mtp_checkpoint.py::test_mtp_checkpoint_round_trip[False-False]
+FAILED tests/test_mtp_checkpoint.py::test_mtp_checkpoint_round_trip[False-True]
+2 failed, 13 passed in 6.43s

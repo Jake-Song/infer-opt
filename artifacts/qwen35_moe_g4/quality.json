@@ -1,0 +1,178 @@
+{
+  "rows": [
+    {
+      "precision": "bf16",
+      "prompt": "short",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0010492115980014205,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "hello",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0016288243932649493,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "korean",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0027478395495563745,
+      "top1_agreement": 0.9791666865348816,
+      "strong_mismatches": 0,
+      "mismatch_steps": [
+        43
+      ]
+    },
+    {
+      "precision": "bf16",
+      "prompt": "math",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0019642950501292944,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "chat",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0009450034121982753,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "chat_long",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.00014505143917631358,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "prose_1k",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0008646652568131685,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "code_1k",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0011109004262834787,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "bf16",
+      "prompt": "code_1_5k",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.005229684058576822,
+      "top1_agreement": 0.9583333134651184,
+      "strong_mismatches": 0,
+      "mismatch_steps": [
+        20,
+        39
+      ]
+    },
+    {
+      "precision": "int8",
+      "prompt": "short",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0009122954797931015,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "int8",
+      "prompt": "hello",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0021605147048830986,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "int8",
+      "prompt": "korean",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.002732830122113228,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "int8",
+      "prompt": "math",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0025683753192424774,
+      "top1_agreement": 0.9583333134651184,
+      "strong_mismatches": 0,
+      "mismatch_steps": [
+        17,
+        31
+      ]
+    },
+    {
+      "precision": "int8",
+      "prompt": "chat",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.002453553956001997,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "int8",
+      "prompt": "chat_long",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.00044533703476190567,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "int8",
+      "prompt": "prose_1k",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.0006986706866882741,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    },
+    {
+      "precision": "int8",
+      "prompt": "code_1k",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.001732427510432899,
+      "top1_agreement": 0.9791666865348816,
+      "strong_mismatches": 0,
+      "mismatch_steps": [
+        30
+      ]
+    },
+    {
+      "precision": "int8",
+      "prompt": "code_1_5k",
+      "teacher_forced_tokens": 48,
+      "mean_kl": 0.004420543555170298,
+      "top1_agreement": 1.0,
+      "strong_mismatches": 0,
+      "mismatch_steps": []
+    }
+  ],
+  "reference": "HF BF16 cached greedy",
+  "tokens": 48
+}

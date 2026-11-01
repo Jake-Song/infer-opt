@@ -48,7 +48,11 @@ PROMPTS = ("chat_long", "code_1k", "prose_1k", "math", "korean")
 def baseline(model, decoder, ids, new_tokens):
     """Greedy tokens and decode ms/token of a fixed-shape decoder (reused across prompts: one cache size)."""
     decoder.cache.reset()
+    sync()
+    prefill_start = time.perf_counter()
     token = model(ids, decoder.cache)[:, -1].argmax(-1, keepdim=True)
+    sync()
+    baseline.last_ttft_ms = (time.perf_counter() - prefill_start) * 1e3
     if decoder.graph is None:
         decoder.prepare()
     out = [token]
@@ -64,7 +68,11 @@ def baseline(model, decoder, ids, new_tokens):
 @torch.no_grad()
 def speculative(decoder, ids, new_tokens):
     """Greedy tokens, decode ms/token (the rounds after the prefill) and ms per round."""
+    sync()
+    prefill_start = time.perf_counter()
     out = decoder.prefill(ids)[0].tolist()
+    sync()
+    speculative.last_ttft_ms = (time.perf_counter() - prefill_start) * 1e3
     if decoder.graph is None:
         decoder.prepare()
     sync()
@@ -73,7 +81,7 @@ def speculative(decoder, ids, new_tokens):
         out += decoder.round()
     sync()
     seconds = time.perf_counter() - t0
-    return (torch.tensor(out[:new_tokens], device=ids.device), seconds / (len(out) - 1) * 1e3,
+    return (torch.tensor(out[:new_tokens], device=ids.device), seconds / (new_tokens - 1) * 1e3,
             seconds / decoder.stats.rounds * 1e3)
 
 
@@ -109,7 +117,7 @@ def measure(model, label, args, prompts):
     rows = []
     try:
         base = FixedShapeDecoder(model, model.new_cache(1, max_len + 8), args.mode)
-        specs = {k: MTPSpeculativeDecoder(model, max_len, k=k, mode=args.mode) for k in args.ks}
+        specs = {k: MTPSpeculativeDecoder(model, max_len, k=k, mode=args.mode, verification=args.verification, allow_inexact=args.allow_inexact_verification) for k in args.ks}
         first = next(iter(prompts.values()))
         t0 = time.perf_counter()
         baseline(model, base, first, 16)
@@ -119,19 +127,34 @@ def measure(model, label, args, prompts):
     except Exception as exc:  # noqa: BLE001 - record and continue
         print(traceback.format_exc()[-1500:], flush=True)
         return [{"config": label, "error": f"{type(exc).__name__}: {str(exc)[:600]}"}]
+    torch.cuda.reset_peak_memory_stats()
     for name, ids in prompts.items():
-        row = {"config": label, "prompt": name, "prompt_tokens": ids.shape[1], "compile_s": compile_s}
+        row = {"config": label, "prompt": name, "prompt_tokens": ids.shape[1], "compile_s": compile_s,
+               "verification": next(iter(specs.values())).verification}
         try:
+            # Prefill kernels specialize on prompt shape too; warming only the
+            # first prompt would mix compilation into later TTFT measurements.
+            warm_start = time.perf_counter()
+            baseline(model, base, ids, 2)
+            for decoder in specs.values():
+                decoder.prefill(ids)
+            sync()
+            row["prefill_warmup_s"] = time.perf_counter() - warm_start
             want, row["baseline_ms_per_token"] = baseline(model, base, ids, args.new_tokens)
+            row["baseline_model_ttft_ms"] = baseline.last_ttft_ms
+            row["baseline_total_ms"] = baseline.last_ttft_ms + row["baseline_ms_per_token"] * (args.new_tokens - 1)
             row["spec"] = {}
             for k, decoder in specs.items():
                 got, ms, round_ms = speculative(decoder, ids, args.new_tokens)
                 same = (got == want).tolist()
-                spec = {"ms_per_token": ms, "round_ms": round_ms, "speedup": row["baseline_ms_per_token"] / ms,
+                spec = {"model_ttft_ms": speculative.last_ttft_ms,
+                        "total_ms": speculative.last_ttft_ms + ms * (args.new_tokens - 1),
+                        "ms_per_token": ms, "round_ms": round_ms, "speedup": row["baseline_ms_per_token"] / ms,
                         **decoder.stats.as_dict(), "first_divergence": same.index(False) if False in same else None,
                         "token_agreement": sum(same) / len(same)}
                 row["spec"][k] = spec
                 print(label, name, "k", k, json.dumps(spec), flush=True)
+            row["greedy_parity_passed"] = all(v["first_divergence"] is None for v in row["spec"].values())
             row["peak_mem_gib"] = torch.cuda.max_memory_allocated() / 2**30
         except Exception as exc:  # noqa: BLE001 - record and continue
             row["error"] = f"{type(exc).__name__}: {str(exc)[:600]}"
@@ -149,6 +172,12 @@ def measure(model, label, args, prompts):
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--allow-inexact-verification", action="store_true", help="enable compiled MoE MTP for diagnostics despite its failed full-model parity gate")
+    parser.add_argument("--bf16-configs", default=None, help="optional BF16 GEMV tuning JSON; preserves BF16 weights")
+    parser.add_argument("--gemv-configs", default=None, help="non-expert single-row tuning JSON")
+    parser.add_argument("--verification", choices=["parallel", "sequential", "consistent"], default=None)
+    parser.add_argument("--repeats", type=int, default=1)
+    parser.add_argument("--prompt-lengths", default="", help="additional fixed prose token lengths, comma separated")
     parser.add_argument("--repo", default="Qwen/Qwen3.5-27B")
     parser.add_argument("--weights", default=None)
     parser.add_argument("--kernels", default="fla-delta")
@@ -171,6 +200,11 @@ def main() -> None:
         for m, n, k, group, config in json.loads(Path(args.rows_configs).read_text())["rows_best"]:
             quant_kernels.ROWS_LAUNCH_CONFIGS[(m, n, k, group)] = tuple(config)
 
+    if args.gemv_configs:
+        from infer_opt import quant_kernels
+        for n, k, group, block_n, block_k, warps in json.loads(Path(args.gemv_configs).read_text())["best"]:
+            quant_kernels.LAUNCH_CONFIGS[(n, k, group)] = (block_n, block_k, warps)
+
     from huggingface_hub import snapshot_download
     from transformers import AutoTokenizer
 
@@ -178,9 +212,27 @@ def main() -> None:
     tok = AutoTokenizer.from_pretrained(path)
     texts = build_prompts(tok, CODE_PROMPT_SOURCE.read_text())
     prompts = {name: tok(texts[name], return_tensors="pt").input_ids.cuda() for name in args.prompts.split(",")}
-    model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels,
+    if args.repeats < 1:
+        parser.error("--repeats must be positive")
+    if args.prompt_lengths:
+        base = tok(texts["prose_1k"], return_tensors="pt").input_ids.cuda()
+        for length in map(int, args.prompt_lengths.split(',')):
+            if length < 1:
+                parser.error("prompt lengths must be positive")
+            prompts[f"prose_fixed_{length}"] = base.repeat(1, (length + base.shape[1] - 1) // base.shape[1])[:, :length].contiguous()
+    prompts = {f"{name}/repeat-{r}": ids for r in range(args.repeats) for name, ids in prompts.items()}
+    if (Path(path) / "quantization.json").exists():
+        if args.configs != "int8+mtp":
+            parser.error("quantized checkpoints require --configs int8+mtp")
+        model = Qwen3_5ForCausalLM.from_quantized_dir(path, device="cuda", kernels=args.kernels)
+    else:
+        model = Qwen3_5ForCausalLM.from_pretrained_dir(path, dtype=torch.bfloat16, device="cuda", kernels=args.kernels,
                                                    mtp=True)
     model.fuse_projections()
+    if args.bf16_configs:
+        from infer_opt.bf16_gemv import install_bf16_gemv
+        table = {(n,k):(bn,bk,w) for n,k,bn,bk,w in json.loads(Path(args.bf16_configs).read_text())["best"]}
+        install_bf16_gemv(model, table)
     print(f"{torch.cuda.get_device_name()} torch {torch.__version__} kernels {args.kernels} mode {args.mode} "
           f"new {args.new_tokens} ks {args.ks}", flush=True)
 
@@ -204,6 +256,11 @@ def main() -> None:
             torch._dynamo.reset()  # drop compiled steps that reference the weights about to be replaced
             gc.collect()
             torch.cuda.empty_cache()
+            if model.config.num_experts:
+                from infer_opt.moe import quantize_moe_experts
+                quantize_moe_experts(model.model, args.group_size)
+                if label != "int8":
+                    quantize_moe_experts(model.mtp, args.group_size)
             report = quantize_linears(model, group_size=args.group_size, **kwargs)
             reports[label] = {"summary": report.summary(), "replaced": len(report.replaced)}
             print(label, report.summary(), flush=True)
@@ -211,6 +268,8 @@ def main() -> None:
         if label in wanted:
             rows += measure(model, label, args, prompts)
             save()
+    if any("error" in row for row in rows):
+        raise SystemExit("one or more benchmark configurations failed; inspect output JSON")
 
 
 if __name__ == "__main__":

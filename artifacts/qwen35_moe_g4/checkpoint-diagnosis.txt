@@ -1,0 +1,2 @@
+{'threads': 24, 'max_error': 8.881784197001252e-16, 'equal': False, 'tokens_equal': True}
+{'threads': 1, 'max_error': 8.881784197001252e-16, 'equal': False, 'tokens_equal': True}

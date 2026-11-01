@@ -113,6 +113,7 @@ def main() -> None:
     parser.add_argument("--weights", default=None, help="local checkpoint dir instead of downloading --repo")
     parser.add_argument("--group-size", type=int, default=128, help="0: one scale per output channel")
     parser.add_argument("--lm-head", action="store_true", help="quantize lm_head too")
+    parser.add_argument("--mtp", action="store_true", help="include native MTP weights")
     parser.add_argument("--bits", type=int, default=8, choices=[8, 4])
     parser.add_argument("--clip-search", action="store_true", help="4-bit: per-group range with the smallest error")
     parser.add_argument("--gptq", action="store_true", help="4-bit with GPTQ on calibration data")
@@ -125,7 +126,14 @@ def main() -> None:
 
     src = Path(args.weights or snapshot_download(args.repo, allow_patterns=PATTERNS))
     out = Path(args.out)
-    model = Qwen3_5ForCausalLM.from_pretrained_dir(src, dtype=torch.bfloat16, device="cuda")
+    model = Qwen3_5ForCausalLM.from_pretrained_dir(src, dtype=torch.bfloat16, device="cuda", mtp=args.mtp)
+    if model.config.num_experts:
+        if args.bits != 8 or args.gptq or not args.group_size:
+            raise ValueError("MoE currently supports grouped INT8 only")
+        if args.push_to_hub:
+            raise ValueError("MoE publication is not supported by this script")
+        from infer_opt.moe import quantize_moe_experts
+        quantize_moe_experts(model, args.group_size)
     out.mkdir(parents=True, exist_ok=True)
     if args.gptq:
         if args.bits != 4 or args.lm_head or args.clip_search or not args.group_size:

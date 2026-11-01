@@ -1,0 +1,87 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "memory_gib": 94.97076416015625,
+  "torch": "2.11.0+cu130",
+  "rows": [
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 1,
+      "overlap": true,
+      "max_abs_error": 0.0,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 1,
+      "overlap": false,
+      "max_abs_error": 0.0,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 2,
+      "overlap": true,
+      "max_abs_error": 0.0,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 2,
+      "overlap": false,
+      "max_abs_error": 0.0,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 3,
+      "overlap": true,
+      "max_abs_error": 0.0,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 3,
+      "overlap": false,
+      "max_abs_error": 7.62939453125e-06,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 4,
+      "overlap": true,
+      "max_abs_error": 2.288818359375e-05,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 4,
+      "overlap": false,
+      "max_abs_error": 3.0517578125e-05,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 5,
+      "overlap": true,
+      "max_abs_error": 3.0517578125e-05,
+      "graph_equal": true,
+      "compiled_equal": true
+    },
+    {
+      "dynamic_routes_equal": true,
+      "tokens": 5,
+      "overlap": false,
+      "max_abs_error": 3.0517578125e-05,
+      "graph_equal": true,
+      "compiled_equal": true
+    }
+  ]
+}

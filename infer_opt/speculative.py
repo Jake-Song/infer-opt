@@ -23,6 +23,7 @@ differences between a ``T``-token and a one-token forward (exact on the fp64 tes
 from __future__ import annotations
 
 from collections import Counter
+from functools import partial
 from dataclasses import dataclass, field
 
 import torch
@@ -48,13 +49,20 @@ def draft(model: Qwen3_5ForCausalLM, hidden: torch.Tensor, token: torch.Tensor, 
 
 
 def spec_round(model: Qwen3_5ForCausalLM, tokens: torch.Tensor, cache: Qwen3_5Cache,
-               mtp_cache: Qwen3_5Cache) -> tuple[torch.Tensor, torch.Tensor]:
+               mtp_cache: Qwen3_5Cache, verification: str = "parallel") -> tuple[torch.Tensor, torch.Tensor]:
     """One verify-commit-draft round on ``tokens`` (``[1, k + 1]``: the last target token and ``k`` drafts), which
     is overwritten with the next round's input. Returns the target's argmax ``[1, k + 1]`` and the number of its
     leading tokens that were accepted (``[1]``, 1..k+1)."""
     k = tokens.shape[1] - 1
-    hidden = model.model.language_model.forward_verify(tokens, cache)
-    target = model.lm_head(hidden).argmax(-1)
+    if verification in ("sequential", "consistent"):
+        verify = (model.model.language_model.forward_verify_consistent if verification == "consistent"
+                  else model.model.language_model.forward_verify_sequential)
+        hidden = verify(tokens, cache)
+        target = torch.cat([model.lm_head(hidden[:, i:i + 1]).argmax(-1)
+                            for i in range(tokens.shape[1])], dim=1)
+    else:
+        hidden = model.model.language_model.forward_verify(tokens, cache)
+        target = model.lm_head(hidden).argmax(-1)
     accepted = (tokens[:, 1:] == target[:, :-1]).long().cumprod(-1).sum(-1) + 1
     cache.commit(accepted)
     mtp_out = model.mtp_hidden(target, hidden, mtp_cache, decode=True)
@@ -94,18 +102,32 @@ class MTPSpeculativeDecoder:
 
     ``mode`` is one of :data:`~infer_opt.qwen3_5.DECODE_MODES`, as for :class:`~infer_opt.qwen3_5.FixedShapeDecoder`:
     the round runs eagerly, through torch.compile (with CUDA graphs for ``compile-reduce-overhead``) or as one
-    hand-captured CUDA graph (``cudagraph``). ``max_seq_len`` bounds prompt + generated tokens; the caches get room
+    hand-captured CUDA graph (``cudagraph``). MoE defaults to ``verification="sequential"``
+    for single-token target math; ``parallel`` is experimental and can change greedy tokens.
+    ``consistent`` retains single-token attention while batching independent routed experts.
+    ``max_seq_len`` bounds prompt + generated tokens; the caches get room
     for one round's overshoot and the capture warm-up on top.
     """
 
     def __init__(self, model: Qwen3_5ForCausalLM, max_seq_len: int, k: int = 2, mode: str = "eager",
-                 fullgraph: bool = True):
+                 fullgraph: bool = True, verification: str | None = None, allow_inexact: bool = False):
         if model.mtp is None:
             raise ValueError("the model has no MTP head: load it with from_pretrained_dir(..., mtp=True)")
         if mode not in DECODE_MODES:
             raise ValueError(f"mode must be one of {DECODE_MODES}, got {mode!r}")
         if k < 1:
             raise ValueError("k must be at least 1")
+        if model.config.num_experts and k > 4:
+            raise ValueError("MoE currently supports k=1 through k=4")
+        verification = verification or ("sequential" if model.config.num_experts else "parallel")
+        if verification not in ("parallel", "sequential", "consistent"):
+            raise ValueError("verification must be parallel, sequential, or consistent")
+        if verification == "consistent":
+            if not model.config.num_experts:
+                raise ValueError("consistent verification requires MoE")
+        if model.config.num_experts and mode.startswith("compile") and not allow_inexact:
+            raise ValueError("compiled MoE MTP failed full-model greedy parity; use cudagraph or explicitly set allow_inexact=True for diagnostics")
+        self.verification = verification
         self.model, self.k, self.mode, self.max_seq_len = model, k, mode, max_seq_len
         self.tokens_per_round = k + 1
         room = max_seq_len + 4 * self.tokens_per_round + k  # a round's overshoot and three warm-up rounds
@@ -115,12 +137,12 @@ class MTPSpeculativeDecoder:
         self.tokens = torch.zeros(1, self.tokens_per_round, dtype=torch.long, device=self.cache.position.device)
         self.stats = SpecStats()
         self.graph = None
-        self.fn = spec_round
+        self.fn = partial(spec_round, verification=verification)
         if mode.startswith("compile"):
             for t in self._state_tensors() + [self.tokens]:
                 torch._dynamo.mark_static_address(t)
             options = {"mode": "reduce-overhead"} if mode == "compile-reduce-overhead" else {}
-            self.fn = torch.compile(spec_round, fullgraph=fullgraph, dynamic=False, **options)
+            self.fn = torch.compile(self.fn, fullgraph=fullgraph, dynamic=False, **options)
 
     def _state_tensors(self) -> list[torch.Tensor]:
         tensors = []
@@ -161,11 +183,11 @@ class MTPSpeculativeDecoder:
         stream.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(stream):
             for _ in range(3):
-                spec_round(self.model, self.tokens, self.cache, self.mtp_cache)
+                self.fn(self.model, self.tokens, self.cache, self.mtp_cache)
         torch.cuda.current_stream().wait_stream(stream)
         self.graph = torch.cuda.CUDAGraph()
         with torch.cuda.graph(self.graph):
-            self.static_out = spec_round(self.model, self.tokens, self.cache, self.mtp_cache)
+            self.static_out = self.fn(self.model, self.tokens, self.cache, self.mtp_cache)
         for dst, src in zip(live, saved):
             dst.copy_(src)
 
