@@ -1,0 +1,22 @@
+{
+  "observed_at_utc": "2026-11-03T17:42:54.481850+00:00",
+  "session": "qwen35-moe-a100-80-eval",
+  "status": "interrupted_runtime_disappeared",
+  "reason": "Unknown; backend reported no active sessions",
+  "backend_output": "[colab] Pruned 1 stale local session(s).\n[colab] No active sessions found on server.",
+  "completed_benchmark_settings": [
+    "cudagraph-sequential-k1",
+    "cudagraph-sequential-k2"
+  ],
+  "partial_setting": "cudagraph-consistent-k1",
+  "partial_rows": 8,
+  "remaining_unmeasured": [
+    "cudagraph-consistent-k2",
+    "cudagraph-parallel-k1",
+    "cudagraph-parallel-k2",
+    "compile-reduce-overhead-parallel-k1",
+    "compile-reduce-overhead-parallel-k2",
+    "compile-reduce-overhead-parallel-k3",
+    "compile-reduce-overhead-consistent-k1"
+  ]
+}

@@ -4,8 +4,16 @@ A compact, correctness-first PyTorch baseline for inference experiments. It uses
 
 ## Qwen3.5 MoE INT8 + MTP
 
-See [implementation and G4 validation](MOE_STATUS.md) for streaming INT8 conversion,
+See [implementation and GPU validation](MOE_STATUS.md) for streaming INT8 conversion,
 MoE/MTP support, kernel tuning, measured performance, and greedy-parity limitations.
+
+Published checkpoint: [Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp](https://huggingface.co/Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp)
+(34.541 GiB of weights, 22 shards, MTP included; custom infer-opt format).
+The [2026-11-04 release evidence](artifacts/qwen35_moe_hf_recovery_20261104/README.md)
+records G4 reload/token-parity validation and remote SHA-256 verification.
+The [A100 80GB experiment](artifacts/qwen35_moe_a100_20261104/README.md)
+completed 30 sequential-MTP parity checks, but MTP remained slower than ordinary
+decoding. Colab disconnected before the parallel/compiled comparisons completed.
 
 ## Setup
 
@@ -257,9 +265,12 @@ the verify forward the int8 GEMV gained a multi-row form (tensor cores, K split 
 1.06-1.26x one row, and the GatedDeltaNet layers verify the `k + 1` tokens in one Triton kernel that keeps the state
 after every token (`infer_opt/gated_delta_kernels.py`). On the int8 27B with the MTP head int8 too and lm_head kept in
 bf16 as in the published checkpoints (A100-SXM4-80GB, `k = 3`, 256 tokens): 19.8 -> **7.6** ms/token on prose, 7.8 on
-math, 9.0 on code, 10.2 on a chat prompt and 13.7 on Korean (`k = 2`), 1.45-2.61x against the plain fixed-shape decoder
-in the same session. The MTP head's precision only moves the acceptance, never the output; quantizing lm_head changes the
-target model, so it stays opt-in. `scripts/bench_qwen3_5_spec_decode.py` measures it; results and per-kernel profiles of
+math and 9.0 on code, with matching greedy tokens (2.20-2.61x against the same-session plain decoder).
+The recorded 10.2 ms/token on chat and 13.7 on Korean (`k = 2`) failed token parity and are diagnostic timings,
+not quality-preserving speedups. In exact speculative decoding the MTP head's precision affects acceptance rather
+than the target output, but this implementation's batched verification can round differently and change near-tie
+token selections. Quantizing lm_head changes the target model, so it stays opt-in.
+`scripts/bench_qwen3_5_spec_decode.py` measures it; results and per-kernel profiles of
 a round are in `notebooks/assets/qwen3_5_27b_int8_spec_gdn_a100_20261025/` (and `..._spec_a100_20261024/` for the
 first version, before the fused GatedDeltaNet kernel).
 

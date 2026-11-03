@@ -1,0 +1,77 @@
+{
+  "repo": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "url": "https://huggingface.co/Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "commit": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "verified_files": [
+    "LICENSE",
+    "README.md",
+    "chat_template.jinja",
+    "config.json",
+    "conversion_info.json",
+    "environment.json",
+    "generation_config.json",
+    "merges.txt",
+    "model-int8-00001.safetensors",
+    "model-int8-00002.safetensors",
+    "model-int8-00003.safetensors",
+    "model-int8-00004.safetensors",
+    "model-int8-00005.safetensors",
+    "model-int8-00006.safetensors",
+    "model-int8-00007.safetensors",
+    "model-int8-00008.safetensors",
+    "model-int8-00009.safetensors",
+    "model-int8-00010.safetensors",
+    "model-int8-00011.safetensors",
+    "model-int8-00012.safetensors",
+    "model-int8-00013.safetensors",
+    "model-int8-00014.safetensors",
+    "model-int8-00015.safetensors",
+    "model-int8-00016.safetensors",
+    "model-int8-00017.safetensors",
+    "model-int8-00018.safetensors",
+    "model-int8-00019.safetensors",
+    "model-int8-00020.safetensors",
+    "model-int8-00021.safetensors",
+    "model-int8-00022.safetensors",
+    "quantization.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "validation.json",
+    "vocab.json"
+  ],
+  "manifest_verified": true,
+  "checkpoint_bytes": 37087658536,
+  "validation": {
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "weights": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+    "expert_modules": 41,
+    "mtp": true,
+    "allocated_gib": 34.66132926940918,
+    "baseline_ms_per_token": 8.713588936508305,
+    "parity": [
+      {
+        "verification": "sequential",
+        "k": 1,
+        "tokens_equal": true
+      },
+      {
+        "verification": "sequential",
+        "k": 2,
+        "tokens_equal": true
+      },
+      {
+        "verification": "consistent",
+        "k": 1,
+        "tokens_equal": true
+      },
+      {
+        "verification": "consistent",
+        "k": 2,
+        "tokens_equal": true
+      }
+    ],
+    "text_sample": "\n\n<think>\n\n</think>\n\nThe sky appears blue due to a phenomenon called **Rayleigh scattering**. Here is the step-by-step physical explanation:\n\n### 1. Sunlight is a Mix of Colors\nSunlight looks white, but it is actually composed of all the colors of the visible spectrum (red, orange,",
+    "profile_steps": 16
+  },
+  "elapsed_s": 972.4186141490936
+}

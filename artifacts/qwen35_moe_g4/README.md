@@ -29,7 +29,8 @@ outputs near ties; inspect parity separately from timings.
 
 The 34.541 GiB checkpoint was stored on the user-created Colab runtime at
 `/content/qwen-moe-int8-g128-mtp-streamed`. That session was lost before HF
-upload; model weights are not checked in and are currently inaccessible.
+upload; that original copy is inaccessible. A regenerated checkpoint was
+[published on 2026-11-04](../qwen35_moe_hf_recovery_20261104/README.md).
 Final remote integration testing reported 34 passed, but its log, the manifest,
 and the compiled HF comparison artifacts were not downloaded.
 Original export peak process RAM was not recorded. Later converter telemetry

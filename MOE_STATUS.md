@@ -7,19 +7,34 @@ custom infer-opt checkpoint format, not a Transformers quantization format.
 
 ## Hardware and checkpoint
 
-Validated on the user-created Colab `qwen35-moe-int8-mtp` G4 session:
+Originally validated on the user-created Colab `qwen35-moe-int8-mtp` G4 session:
 RTX PRO 6000 Blackwell Server Edition, 94.97 GiB, PyTorch 2.11.0+cu130,
 Triton 3.6.0. **These are not A100 measurements.** The separate `cudagemv`
 session was not used.
+
+On 2026-11-04, the published checkpoint also passed strict reload and all ten
+expert-kernel checks on **A100-SXM4-80GB (79.250732 GiB visible)**, with
+PyTorch 2.11.0+cu130 and Triton 3.6.0. The four 64-token sequential/consistent
+MTP k=1,2 smoke checks matched ordinary decoding. Evidence is in
+[artifacts/qwen35_moe_a100_20261104](artifacts/qwen35_moe_a100_20261104/README.md);
+its measurements are separate from G4.
 
 Source: `Qwen/Qwen3.5-35B-A3B`, revision
 `59d61f3ce65a6d9863b86d2e96597125219dc754`.
 CPU streaming conversion produced 22 shards, 34.541 GiB, including MTP.
 Reload validated 41 quantized expert modules. The checkpoint was stored at
 `/content/qwen-moe-int8-g128-mtp-streamed`. The Colab session was subsequently
-lost (CLI returned 404/401 and no active sessions). The checkpoint is no longer
-accessible and was not uploaded to Hugging Face; regeneration is required if
-the runtime cannot be recovered.
+lost (CLI returned 404/401 and no active sessions) before that export was uploaded.
+
+On 2026-11-04 the checkpoint was regenerated and published as
+[Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp](https://huggingface.co/Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp),
+commit `331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388`. It contains 22 weight shards
+(34.540574 GiB) plus tokenizer/configuration files and release metadata.
+The release passed strict reload of 41 expert modules, ordinary 64-token
+generation, and MTP k=1,2 token parity with sequential and consistent verification
+on G4. All 35 payload files and the manifest were verified at the published
+commit. See [release evidence](artifacts/qwen35_moe_hf_recovery_20261104/README.md).
+Publishing used local HF authentication; the dedicated Colab runtime was stopped.
 
 The converter processes expert slices and output shards without loading the full
 BF16 model on the GPU. This makes conversion independent of A100 VRAM capacity;
@@ -28,9 +43,12 @@ so its peak host RAM was not measured. G4 inference reached 37.235 GiB allocated
 at 4096-token context; that is **not proof of fitting or running on A100 40 GB**
 (driver allocations, reserved memory and kernels differ).
 
+The 2026-11-04 release regeneration separately measured 26.855965 GiB peak
+process RSS during CPU conversion, with CUDA uninitialized in the converter.
+
 ## Measured behavior
 
-Raw evidence is in [artifacts/qwen35_moe_g4](artifacts/qwen35_moe_g4).
+The original G4 evidence is in [artifacts/qwen35_moe_g4](artifacts/qwen35_moe_g4).
 All timing claims below concern batch-one decode, not prefill or task accuracy.
 
 * Ordinary INT8 decode with manual CUDA Graph: roughly 8.6–8.9 ms/token.
@@ -52,6 +70,28 @@ All timing claims below concern batch-one decode, not prefill or task accuracy.
 `contexts-cold-prefill.json` contains a cold prefill compile in its first long
 context measurement. Do not compare its TTFT as warmed performance. The benchmark
 now warms each prompt shape before timing.
+
+### A100 80GB, 2026-11-04
+
+The published checkpoint ran on A100-SXM4-80GB with batch 1, five prompts,
+three repeats and 256 output tokens. The following ranges are per-prompt
+medians; prefill and compilation are excluded from decode timing.
+
+| CUDA Graph setting | Ordinary ms/token | MTP ms/token | Token divergence |
+|---|---:|---:|---:|
+| Sequential k=1 | 10.68–10.74 | 12.03–13.51 | 0/15 runs |
+| Sequential k=2 | 10.75–10.84 | 12.26–15.96 | 0/15 runs |
+
+Neither setting established a speedup. On prose, k=1 produced 1.984 tokens per
+23.802 ms round; k=2 produced 2.931 tokens per approximately 35.9 ms round.
+High acceptance alone did not offset the sequential verifier's round cost.
+This observation does not establish how an optimized batched verifier would perform.
+
+The runtime disappeared during consistent k=1; eight completed partial rows
+retained token parity, but the full repeat set was not collected. The backend
+reported no active sessions. Parallel and compiled MoE comparisons were not
+reached, so this run does not settle their speed or parity on A100. The cause of
+runtime loss is unknown. See the linked artifact README and `interruption.json`.
 
 ## Kernel tuning scope
 
@@ -95,11 +135,13 @@ MoE GPU test run passed 27 tests; the additional BF16 suite passed five.
 Historical dense FP64 checkpoint regression tests had two exact-equality
 failures at 8.88e-16 logit difference with identical token selections and state;
 see `gpu-tests.txt` and `checkpoint-diagnosis.txt`. This is not an entirely green
-repository-wide GPU test claim. A100 execution and task-level quality evaluation
-remain unvalidated.
+repository-wide GPU test claim. The later A100 80GB run validates the recorded
+INT8 kernel, reload, generation and decoding cases; task-level quality evaluation
+remains unvalidated.
 
 Final remote integration testing reported 34 passed before the session was lost.
 Its log and the completed compiled-plus-BF16-override HF comparison were not
 downloaded. The separate stock compiled INT8 HF comparison had not been
 confirmed complete. Only the files present in the artifact directory are retained
-evidence; final compiled quality and HF publication remain unfinished.
+evidence; final compiled quality remains unfinished. HF publication was completed
+separately on 2026-11-04 as described above.

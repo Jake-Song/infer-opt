@@ -1,0 +1,8 @@
+{
+  "requested_gpu": "A100 80GB",
+  "session": "qwen35-moe-a100-80-eval",
+  "checkpoint_revision": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "repeats": 3,
+  "new_tokens": 256,
+  "prior_40gb_session_stopped_before_model_execution": true
+}

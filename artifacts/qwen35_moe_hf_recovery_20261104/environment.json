@@ -1,0 +1,9 @@
+{
+  "source": "Qwen/Qwen3.5-35B-A3B",
+  "source_revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+  "code_revision": "b5ae4228a361fa562063fac7cd46dd19a611e9f2",
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "vram_gib": 94.97076416015625
+}

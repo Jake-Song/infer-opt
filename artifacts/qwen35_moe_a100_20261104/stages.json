@@ -1,0 +1,82 @@
+[
+  {
+    "returncode": 0,
+    "name": "expert-kernels",
+    "command": [
+      "/usr/bin/python3",
+      "scripts/validate_qwen3_5_moe_kernels.py"
+    ],
+    "elapsed_s": 26.48022740600001
+  },
+  {
+    "returncode": 0,
+    "name": "checkpoint-smoke",
+    "command": [
+      "/usr/bin/python3",
+      "scripts/validate_quantized_qwen3_5_moe.py",
+      "--weights",
+      "/content/moe-a100-results/checkpoint-cache/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+      "--out",
+      "/content/moe-a100-results/checkpoint-validation.json"
+    ],
+    "elapsed_s": 104.86347101000001
+  },
+  {
+    "returncode": 0,
+    "name": "cudagraph-sequential-k1",
+    "command": [
+      "/usr/bin/python3",
+      "scripts/bench_qwen3_5_spec_decode.py",
+      "--repo",
+      "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+      "--weights",
+      "/content/moe-a100-results/checkpoint-cache/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+      "--configs",
+      "int8+mtp",
+      "--mode",
+      "cudagraph",
+      "--verification",
+      "sequential",
+      "--ks",
+      "1",
+      "--new-tokens",
+      "256",
+      "--repeats",
+      "3",
+      "--prompts",
+      "korean,math,code_1k,prose_1k,chat_long",
+      "--out",
+      "/content/moe-a100-results/cudagraph-sequential-k1.json"
+    ],
+    "elapsed_s": 342.859433341
+  },
+  {
+    "returncode": 0,
+    "name": "cudagraph-sequential-k2",
+    "command": [
+      "/usr/bin/python3",
+      "scripts/bench_qwen3_5_spec_decode.py",
+      "--repo",
+      "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+      "--weights",
+      "/content/moe-a100-results/checkpoint-cache/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+      "--configs",
+      "int8+mtp",
+      "--mode",
+      "cudagraph",
+      "--verification",
+      "sequential",
+      "--ks",
+      "2",
+      "--new-tokens",
+      "256",
+      "--repeats",
+      "3",
+      "--prompts",
+      "korean,math,code_1k,prose_1k,chat_long",
+      "--out",
+      "/content/moe-a100-results/cudagraph-sequential-k2.json"
+    ],
+    "elapsed_s": 348.1057449970001
+  }
+]

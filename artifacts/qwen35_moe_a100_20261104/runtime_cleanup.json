@@ -1,0 +1,7 @@
+{
+  "session": "qwen35-moe-a100-80-eval",
+  "observed_at_utc": "2026-11-03T17:42:54.481850+00:00",
+  "backend_active_sessions": [],
+  "observation": "[colab] Pruned 1 stale local session(s).\n[colab] No active sessions found on server.",
+  "termination": "Runtime disappeared before explicit stop; no remaining assignment observed."
+}

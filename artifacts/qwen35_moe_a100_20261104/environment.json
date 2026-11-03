@@ -1,0 +1,33 @@
+{
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "memory_gib": 79.250732421875,
+  "compute_capability": [
+    8,
+    0
+  ],
+  "torch": "2.11.0+cu130",
+  "cuda": "13.0",
+  "triton": "3.6.0",
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "dependencies": {
+    "transformers": "5.22.0",
+    "huggingface_hub": "1.33.0",
+    "safetensors": "0.8.0",
+    "flash-linear-attention": "0.6.0"
+  },
+  "checkpoint": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "revision": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "inference_code_revision": "b5ae4228a361fa562063fac7cd46dd19a611e9f2",
+  "repeats": 3,
+  "new_tokens": 256,
+  "prompts": [
+    "korean",
+    "math",
+    "code_1k",
+    "prose_1k",
+    "chat_long"
+  ],
+  "batch_size": 1,
+  "timing": "synchronized host decode time; prefill and compilation excluded",
+  "clock_policy": "provider default; no clock locking"
+}

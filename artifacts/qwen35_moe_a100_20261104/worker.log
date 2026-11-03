@@ -1,0 +1,47 @@
+Requirement already satisfied: transformers in /usr/local/lib/python3.13/dist-packages (5.22.0)
+Requirement already satisfied: safetensors in /usr/local/lib/python3.13/dist-packages (0.8.0)
+Requirement already satisfied: huggingface_hub in /usr/local/lib/python3.13/dist-packages (1.33.0)
+Collecting flash-linear-attention==0.6.0
+  Downloading flash_linear_attention-0.6.0-py3-none-any.whl.metadata (44 kB)
+Collecting fla-core==0.6.0 (from flash-linear-attention==0.6.0)
+  Downloading fla_core-0.6.0-py3-none-any.whl.metadata (44 kB)
+Requirement already satisfied: einops in /usr/local/lib/python3.13/dist-packages (from fla-core==0.6.0->flash-linear-attention==0.6.0) (0.8.2)
+Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.13/dist-packages (from transformers) (2.4.6)
+Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.13/dist-packages (from transformers) (26.3)
+Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.13/dist-packages (from transformers) (6.0.3)
+Requirement already satisfied: regex>=2025.10.22 in /usr/local/lib/python3.13/dist-packages (from transformers) (2025.11.3)
+Requirement already satisfied: tokenizers<0.24.0,>=0.23.1 in /usr/local/lib/python3.13/dist-packages (from transformers) (0.23.3)
+Requirement already satisfied: typer in /usr/local/lib/python3.13/dist-packages (from transformers) (0.27.3)
+Requirement already satisfied: tqdm>=4.60 in /usr/local/lib/python3.13/dist-packages (from transformers) (4.67.3)
+Requirement already satisfied: click<9.0.0,>=8.4.2 in /usr/local/lib/python3.13/dist-packages (from huggingface_hub) (8.5.0)
+Requirement already satisfied: filelock>=3.10.0 in /usr/local/lib/python3.13/dist-packages (from huggingface_hub) (4.2.4)
+Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.13/dist-packages (from huggingface_hub) (2025.12.0)
+Requirement already satisfied: hf-xet<2.0.0,>=1.6.0 in /usr/local/lib/python3.13/dist-packages (from huggingface_hub) (1.7.1)
+Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.13/dist-packages (from huggingface_hub) (0.28.1)
+Requirement already satisfied: typing-extensions>=4.1.0 in /usr/local/lib/python3.13/dist-packages (from huggingface_hub) (4.16.0)
+Requirement already satisfied: anyio in /usr/local/lib/python3.13/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (4.15.1)
+Requirement already satisfied: certifi in /usr/local/lib/python3.13/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (2026.10.23)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.13/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (1.0.9)
+Requirement already satisfied: idna in /usr/local/lib/python3.13/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (3.20)
+Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.13/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->huggingface_hub) (0.16.0)
+Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.13/dist-packages (from typer->transformers) (1.5.4)
+Requirement already satisfied: rich>=13.8.0 in /usr/local/lib/python3.13/dist-packages (from typer->transformers) (13.9.4)
+Requirement already satisfied: annotated-doc>=0.0.2 in /usr/local/lib/python3.13/dist-packages (from typer->transformers) (0.0.5)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.13/dist-packages (from rich>=13.8.0->typer->transformers) (4.2.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.13/dist-packages (from rich>=13.8.0->typer->transformers) (2.21.0)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.13/dist-packages (from markdown-it-py>=2.2.0->rich>=13.8.0->typer->transformers) (0.1.2)
+Downloading flash_linear_attention-0.6.0-py3-none-any.whl (403 kB)
+Downloading fla_core-0.6.0-py3-none-any.whl (1.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 15.6 MB/s  0:00:00
+Installing collected packages: fla-core, flash-linear-attention
+
+Successfully installed fla-core-0.6.0 flash-linear-attention-0.6.0
+{"stage": "expert-kernels", "elapsed_s": 3.401379835}
+{"stage": "download", "elapsed_s": 29.882244316999987}
+Fetching 36 files:   0%|          | 0/36 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 36 files:   3%|▎         | 1/36 [00:00<00:12,  2.90it/s]Fetching 36 files:   6%|▌         | 2/36 [00:00<00:06,  4.98it/s]Fetching 36 files:  22%|██▏       | 8/36 [00:00<00:02, 12.25it/s]Fetching 36 files:  22%|██▏       | 8/36 [00:19<00:02, 12.25it/s]Fetching 36 files:  25%|██▌       | 9/36 [00:52<03:52,  8.60s/it]Fetching 36 files:  47%|████▋     | 17/36 [01:31<01:57,  6.16s/it]Fetching 36 files:  64%|██████▍   | 23/36 [01:33<00:49,  3.79s/it]Fetching 36 files:  67%|██████▋   | 24/36 [01:34<00:41,  3.48s/it]Fetching 36 files:  69%|██████▉   | 25/36 [01:34<00:34,  3.13s/it]Fetching 36 files:  72%|███████▏  | 26/36 [02:03<01:07,  6.71s/it]Fetching 36 files:  94%|█████████▍| 34/36 [02:03<00:05,  2.62s/it]Fetching 36 files: 100%|██████████| 36/36 [02:04<00:00,  2.18s/it]Fetching 36 files: 100%|██████████| 36/36 [02:04<00:00,  3.44s/it]
+{"stage": "verify_checkpoint_hashes", "elapsed_s": 154.17572894499997}
+{"stage": "checkpoint-smoke", "elapsed_s": 259.385426112}
+{"stage": "cudagraph-sequential-k1", "elapsed_s": 364.24958142599996}
+{"stage": "cudagraph-sequential-k2", "elapsed_s": 707.110457193}
+{"stage": "cudagraph-consistent-k1", "elapsed_s": 1055.2176475439999}
