@@ -1,0 +1,228 @@
+{
+  "rows": [
+    {
+      "test": "prefill",
+      "prompt_tokens": 512,
+      "samples_ms": [
+        1093.3340180000641,
+        1092.6127180000549,
+        1092.9188979999935,
+        1088.7124910000239,
+        1086.7147129999921,
+        1088.2628520000708,
+        1087.843070999952
+      ],
+      "median_ms": 1088.7124910000239,
+      "median_tokens_s": 470.28026612398696,
+      "warmup_s": 22.089810854999996
+    },
+    {
+      "test": "prefill",
+      "prompt_tokens": 2048,
+      "samples_ms": [
+        1281.7390589999604,
+        1282.3151379999445,
+        1281.989307999993,
+        1307.683400999963,
+        1362.9902920000632,
+        1365.609420999931,
+        1364.6810220000134
+      ],
+      "median_ms": 1307.683400999963,
+      "median_tokens_s": 1566.1283139588143,
+      "warmup_s": 1.304455353000094
+    },
+    {
+      "test": "prefill",
+      "prompt_tokens": 8192,
+      "samples_ms": [
+        1569.6369810000306,
+        1568.5468610000726,
+        1572.7993689999948,
+        1572.5753389999682,
+        1575.1169860000118,
+        1571.0631990000365,
+        1574.4491570000037
+      ],
+      "median_ms": 1572.5753389999682,
+      "median_tokens_s": 5209.289371922528,
+      "warmup_s": 7.371242689999917
+    },
+    {
+      "test": "decode",
+      "mode": "cudagraph",
+      "context_depth": 0,
+      "generated_tokens": 256,
+      "samples_ms": [
+        2314.25587800004,
+        2314.046947999941,
+        2313.1121170000597,
+        2313.0211980000013,
+        2313.295147999952,
+        2313.3968370000275,
+        2313.109577999967
+      ],
+      "median_ms_token": 9.036309171874812,
+      "median_tokens_s": 110.66465090774717,
+      "setup_s": 1.4852960380000013,
+      "allclose_passed": true,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.12290096282959
+    },
+    {
+      "test": "decode",
+      "mode": "cudagraph",
+      "context_depth": 512,
+      "generated_tokens": 256,
+      "samples_ms": [
+        2318.444826000018,
+        2319.7867050000696,
+        2319.504486000028,
+        2319.3174549999185,
+        2316.550537000012,
+        2316.004286000066,
+        2315.946757000006
+      ],
+      "median_ms_token": 9.05642510156257,
+      "median_tokens_s": 110.41884505040105,
+      "setup_s": 1.4852960380000013,
+      "allclose_passed": true,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.12290096282959
+    },
+    {
+      "test": "decode",
+      "mode": "cudagraph",
+      "context_depth": 2048,
+      "generated_tokens": 256,
+      "samples_ms": [
+        2319.8773789999905,
+        2319.9647889999824,
+        2319.7184389999848,
+        2319.3605090000347,
+        2319.6877290000657,
+        2320.235218999983,
+        2318.9562100000103
+      ],
+      "median_ms_token": 9.06140015234369,
+      "median_tokens_s": 110.35822093579594,
+      "setup_s": 1.4852960380000013,
+      "allclose_passed": true,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.12290096282959
+    },
+    {
+      "test": "decode",
+      "mode": "cudagraph",
+      "context_depth": 8192,
+      "generated_tokens": 256,
+      "samples_ms": [
+        2339.92062599998,
+        2339.78807699998,
+        2340.4522890000408,
+        2340.2270589999716,
+        2344.1312659999767,
+        2344.191025999976,
+        2343.7885069999993
+      ],
+      "median_ms_token": 9.14239175390641,
+      "median_tokens_s": 109.38056768052132,
+      "setup_s": 1.4852960380000013,
+      "allclose_passed": true,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.140159130096436
+    },
+    {
+      "test": "decode",
+      "mode": "compile-reduce-overhead",
+      "context_depth": 0,
+      "generated_tokens": 256,
+      "samples_ms": [
+        1429.0009180000425,
+        1421.4554939999289,
+        1413.5934189999944,
+        1412.9430499999671,
+        1423.9371419999998,
+        1432.4839000000793,
+        1432.5892029999068
+      ],
+      "median_ms_token": 5.562254460937499,
+      "median_tokens_s": 179.78321686337475,
+      "setup_s": 39.68671250099999,
+      "allclose_passed": false,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.140159130096436
+    },
+    {
+      "test": "decode",
+      "mode": "compile-reduce-overhead",
+      "context_depth": 512,
+      "generated_tokens": 256,
+      "samples_ms": [
+        1434.0946320000967,
+        1427.6484859999528,
+        1418.558401999917,
+        1417.4728820000837,
+        1419.125022000003,
+        1419.3034420000004,
+        1419.4482920000837
+      ],
+      "median_ms_token": 5.544154070312501,
+      "median_tokens_s": 180.37016780517322,
+      "setup_s": 39.68671250099999,
+      "allclose_passed": false,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.140159130096436
+    },
+    {
+      "test": "decode",
+      "mode": "compile-reduce-overhead",
+      "context_depth": 2048,
+      "generated_tokens": 256,
+      "samples_ms": [
+        1423.1559590000415,
+        1422.3001000000295,
+        1420.9916199999952,
+        1419.436330999929,
+        1417.1599019999803,
+        1414.5972549999897,
+        1412.245606000056
+      ],
+      "median_ms_token": 5.544673167968472,
+      "median_tokens_s": 180.35328137589624,
+      "setup_s": 39.68671250099999,
+      "allclose_passed": false,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.140159130096436
+    },
+    {
+      "test": "decode",
+      "mode": "compile-reduce-overhead",
+      "context_depth": 8192,
+      "generated_tokens": 256,
+      "samples_ms": [
+        1440.6345879999662,
+        1434.4467509999959,
+        1434.9563510000962,
+        1432.5471429999652,
+        1434.733921999964,
+        1428.743956000062,
+        1424.3770680000125
+      ],
+      "median_ms_token": 5.603307621093734,
+      "median_tokens_s": 178.46601822028927,
+      "setup_s": 39.68671250099999,
+      "allclose_passed": false,
+      "argmax_matches_16": 16,
+      "peak_allocated_gib": 36.140159130096436
+    }
+  ],
+  "environment": {
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "vram_gib": 94.97076416015625,
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0",
+    "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+    "code_revision": "a0a798494c295f1e6a850305944373356e33d982"
+  }
+}

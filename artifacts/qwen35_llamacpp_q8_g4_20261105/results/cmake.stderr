@@ -1,0 +1,5 @@
+CMAKE_BUILD_TYPE=Release
+CMake Warning at CMakeLists.txt:183 (message):
+  LLAMA_CURL is deprecated and will be ignored
+Call Stack (most recent call first):
+  CMakeLists.txt:197 (llama_option_depr)

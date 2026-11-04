@@ -15,6 +15,15 @@ The [A100 80GB experiment](artifacts/qwen35_moe_a100_20261104/README.md)
 completed 30 sequential-MTP parity checks, but MTP remained slower than ordinary
 decoding. Colab disconnected before the parallel/compiled comparisons completed.
 
+The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
+measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
+9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded
+eager-logit tolerance check and is diagnostic only. The separate
+[llama.cpp Q8_0 benchmark](artifacts/qwen35_llamacpp_q8_g4_20261105/README.md)
+measured 4.27–4.43 ms/token. Inputs, quantization, cache capacity, and execution
+engines differ; these are not paired measurements. Both reports preserve raw
+samples, revisions, validation scope, and runtime cleanup.
+
 ## Setup
 
 The project targets Python 3.13. Install its dependencies with your preferred environment manager, for example:

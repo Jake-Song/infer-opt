@@ -1,0 +1,35 @@
+
+
+Loading model... |-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\| 
+
+▄▄ ▄▄
+██ ██
+██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄
+██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██
+██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀
+                                    ██    ██
+                                    ▀▀    ▀▀
+
+build      : b1-c6a0ff1
+model      : /root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf
+ftype      : Q8_0
+modalities : text
+
+available commands:
+  /exit or Ctrl+C     stop or exit
+  /regen              regenerate the last response
+  /clear              clear the chat history
+  /read <file>        add a text file
+  /glob <pattern>     add text files using globbing pattern
+
+
+
+> Explain briefly why the sky is blue.
+The sky appears blue due to a phenomenon called **Rayleigh scattering**.
+
+Sunlight is made up of all colors of the rainbow, each traveling as a wave of a different length. Blue light travels in shorter, smaller waves compared to other
+
+[ Prompt: 198.7 t/s | Generation: 217.4 t/s ]
+
+
+Exiting...

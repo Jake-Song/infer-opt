@@ -1,0 +1,25 @@
+{
+  "reference": "same-checkpoint fixed-shape eager",
+  "steps": 16,
+  "max_abs_diff": 0.8125,
+  "argmax_matches": 16,
+  "allclose_atol_002_rtol_002": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "setup_s": 39.68671250099999
+}

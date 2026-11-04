@@ -1,0 +1,25 @@
+hardware
+["nvidia-smi", "-q"]
+["nvcc", "--version"]
+source_and_build
+["git", "clone", "--depth", "1", "https://github.com/ggml-org/llama.cpp.git", "/content/q35moe-llama-q8/llama.cpp"]
+["git", "-C", "/content/q35moe-llama-q8/llama.cpp", "rev-parse", "HEAD"]
+["cmake", "-S", "/content/q35moe-llama-q8/llama.cpp", "-B", "/content/q35moe-llama-q8/llama.cpp/build", "-DCMAKE_BUILD_TYPE=Release", "-DGGML_CUDA=ON", "-DCMAKE_CUDA_ARCHITECTURES=120", "-DGGML_CUDA_GRAPHS=ON", "-DBUILD_SHARED_LIBS=OFF", "-DLLAMA_CURL=ON"]
+["cmake", "--build", "/content/q35moe-llama-q8/llama.cpp/build", "-j", "12", "--target", "llama-bench", "llama-cli"]
+download_model
+verify_model
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-bench", "--help"]
+prefill
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-bench", "-m", "/root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf", "-ngl", "99", "-fa", "on", "-t", "4", "-b", "2048", "-ub", "512", "-ctk", "f16", "-ctv", "f16", "-r", "7", "-o", "jsonl", "-oe", "md", "-p", "512,2048,8192", "-n", "0"]
+decode-d0
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-bench", "-m", "/root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf", "-ngl", "99", "-fa", "on", "-t", "4", "-b", "2048", "-ub", "512", "-ctk", "f16", "-ctv", "f16", "-r", "7", "-o", "jsonl", "-oe", "md", "-p", "0", "-n", "256", "-d", "0"]
+decode-d512
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-bench", "-m", "/root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf", "-ngl", "99", "-fa", "on", "-t", "4", "-b", "2048", "-ub", "512", "-ctk", "f16", "-ctv", "f16", "-r", "7", "-o", "jsonl", "-oe", "md", "-p", "0", "-n", "256", "-d", "512"]
+decode-d2048
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-bench", "-m", "/root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf", "-ngl", "99", "-fa", "on", "-t", "4", "-b", "2048", "-ub", "512", "-ctk", "f16", "-ctv", "f16", "-r", "7", "-o", "jsonl", "-oe", "md", "-p", "0", "-n", "256", "-d", "2048"]
+decode-d8192
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-bench", "-m", "/root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf", "-ngl", "99", "-fa", "on", "-t", "4", "-b", "2048", "-ub", "512", "-ctk", "f16", "-ctv", "f16", "-r", "7", "-o", "jsonl", "-oe", "md", "-p", "0", "-n", "256", "-d", "8192"]
+generation_smoke
+["/content/q35moe-llama-q8/llama.cpp/build/bin/llama-cli", "-m", "/root/.cache/huggingface/hub/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf", "-ngl", "99", "-fa", "on", "-c", "2048", "-n", "48", "-p", "Explain briefly why the sky is blue.", "--single-turn", "--temp", "0", "--spec-type", "none", "--chat-template-kwargs", "{\"enable_thinking\":false}"]
+["nvidia-smi", "-q"]
+complete

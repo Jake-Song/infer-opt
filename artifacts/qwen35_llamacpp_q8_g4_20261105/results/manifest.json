@@ -1,0 +1,14 @@
+{
+  "model_repo": "ggml-org/Qwen3.5-35B-A3B-GGUF",
+  "model_revision": "3127ef0b7fd4f12626506419ceefde54fa8db53c",
+  "file": "Qwen3.5-35B-A3B-Q8_0.gguf",
+  "bytes": 36903139584,
+  "sha256": "8a83fbfde74b0366feb76b075c10df46bbece6aa21ed14a6f291a7904f2b7d67",
+  "expected_sha256": "8a83fbfde74b0366feb76b075c10df46bbece6aa21ed14a6f291a7904f2b7d67",
+  "llama_cpp_commit": "c6a0ff11a0fe16ac1a2eb569190934593a2b3670",
+  "mtp": false,
+  "speculative_decoding": false,
+  "timing": "llama-bench synchronized engine time; synthetic random tokens; excludes model loading, tokenization, sampling, HTTP, depth prefill and warmup",
+  "repetitions": 7,
+  "decode_tokens": 256
+}

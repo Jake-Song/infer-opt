@@ -1,0 +1,158 @@
+{
+  "manifest": {
+    "model_repo": "ggml-org/Qwen3.5-35B-A3B-GGUF",
+    "model_revision": "3127ef0b7fd4f12626506419ceefde54fa8db53c",
+    "file": "Qwen3.5-35B-A3B-Q8_0.gguf",
+    "bytes": 36903139584,
+    "sha256": "8a83fbfde74b0366feb76b075c10df46bbece6aa21ed14a6f291a7904f2b7d67",
+    "expected_sha256": "8a83fbfde74b0366feb76b075c10df46bbece6aa21ed14a6f291a7904f2b7d67",
+    "llama_cpp_commit": "c6a0ff11a0fe16ac1a2eb569190934593a2b3670",
+    "mtp": false,
+    "speculative_decoding": false,
+    "timing": "llama-bench synchronized engine time; synthetic random tokens; excludes model loading, tokenization, sampling, HTTP, depth prefill and warmup",
+    "repetitions": 7,
+    "decode_tokens": 256
+  },
+  "rows": [
+    {
+      "test": "prefill",
+      "prompt_tokens": 512,
+      "generated_tokens": 0,
+      "context_depth": 0,
+      "median_ms": 48.298201,
+      "median_tokens_s": 10600.808920398506,
+      "median_ms_token": 0.094332423828125,
+      "mean_tokens_s": 10553.066014,
+      "std_tokens_s": 161.561993,
+      "samples_ms": [
+        50.20757,
+        48.41457,
+        48.043351,
+        48.298201,
+        48.52032,
+        48.066751,
+        48.13621
+      ]
+    },
+    {
+      "test": "prefill",
+      "prompt_tokens": 2048,
+      "generated_tokens": 0,
+      "context_depth": 0,
+      "median_ms": 198.62497,
+      "median_tokens_s": 10310.888907874978,
+      "median_ms_token": 0.0969848486328125,
+      "mean_tokens_s": 10272.193567,
+      "std_tokens_s": 106.467474,
+      "samples_ms": [
+        201.814209,
+        201.900159,
+        200.822459,
+        198.62497,
+        197.99031,
+        197.585531,
+        197.00346
+      ]
+    },
+    {
+      "test": "prefill",
+      "prompt_tokens": 8192,
+      "generated_tokens": 0,
+      "context_depth": 0,
+      "median_ms": 806.121555,
+      "median_tokens_s": 10162.239117895811,
+      "median_ms_token": 0.09840351013183593,
+      "mean_tokens_s": 10154.452606,
+      "std_tokens_s": 60.713844,
+      "samples_ms": [
+        815.719512,
+        809.121294,
+        806.121555,
+        807.176246,
+        805.930075,
+        802.404905,
+        800.877987
+      ]
+    },
+    {
+      "test": "decode-d0",
+      "prompt_tokens": 0,
+      "generated_tokens": 256,
+      "context_depth": 0,
+      "median_ms": 1100.959777,
+      "median_tokens_s": 232.52438949002584,
+      "median_ms_token": 4.30062412890625,
+      "mean_tokens_s": 232.520722,
+      "std_tokens_s": 0.877934,
+      "samples_ms": [
+        1106.370735,
+        1105.635886,
+        1103.092897,
+        1100.959777,
+        1096.952469,
+        1097.166018,
+        1096.756449
+      ]
+    },
+    {
+      "test": "decode-d512",
+      "prompt_tokens": 0,
+      "generated_tokens": 256,
+      "context_depth": 512,
+      "median_ms": 1094.340569,
+      "median_tokens_s": 233.93083218502156,
+      "median_ms_token": 4.27476784765625,
+      "mean_tokens_s": 233.764631,
+      "std_tokens_s": 0.509907,
+      "samples_ms": [
+        1100.526977,
+        1094.36882,
+        1094.340569,
+        1094.37639,
+        1094.323489,
+        1094.30939,
+        1093.6161
+      ]
+    },
+    {
+      "test": "decode-d2048",
+      "prompt_tokens": 0,
+      "generated_tokens": 256,
+      "context_depth": 2048,
+      "median_ms": 1094.47287,
+      "median_tokens_s": 233.9025543867524,
+      "median_ms_token": 4.2752846484375,
+      "mean_tokens_s": 233.816469,
+      "std_tokens_s": 0.245563,
+      "samples_ms": [
+        1097.480659,
+        1094.47287,
+        1094.60737,
+        1094.38853,
+        1094.40558,
+        1094.48436,
+        1094.2987
+      ]
+    },
+    {
+      "test": "decode-d8192",
+      "prompt_tokens": 0,
+      "generated_tokens": 256,
+      "context_depth": 8192,
+      "median_ms": 1133.310115,
+      "median_tokens_s": 225.88698063459884,
+      "median_ms_token": 4.42699263671875,
+      "mean_tokens_s": 225.805001,
+      "std_tokens_s": 0.235055,
+      "samples_ms": [
+        1136.391655,
+        1133.310115,
+        1133.326635,
+        1133.178435,
+        1133.191955,
+        1133.491065,
+        1133.168525
+      ]
+    }
+  ]
+}

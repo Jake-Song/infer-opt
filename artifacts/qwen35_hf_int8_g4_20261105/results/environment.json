@@ -1,0 +1,8 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "vram_gib": 94.97076416015625,
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "code_revision": "a0a798494c295f1e6a850305944373356e33d982"
+}
