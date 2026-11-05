@@ -1,0 +1,8 @@
+[
+  "git",
+  "-C",
+  "/content/q35moe-llama-hf-quality/infer-opt",
+  "checkout",
+  "--detach",
+  "FETCH_HEAD"
+]

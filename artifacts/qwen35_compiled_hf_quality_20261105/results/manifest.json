@@ -1,0 +1,30 @@
+{
+  "hf_repo": "Qwen/Qwen3.5-35B-A3B",
+  "hf_revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+  "int8_repo": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "int8_revision": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "code_revision": "a0a798494c295f1e6a850305944373356e33d982",
+  "model_cache_root": "/tmp/infer-opt-models/q35moe-compiled-hf-quality",
+  "mtp_called": false,
+  "cache_capacity": 8456,
+  "tokens_per_prompt": 48,
+  "modes": [
+    "eager",
+    "compile-reduce-overhead"
+  ],
+  "compile": {
+    "fullgraph": true,
+    "dynamic": false,
+    "mode": "reduce-overhead"
+  },
+  "kernels": "fla-delta",
+  "fuse_projections": true,
+  "paired_hf_reference": true,
+  "scope": "teacher-forced distribution comparison and eager-logit tolerance; not task accuracy or throughput",
+  "harness_sha256": {
+    "worker.py": "7abc371249656d33ebb59ee0fa91bc0d47e51443e12bdf800dbaa732cb21b3e2",
+    "validate_compiled_qwen3_5_moe_quality.py": "c621367fb239f1b08697b13c22baa8c8493ce913e6aaf770013e2b5e39bc3e27",
+    "validate_llamacpp_qwen3_5_quality.py": "2f70dca1efdfc2a5b715ab0ea1061365d8285c58b66826815f8d127bc099128e"
+  },
+  "same_input_ids_as_previous_llama": false
+}

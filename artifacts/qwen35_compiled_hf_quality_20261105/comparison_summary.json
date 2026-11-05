@@ -1,0 +1,67 @@
+{
+  "aggregate": {
+    "eager": {
+      "positions": 432,
+      "mean_kl": 0.0018939932374956293,
+      "mismatches": 4,
+      "top1_agreement": 0.9907407407407407,
+      "strong_mismatches": 0,
+      "max_abs_logit_error": 5.65625
+    },
+    "compile-reduce-overhead": {
+      "positions": 432,
+      "mean_kl": 0.002058574506210991,
+      "mismatches": 2,
+      "top1_agreement": 0.9953703703703703,
+      "strong_mismatches": 0,
+      "max_abs_logit_error": 8.46875
+    },
+    "compiled_vs_eager": {
+      "positions": 432,
+      "allclose_positions": 9,
+      "mismatches": 4,
+      "max_abs_logit_error": 8.6875,
+      "atol": 0.02,
+      "rtol": 0.02
+    }
+  },
+  "phases": {
+    "eager": {
+      "prefill_last": {
+        "positions": 9,
+        "mean_kl": 0.005644214922881474,
+        "mismatches": 0,
+        "strong_mismatches": 0
+      },
+      "decode": {
+        "positions": 423,
+        "mean_kl": 0.0018142013318958503,
+        "mismatches": 4,
+        "strong_mismatches": 0
+      }
+    },
+    "compile-reduce-overhead": {
+      "prefill_last": {
+        "positions": 9,
+        "mean_kl": 0.005644214922881474,
+        "mismatches": 0,
+        "strong_mismatches": 0
+      },
+      "decode": {
+        "positions": 423,
+        "mean_kl": 0.0019822842286758035,
+        "mismatches": 2,
+        "strong_mismatches": 0
+      }
+    }
+  },
+  "paired_eager_compiled_hf_reference": true,
+  "compiled_decode_allclose": {
+    "passed_positions": 0,
+    "total_positions": 423,
+    "atol": 0.02,
+    "rtol": 0.02
+  },
+  "previous_llama_comparison_is_paired": false,
+  "reference_difference": "All 9 prompt ID sequences match the previous llama run, but HF continuations differ for code_1k and code_1_5k. Previous HF logs report DeltaNet PyTorch fallback; this environment installs FLA 0.6.0. The effect was not isolated."
+}

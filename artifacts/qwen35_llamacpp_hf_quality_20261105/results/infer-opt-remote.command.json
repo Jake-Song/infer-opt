@@ -1,0 +1,9 @@
+[
+  "git",
+  "-C",
+  "/content/q35moe-llama-hf-quality/infer-opt",
+  "remote",
+  "add",
+  "origin",
+  "https://github.com/Jake-Song/infer-opt.git"
+]

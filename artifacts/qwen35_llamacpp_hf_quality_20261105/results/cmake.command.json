@@ -1,0 +1,13 @@
+[
+  "cmake",
+  "-S",
+  "/content/q35moe-llama-hf-quality/infer-opt/scripts/llamacpp_quality",
+  "-B",
+  "/content/q35moe-llama-hf-quality/build",
+  "-DCMAKE_BUILD_TYPE=Release",
+  "-DLLAMA_CPP_SOURCE=/content/q35moe-llama-hf-quality/llama.cpp",
+  "-DGGML_CUDA=ON",
+  "-DCMAKE_CUDA_ARCHITECTURES=120",
+  "-DGGML_CUDA_GRAPHS=ON",
+  "-DBUILD_SHARED_LIBS=OFF"
+]

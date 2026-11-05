@@ -1,0 +1,8 @@
+[
+  "git",
+  "-C",
+  "/content/q35moe-llama-hf-quality/llama.cpp",
+  "checkout",
+  "--detach",
+  "FETCH_HEAD"
+]

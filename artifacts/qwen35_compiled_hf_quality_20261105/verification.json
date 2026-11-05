@@ -1,0 +1,17 @@
+{
+  "cpu_tests_passed": 9,
+  "real_gpu_execution": "completed",
+  "harness_sha256_verified": true,
+  "checkpoint_files_hashed": 34,
+  "weight_shards_hub_lfs_verified": 22,
+  "all_hf_defined_token_mappings_equal": true,
+  "same_hf_logit_hashes_across_modes": true,
+  "finite_logits_in_both_modes": true,
+  "strict_checkpoint_reload": true,
+  "fused_groups": 82,
+  "mtp_called": false,
+  "cache_capacity": 8456,
+  "prompts_per_mode": 9,
+  "positions_per_mode": 432,
+  "archive_sha256": "ea5a58d9bd50c0ddb54721c669c7c8256b4640541df203e0aa15a2923efe52fe"
+}

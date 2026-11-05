@@ -1,0 +1,9 @@
+[
+  "cmake",
+  "--build",
+  "/content/q35moe-llama-hf-quality/build",
+  "-j",
+  "12",
+  "--target",
+  "infer-opt-llama-replay"
+]

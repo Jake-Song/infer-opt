@@ -1,0 +1,16 @@
+{
+  "status": "allocation_failed_before_execution",
+  "gpu_requested": "G4",
+  "session": "q35moe-compiled-hf-quality",
+  "error": "503 Service Unavailable on Colab assignment POST",
+  "model_execution_started": false,
+  "new_quality_results": false,
+  "manual_allocation_attempts": 1,
+  "cpu_tests_passed": 9,
+  "recorded_at_utc": "2026-11-05T09:18:48.125077+00:00",
+  "harness_sha256": {
+    "scripts/validate_compiled_qwen3_5_moe_quality.py": "c621367fb239f1b08697b13c22baa8c8493ce913e6aaf770013e2b5e39bc3e27",
+    "scripts/validate_llamacpp_qwen3_5_quality.py": "2f70dca1efdfc2a5b715ab0ea1061365d8285c58b66826815f8d127bc099128e",
+    "artifacts/qwen35_compiled_hf_quality_20261105/worker.py": "7abc371249656d33ebb59ee0fa91bc0d47e51443e12bdf800dbaa732cb21b3e2"
+  }
+}

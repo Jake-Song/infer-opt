@@ -139,9 +139,25 @@ repository-wide GPU test claim. The later A100 80GB run validates the recorded
 INT8 kernel, reload, generation and decoding cases; task-level quality evaluation
 remains unvalidated.
 
-Final remote integration testing reported 34 passed before the session was lost.
+The original remote integration testing reported 34 passed before the session was lost.
 Its log and the completed compiled-plus-BF16-override HF comparison were not
 downloaded. The separate stock compiled INT8 HF comparison had not been
 confirmed complete. Only the files present in the artifact directory are retained
-evidence; final compiled quality remains unfinished. HF publication was completed
+evidence; compiled quality was unfinished at that stage. HF publication was completed
 separately on 2026-11-04 as described above.
+
+The [2026-11-05 paired HF comparison](artifacts/qwen35_compiled_hf_quality_20261105/README.md)
+subsequently completed the stock fused INT8 eager and full compiled decode replay
+on G4, with MTP off and cache capacity 8456. Both modes shared the exact HF
+reference logits over nine prompts and 432 positions. Eager/compiled mean KL was
+0.001894/0.002059, top-1 agreement 428/432 and 430/432, and strong mismatches zero
+for both. The strict compiled/eager logit comparison still failed at all 423
+actual decode positions (maximum absolute difference 8.6875); the nine shared
+eager-prefill positions passed. This completes distribution measurement, not
+strict eager equivalence, a root-cause diagnosis, or task accuracy evaluation.
+
+The separate [llama.cpp Q8_0 HF comparison](artifacts/qwen35_llamacpp_hf_quality_20261105/README.md)
+had mean KL 0.002135, 426/432 top-1 matches and no strong mismatches. Its HF
+environment used DeltaNet PyTorch fallback, whereas the paired custom experiment
+installed FLA 0.6.0. The HF continuations differed on two code prompts, so the
+aggregate values do not provide a paired ranking across the two engines.

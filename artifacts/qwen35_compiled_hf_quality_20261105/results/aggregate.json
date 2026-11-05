@@ -1,0 +1,26 @@
+{
+  "eager": {
+    "positions": 432,
+    "mean_kl": 0.0018939932374956293,
+    "mismatches": 4,
+    "top1_agreement": 0.9907407407407407,
+    "strong_mismatches": 0,
+    "max_abs_logit_error": 5.65625
+  },
+  "compile-reduce-overhead": {
+    "positions": 432,
+    "mean_kl": 0.002058574506210991,
+    "mismatches": 2,
+    "top1_agreement": 0.9953703703703703,
+    "strong_mismatches": 0,
+    "max_abs_logit_error": 8.46875
+  },
+  "compiled_vs_eager": {
+    "positions": 432,
+    "allclose_positions": 9,
+    "mismatches": 4,
+    "max_abs_logit_error": 8.6875,
+    "atol": 0.02,
+    "rtol": 0.02
+  }
+}

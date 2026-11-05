@@ -1,0 +1,13 @@
+[
+  "/usr/bin/python3",
+  "/content/q35moe-compiled-hf-quality/infer-opt/scripts/validate_llamacpp_qwen3_5_quality.py",
+  "reference",
+  "--weights",
+  "/tmp/infer-opt-models/q35moe-compiled-hf-quality/reference/models--Qwen--Qwen3.5-35B-A3B/snapshots/59d61f3ce65a6d9863b86d2e96597125219dc754",
+  "--reference-dir",
+  "/content/q35moe-compiled-hf-quality/reference-buffers",
+  "--reference-revision",
+  "59d61f3ce65a6d9863b86d2e96597125219dc754",
+  "--tokens",
+  "48"
+]

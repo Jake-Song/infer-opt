@@ -1,0 +1,42 @@
+{
+  "llamacpp": {
+    "prompts": 9,
+    "teacher_forced_positions": 432,
+    "mean_kl": 0.0021348793913299837,
+    "top1_agreement": 0.9861111111111112,
+    "strong_mismatches": 0,
+    "mismatches": 6
+  },
+  "phases": {
+    "prefill_last": {
+      "positions": 9,
+      "mean_kl": 0.012550255410360478,
+      "mismatches": 0
+    },
+    "decode": {
+      "positions": 423,
+      "mean_kl": 0.001913275692465795,
+      "mismatches": 6
+    }
+  },
+  "historical_infer_opt": {
+    "bf16": {
+      "positions": 432,
+      "mean_kl": 0.0017428305760000108,
+      "top1_agreement": 0.9930555555555556,
+      "mismatches": 3,
+      "strong_mismatches": 0
+    },
+    "int8": {
+      "positions": 432,
+      "mean_kl": 0.002013838707676364,
+      "top1_agreement": 0.9930555555555556,
+      "mismatches": 3,
+      "strong_mismatches": 0
+    }
+  },
+  "historical_source": "artifacts/qwen35_moe_g4/quality.json",
+  "historical_source_sha256": "527d37e459b548a3fcff8369d892482fb9bf0339bd87b24f8d8cba19ef0eb5c6",
+  "paired_comparison": false,
+  "limitation": "Same prompt builders and original HF revision, but fresh HF logits/software; historical custom comparison is not paired."
+}

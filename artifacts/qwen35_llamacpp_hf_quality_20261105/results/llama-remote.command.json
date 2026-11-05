@@ -1,0 +1,9 @@
+[
+  "git",
+  "-C",
+  "/content/q35moe-llama-hf-quality/llama.cpp",
+  "remote",
+  "add",
+  "origin",
+  "https://github.com/ggml-org/llama.cpp.git"
+]

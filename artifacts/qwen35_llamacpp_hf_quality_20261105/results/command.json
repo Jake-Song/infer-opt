@@ -1,0 +1,10 @@
+[
+  "/content/q35moe-llama-hf-quality/build/infer-opt-llama-replay",
+  "/tmp/infer-opt-models/q35moe-llama-hf-quality/gguf/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf",
+  "/content/q35moe-llama-hf-quality/reference-buffers/replay.bin",
+  "/content/q35moe-llama-hf-quality/reference-buffers/actual.bin",
+  "2048",
+  "512",
+  "4",
+  "99"
+]

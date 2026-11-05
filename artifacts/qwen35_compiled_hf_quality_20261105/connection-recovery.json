@@ -1,0 +1,7 @@
+{
+  "symptom": "Colab exec polling websocket reported Connection was lost during compile",
+  "runtime_remained_active": true,
+  "recovery": "Downloaded results via Colab file transfer API",
+  "worker_exit_code": 0,
+  "complete_modes_and_prompts_recovered": true
+}

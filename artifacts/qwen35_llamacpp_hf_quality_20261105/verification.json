@@ -1,0 +1,16 @@
+{
+  "cpu_tests_passed": 7,
+  "native_header_syntax_check": "passed",
+  "pinned_native_cuda_build": "passed",
+  "hf_missing_or_mismatched_keys": false,
+  "defined_token_mapping_verified": 248077,
+  "model_vocabulary": 248320,
+  "full_gpu_layers": "41/41",
+  "prompt_count": 9,
+  "positions": 432,
+  "finite_logits": true,
+  "harness_source_hashes_verified": true,
+  "code_prompt_hash_verified": true,
+  "gguf_matches_prior_benchmark_sha256": true,
+  "raw_archive_sha256": "1ffd0c95e7fed891ad17fe08650fd6d8d84fd50ca2eafe0fd20f8f8e74f9ac33"
+}

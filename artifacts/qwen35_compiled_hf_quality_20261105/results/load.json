@@ -1,0 +1,9 @@
+{
+  "strict_reload": true,
+  "fused_groups": 82,
+  "mtp_head_present": true,
+  "mtp_called": false,
+  "activation_dtype": "torch.bfloat16",
+  "cache_capacity": 8456,
+  "allocated_gib": 34.76172351837158
+}

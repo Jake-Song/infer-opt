@@ -1,0 +1,8 @@
+{
+  "prompts": 9,
+  "teacher_forced_positions": 432,
+  "mean_kl": 0.0021348793913299837,
+  "top1_agreement": 0.9861111111111112,
+  "strong_mismatches": 0,
+  "mismatches": 6
+}

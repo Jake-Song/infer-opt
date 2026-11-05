@@ -1,0 +1,13 @@
+[
+  "/usr/bin/python3",
+  "/content/q35moe-llama-hf-quality/infer-opt/scripts/validate_llamacpp_qwen3_5_quality.py",
+  "compare",
+  "--reference-dir",
+  "/content/q35moe-llama-hf-quality/reference-buffers",
+  "--out",
+  "/content/q35moe-llama-hf-quality/results",
+  "--llama-bin",
+  "/content/q35moe-llama-hf-quality/build/infer-opt-llama-replay",
+  "--gguf",
+  "/tmp/infer-opt-models/q35moe-llama-hf-quality/gguf/models--ggml-org--Qwen3.5-35B-A3B-GGUF/snapshots/3127ef0b7fd4f12626506419ceefde54fa8db53c/Qwen3.5-35B-A3B-Q8_0.gguf"
+]

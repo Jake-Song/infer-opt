@@ -1,0 +1,10 @@
+hardware
+dependencies
+sources_and_build
+download_hf_reference
+Fetching 24 files:   0%|          | 0/24 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 24 files:   4%|▍         | 1/24 [00:00<00:03,  6.51it/s]Fetching 24 files:  21%|██        | 5/24 [02:09<08:42, 27.48s/it]Fetching 24 files:  54%|█████▍    | 13/24 [02:09<01:28,  8.02s/it]Fetching 24 files:  75%|███████▌  | 18/24 [02:09<00:29,  4.93s/it]Fetching 24 files:  75%|███████▌  | 18/24 [02:20<00:29,  4.93s/it]Fetching 24 files:  79%|███████▉  | 19/24 [03:34<01:04, 12.92s/it]Fetching 24 files: 100%|██████████| 24/24 [03:34<00:00,  8.95s/it]
+hf_reference
+download_gguf
+llama_replay_and_comparison
+complete

@@ -24,6 +24,16 @@ measured 4.27–4.43 ms/token. Inputs, quantization, cache capacity, and executi
 engines differ; these are not paired measurements. Both reports preserve raw
 samples, revisions, validation scope, and runtime cleanup.
 
+The [Q8_0 versus HF BF16 numerical comparison](artifacts/qwen35_llamacpp_hf_quality_20261105/README.md)
+recorded mean KL 0.002135, 426/432 top-1 matches, and zero strong mismatches.
+The [paired eager/compiled INT8 comparison](artifacts/qwen35_compiled_hf_quality_20261105/README.md)
+used one shared HF reference: eager/compiled mean KL was 0.001894/0.002059,
+with 428/432 and 430/432 top-1 matches and zero strong mismatches each.
+Compiled/eager `allclose(atol=rtol=0.02)` still failed at all 423 decode positions.
+These replay checks do not establish task accuracy. The two experiments used
+different HF DeltaNet reference backends and are not a paired quality ranking
+of llama.cpp versus infer-opt.
+
 ## Setup
 
 The project targets Python 3.13. Install its dependencies with your preferred environment manager, for example:

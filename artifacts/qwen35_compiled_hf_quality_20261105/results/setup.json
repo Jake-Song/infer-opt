@@ -1,0 +1,12 @@
+[
+  {
+    "mode": "eager",
+    "warmup_steps": 8,
+    "setup_s": 1.7925401349999674
+  },
+  {
+    "mode": "compile-reduce-overhead",
+    "warmup_steps": 8,
+    "setup_s": 51.21838826700002
+  }
+]

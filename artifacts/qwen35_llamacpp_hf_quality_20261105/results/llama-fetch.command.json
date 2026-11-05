@@ -1,0 +1,10 @@
+[
+  "git",
+  "-C",
+  "/content/q35moe-llama-hf-quality/llama.cpp",
+  "fetch",
+  "--depth",
+  "1",
+  "origin",
+  "c6a0ff11a0fe16ac1a2eb569190934593a2b3670"
+]

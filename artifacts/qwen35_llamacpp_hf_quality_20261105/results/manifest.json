@@ -1,0 +1,21 @@
+{
+  "hf_repo": "Qwen/Qwen3.5-35B-A3B",
+  "hf_revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+  "gguf_repo": "ggml-org/Qwen3.5-35B-A3B-GGUF",
+  "gguf_revision": "3127ef0b7fd4f12626506419ceefde54fa8db53c",
+  "llama_cpp_revision": "c6a0ff11a0fe16ac1a2eb569190934593a2b3670",
+  "infer_opt_revision": "a0a798494c295f1e6a850305944373356e33d982",
+  "model_cache_root": "/tmp/infer-opt-models/q35moe-llama-hf-quality",
+  "mtp": false,
+  "tokens_per_prompt": 48,
+  "reference_contract": "HF cached greedy; same 9 prompts as validate_qwen3_5_moe_quality.py",
+  "scope": "teacher-forced distribution preservation, not task accuracy or throughput",
+  "harness_sha256": {
+    "worker.py": "1f6bcef4e5d6fbbd2c256ca20c8dc7f7ac67e28dd8feaada9666823378970971",
+    "replay.cpp": "0a53d18a59e37186362cc094200e6bf79d99dca750e53dea026bdb77c78335ad",
+    "CMakeLists.txt": "33801262cfc42b77d4bf9efa4747e8548fab9e0f5d262ebad1198fc09fcb9de0",
+    "validate_llamacpp_qwen3_5_quality.py": "94c22af77ce4c6141a6bbd0636f2c9cd7de36202bb395269a4419f74050486ec"
+  },
+  "gguf_sha256": "8a83fbfde74b0366feb76b075c10df46bbece6aa21ed14a6f291a7904f2b7d67",
+  "gguf_bytes": 36903139584
+}
