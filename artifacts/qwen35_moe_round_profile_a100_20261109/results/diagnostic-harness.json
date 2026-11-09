@@ -1,0 +1,6 @@
+{
+  "sha256": "4446b3e031cb82c9970c2eb5f6c7eb62fbe0171fce9883e4d9730d2ebdde7417",
+  "source_file": "profile-diagnostic-source.py",
+  "production_executed_source": "profile-executed-source.py",
+  "change": "Before diagnostic process launch: add separately compiled full-round manual CUDA Graph control, exact frozen-state comparison, and explicit topk/sort postprocessing category. Production process retains the original loaded source."
+}

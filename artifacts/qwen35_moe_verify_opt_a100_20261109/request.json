@@ -1,0 +1,26 @@
+{
+  "gpu": "A100",
+  "allocation_attempts": [
+    {
+      "high_mem": true,
+      "result": "503 Service Unavailable"
+    },
+    {
+      "high_mem": true,
+      "result": "503 Service Unavailable"
+    },
+    {
+      "high_mem": false,
+      "result": "READY"
+    }
+  ],
+  "task": "Optimize routed expert kernels in target parallel verification; validate before adoption.",
+  "local_checks": {
+    "passed": 20,
+    "skipped_cuda": 17,
+    "command": ".venv/bin/python -m pytest tests/test_moe.py tests/test_moe_shared_routes.py -q"
+  },
+  "actual_gpu": "NVIDIA A100-SXM4-40GB",
+  "visible_vram_gib": 39.4935302734375,
+  "target_scope": "Target verification body only, MTP module released after loading on A100 40GB; paired same-device measurements, not prior A100 80GB wall time."
+}

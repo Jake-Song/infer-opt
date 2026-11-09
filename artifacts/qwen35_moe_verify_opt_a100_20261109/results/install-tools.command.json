@@ -1,0 +1,13 @@
+[
+  "/usr/bin/python3",
+  "-m",
+  "pip",
+  "install",
+  "pytest",
+  "transformers==5.22.0",
+  "accelerate==1.15.0",
+  "safetensors==0.8.0",
+  "huggingface_hub==1.33.0",
+  "flash-linear-attention==0.6.0",
+  "fla-core==0.6.0"
+]

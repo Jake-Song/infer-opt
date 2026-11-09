@@ -1,0 +1,59 @@
+{
+  "rows": [
+    {
+      "tokens": 1,
+      "config": [
+        256,
+        1
+      ],
+      "baseline_exact": true,
+      "max_abs_diff": 0.0,
+      "graph_dynamic_routes_equal": true,
+      "compiled_dynamic_routes_equal": true
+    },
+    {
+      "tokens": 2,
+      "config": [
+        256,
+        1
+      ],
+      "baseline_exact": true,
+      "max_abs_diff": 0.0,
+      "graph_dynamic_routes_equal": true,
+      "compiled_dynamic_routes_equal": true
+    },
+    {
+      "tokens": 3,
+      "config": [
+        256,
+        1
+      ],
+      "baseline_exact": true,
+      "max_abs_diff": 0.0,
+      "graph_dynamic_routes_equal": true,
+      "compiled_dynamic_routes_equal": true
+    },
+    {
+      "tokens": 4,
+      "config": [
+        256,
+        1
+      ],
+      "baseline_exact": true,
+      "max_abs_diff": 0.0,
+      "graph_dynamic_routes_equal": true,
+      "compiled_dynamic_routes_equal": true
+    },
+    {
+      "tokens": 5,
+      "config": [
+        256,
+        1
+      ],
+      "baseline_exact": true,
+      "max_abs_diff": 0.0,
+      "graph_dynamic_routes_equal": true,
+      "compiled_dynamic_routes_equal": true
+    }
+  ]
+}

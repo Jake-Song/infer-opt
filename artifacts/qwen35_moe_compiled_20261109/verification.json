@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "benchmark_rows": 20,
+  "samples_verified": 100,
+  "generated_token_ids_verified": 25600,
+  "paired_hf_reference_hashes_verified": true,
+  "source_hashes_verified": true,
+  "peak_benchmark_allocated_gib": 35.8792200088501
+}

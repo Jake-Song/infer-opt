@@ -1,0 +1,1 @@
+["/usr/bin/python3", "/content/q35moe-verify-opt-20261109/infer-opt/scripts/bench_moe_shared_routes.py", "--kernel", "tiled", "--out", "/content/q35moe-verify-opt-20261109/results/tiled", "--repeats", "30"]

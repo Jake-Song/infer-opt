@@ -1,0 +1,25 @@
+{
+  "args": {
+    "weights": "/tmp/infer-opt-models/q35moe-round-profile-20261109/int8/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+    "out": "/content/q35moe-round-profile-20261109/results/diagnostic",
+    "stage": "diagnostic",
+    "ks": [
+      1,
+      3
+    ],
+    "prompts": "math,korean",
+    "cache_capacity": 2048,
+    "new_tokens": 256,
+    "repeats": 5,
+    "warmup": 3,
+    "profile_rounds": 24,
+    "event_repeats": 20,
+    "micro_repeats": 10
+  },
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "torch": "2.11.0+cu130",
+  "fused_groups": 82,
+  "mtp": "INT8 group128",
+  "lm_head": "BF16",
+  "compile": "reduce-overhead/fullgraph/static/max_autotune/coordinate_descent"
+}

@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Local editor settings
+.vscode/
+
 # Jupyter
 .ipynb_checkpoints/
 

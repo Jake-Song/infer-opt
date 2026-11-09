@@ -40,7 +40,12 @@ def main():
     parser.add_argument('--out', required=True)
     parser.add_argument('--scratch', required=True)
     parser.add_argument('--cache-capacity', type=int, default=8456)
+    parser.add_argument('--max-autotune', action='store_true',
+                        help='match dense G4 max-autotune and coordinate-descent settings')
     args = parser.parse_args()
+    import torch._inductor.config as inductor_config
+    inductor_config.max_autotune = args.max_autotune
+    inductor_config.coordinate_descent_tuning = args.max_autotune
     from infer_opt.qwen3_5 import Qwen3_5ForCausalLM, FixedShapeDecoder
 
     torch.set_num_threads(4)
@@ -106,6 +111,7 @@ def main():
                  'reference_revision': reference['model_revision'], 'tokens': reference['tokens'],
                  'kernels': 'fla-delta', 'fused_projections': True, 'mtp': False,
                  'cache_capacity': args.cache_capacity, 'strong_mismatch_margin': 0.5,
+                 'max_autotune': args.max_autotune,
                  'scope': 'paired teacher-forced numerical distribution comparison; not task accuracy'})
             print(json.dumps({k: v for k, v in row.items() if k != 'per_step'}), flush=True)
             del actual, values, want, ids

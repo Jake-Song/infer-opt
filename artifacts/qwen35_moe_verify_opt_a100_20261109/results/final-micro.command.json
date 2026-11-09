@@ -1,0 +1,10 @@
+[
+  "/usr/bin/python3",
+  "/content/q35moe-verify-opt-20261109/infer-opt/scripts/bench_moe_verification_kernel.py",
+  "--out",
+  "/content/q35moe-verify-opt-20261109/results/final-micro",
+  "--kernel",
+  "packed",
+  "--repeats",
+  "100"
+]

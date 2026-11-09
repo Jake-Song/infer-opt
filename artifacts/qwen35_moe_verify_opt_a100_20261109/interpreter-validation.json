@@ -1,0 +1,276 @@
+{
+  "triton": "3.6.0",
+  "scope": "CPU interpreter only; not actual GPU execution or performance.",
+  "rows": [
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 1,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 1,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 1,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 2,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 2,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 2,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 3,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 3,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 3,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 4,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 4,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 4,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 5,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 5,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "tokens": 5,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 1,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 1,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 1,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 2,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 2,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 2,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 3,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 3,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 3,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 4,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 4,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 4,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 5,
+      "top": 3,
+      "routing": "shared",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 5,
+      "top": 3,
+      "routing": "partial",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    },
+    {
+      "dtype": "torch.float16",
+      "tokens": 5,
+      "top": 3,
+      "routing": "disjoint",
+      "gate_exact": true,
+      "down_exact": true,
+      "combined_exact": true
+    }
+  ]
+}

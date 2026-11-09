@@ -1,0 +1,1 @@
+["/usr/bin/python3", "/content/q35moe-verify-opt-20261109/bench-packed.py", "--kernel", "packed", "--out", "/content/q35moe-verify-opt-20261109/results/packed", "--repeats", "50"]

@@ -1,0 +1,22 @@
+[
+  {
+    "file": "infer_opt/moe_kernels.py",
+    "source_file": "moe-kernels-final.py",
+    "sha256": "48206513d148522b6a2e498c666fe989ff30b02b135e6312605db8abe840b21a"
+  },
+  {
+    "file": "scripts/bench_moe_verification_kernel.py",
+    "source_file": "bench-moe-final.py",
+    "sha256": "5a5e3bb6e6d7595feacca8b0e4763dd6b90cfd5e647f6ccf9ed7ec634b46c84e"
+  },
+  {
+    "file": "scripts/bench_moe_target_verify.py",
+    "source_file": "bench-target-final.py",
+    "sha256": "b8fb18dabb6fc85e931f88c6f55d9da8f9b020cb6c5f0ab234cd78e4f59c3608"
+  },
+  {
+    "file": "tests/test_moe_verification_kernel.py",
+    "source_file": "test-kernel-final.py",
+    "sha256": "2e1e587fc75a5817671ff78e10ae6025c5547fc702c1ac9bd3552cc09822e72a"
+  }
+]

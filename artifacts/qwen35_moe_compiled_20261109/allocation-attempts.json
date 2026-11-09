@@ -1,0 +1,31 @@
+{
+  "attempts": [
+    {
+      "attempt": 1,
+      "session": "moe-compiled-20261109",
+      "gpu": "G4",
+      "status": "failed",
+      "error": "Colab assignment POST: 503 Service Unavailable",
+      "model_execution_started": false,
+      "recorded_at_utc": "2026-11-09T06:56:30.047099+00:00"
+    },
+    {
+      "attempt": 2,
+      "session": "moe-compiled-20261109-retry",
+      "gpu": "G4",
+      "status": "failed",
+      "error": "Colab assignment POST: 503 Service Unavailable",
+      "model_execution_started": false,
+      "recorded_at_utc": "2026-11-09T07:02:34.612543+00:00"
+    },
+    {
+      "attempt": 3,
+      "session": "moe-compiled-a100-20261109",
+      "gpu": "A100",
+      "high_mem": true,
+      "status": "completed_results_verified_session_terminated",
+      "recorded_at_utc": "2026-11-09T07:03:37.500397+00:00"
+    }
+  ],
+  "fallback_authorized": "A100 if G4 retry fails"
+}

@@ -1,0 +1,39 @@
+{
+  "hf_repo": "Qwen/Qwen3.5-35B-A3B",
+  "hf_revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+  "int8_repo": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "int8_revision": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "cache_root": "/tmp/infer-opt-models/q35moe-compiled-20261109",
+  "cache_capacity": 2048,
+  "batch": 1,
+  "quality": {
+    "mtp": false,
+    "prompts": 9,
+    "positions": 48,
+    "modes": [
+      "eager",
+      "compile-reduce-overhead"
+    ]
+  },
+  "benchmark": {
+    "verification": "parallel",
+    "ks": [
+      1,
+      2,
+      3
+    ],
+    "tokens": 256,
+    "warmup": 3,
+    "repeats": 5,
+    "mode": "compile-reduce-overhead"
+  },
+  "compile": {
+    "mode": "reduce-overhead",
+    "fullgraph": true,
+    "dynamic": false
+  },
+  "fused_projections": true,
+  "max_autotune": true,
+  "coordinate_descent_tuning": true,
+  "bf16_gemv_overrides": false
+}

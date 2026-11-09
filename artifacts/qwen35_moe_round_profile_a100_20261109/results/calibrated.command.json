@@ -1,0 +1,20 @@
+[
+  "/usr/bin/python3",
+  "/content/q35moe-round-profile-20261109/infer-opt/scripts/profile_qwen3_5_moe_round.py",
+  "--stage",
+  "diagnostic",
+  "--weights",
+  "/tmp/infer-opt-models/q35moe-round-profile-20261109/int8/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "--out",
+  "/content/q35moe-round-profile-20261109/results/calibrated",
+  "--ks",
+  "1,3",
+  "--prompts",
+  "math,korean",
+  "--cache-capacity",
+  "2048",
+  "--event-repeats",
+  "20",
+  "--micro-repeats",
+  "10"
+]

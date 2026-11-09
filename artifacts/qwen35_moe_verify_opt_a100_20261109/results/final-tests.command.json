@@ -1,0 +1,10 @@
+[
+  "/usr/bin/python3",
+  "-m",
+  "pytest",
+  "/content/q35moe-verify-opt-20261109/infer-opt/tests/test_moe_verification_kernel.py",
+  "/content/q35moe-verify-opt-20261109/infer-opt/tests/test_moe.py",
+  "-q",
+  "-k",
+  "verification_projection or selected_int8_kernel"
+]

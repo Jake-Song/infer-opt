@@ -15,6 +15,25 @@ The [A100 80GB experiment](artifacts/qwen35_moe_a100_20261104/README.md)
 completed 30 sequential-MTP parity checks, but MTP remained slower than ordinary
 decoding. Colab disconnected before the parallel/compiled comparisons completed.
 
+The [2026-11-09 compiled parallel-MTP experiment](artifacts/qwen35_moe_compiled_20261109/README.md)
+completed on A100 80GB with the dense G4 compiler/autotune settings and confirmed
+CUDA Graph launches. MTP-off decode was 5.45–5.56 ms/token; MTP k=3 preserved all
+256 tokens on math/code at 4.15/4.53 ms/token (1.34×/1.22×). Other prompts diverged.
+With MTP off, compiled INT8 matched HF top-1 at 430/432 positions with zero strong
+mismatches; strict compiled/eager logit tolerance still failed at all 423 decode positions.
+
+The [A100 round profiling follow-up](artifacts/qwen35_moe_round_profile_a100_20261109/README.md)
+keeps the same compiled CUDA Graph path. Routed experts explain 61% of the
+k=1→3 GPU kernel-time increase; repeated BF16 vocabulary projections are another
+major cost. Separate phase diagnostics preserve their state-parity limitations.
+The new run also diverged on math k=3, so the earlier token-parity result is
+specific to its recorded run.
+
+The [A100 verification-kernel follow-up](artifacts/qwen35_moe_verify_opt_a100_20261109/README.md)
+adds an exact pair-load path for the measured MoE verification shape. Final math
+checks reduced target-body time by 1.38–2.67%; 37 GPU tests passed. Whole MTP
+throughput was not remeasured. Proper packed Grouped GEMM remains the next experiment.
+
 The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
 measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
 9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded

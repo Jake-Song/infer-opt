@@ -1,0 +1,118 @@
+{
+  "source_hashes_verified": true,
+  "timed_generations": 30,
+  "generated_ids_verified": 7680,
+  "trace_files": 6,
+  "phase_diagnostics": {
+    "diagnostic": {
+      "frozen_points": 4,
+      "phase_replays": 80,
+      "expert_sweep_replays": 120
+    },
+    "calibrated": {
+      "frozen_points": 4,
+      "phase_replays": 80,
+      "expert_sweep_replays": 120
+    }
+  },
+  "state_parity": [
+    {
+      "k": 1,
+      "prompt": "math",
+      "full_manual_graph_outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 49,
+          "max_abs_diff": 1.25
+        }
+      },
+      "outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 49,
+          "max_abs_diff": 1.25
+        }
+      }
+    },
+    {
+      "k": 1,
+      "prompt": "korean",
+      "full_manual_graph_outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 145,
+          "max_abs_diff": 0.0
+        }
+      },
+      "outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 63,
+          "max_abs_diff": 0.63671875
+        }
+      }
+    },
+    {
+      "k": 3,
+      "prompt": "math",
+      "full_manual_graph_outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 15,
+          "max_abs_diff": 0.625
+        }
+      },
+      "outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 15,
+          "max_abs_diff": 0.625
+        }
+      }
+    },
+    {
+      "k": 3,
+      "prompt": "korean",
+      "full_manual_graph_outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 99,
+          "max_abs_diff": 0.25
+        }
+      },
+      "outputs_vs_production": {
+        "target_ids_equal": true,
+        "accepted_equal": true,
+        "next_input_ids_equal": true,
+        "state": {
+          "tensors": 145,
+          "exact_tensors": 46,
+          "max_abs_diff": 0.4375
+        }
+      }
+    }
+  ],
+  "state_parity_note": "State equality is recorded, not assumed. A mismatch does not invalidate the original production traces, but prevents claiming equivalent optimization.",
+  "compiler_python_modules": 494
+}

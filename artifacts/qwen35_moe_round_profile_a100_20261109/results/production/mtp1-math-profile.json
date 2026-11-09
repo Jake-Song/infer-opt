@@ -1,0 +1,180 @@
+{
+  "method": "mtp1",
+  "prompt": "math",
+  "median_ms_token": 5.598037617186691,
+  "divergent_runs": 0,
+  "round_ms": 10.939676564883914,
+  "tokens_per_round": 1.9541984732824427,
+  "profile": {
+    "calls": 24,
+    "gpu_events": 30504,
+    "cuda_graph_launches": 24,
+    "gpu_kernel_sum_ms_per_call": 9.576537375,
+    "gpu_busy_union_ms_per_call": 9.5654814453125,
+    "gpu_category_ms_per_call": {
+      "routed_experts": 2.836065125000046,
+      "bf16_matmul": 2.385019041666666,
+      "int8_multirow": 1.9064002083333325,
+      "pointwise": 0.7225911249999866,
+      "copy_gather": 0.6964745416666619,
+      "reduction": 0.4175081250000003,
+      "other": 0.26682233333333516,
+      "delta_rule": 0.26116291666666674,
+      "attention": 0.08449395833333326
+    },
+    "cpu_sync_api_ms_per_call": 9.399342166666667,
+    "top_kernels": [
+      {
+        "name": "_project",
+        "ms_per_call": 2.759625000000005,
+        "count_per_call": 82.0
+      },
+      {
+        "name": "_w8a16_group_gemv_rows_kernel",
+        "ms_per_call": 1.9064002083333325,
+        "count_per_call": 165.0
+      },
+      {
+        "name": "triton_red_fused__to_copy_add_index_select_mean_mm_mul_pow_rsqrt_sub_t_view_41",
+        "ms_per_call": 0.571091125,
+        "count_per_call": 1.0
+      },
+      {
+        "name": "triton_tem_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_31",
+        "ms_per_call": 0.5554444166666666,
+        "count_per_call": 1.0
+      },
+      {
+        "name": "void at::native::sbtopk::gatherTopK<float, unsigned int, 2, false>(at::cuda::detail::TensorInfo<float const, unsigned int>, unsigned int, unsigned int, bool, unsigned int, unsigned int, at::cuda::detail::TensorInfo<float, unsigned int>, unsigned int, at::cuda::detail::TensorInfo<long, unsigned int>, unsigned int, float*)",
+        "ms_per_call": 0.43365183333333523,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "triton_tem_fused__to_copy_add_mean_mm_mul_pow_rsqrt_t_view_10",
+        "ms_per_call": 0.3844690416666665,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "void at::native::bitonicSortKVInPlace<2, -1, 16, 16, float, long, at::native::GTOp<float, true>, unsigned int>(at::cuda::detail::TensorInfo<float, unsigned int>, unsigned int, unsigned int, unsigned int, at::cuda::detail::TensorInfo<long, unsigned int>, unsigned int, at::native::GTOp<float, true>)",
+        "ms_per_call": 0.2631902083333352,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "_gated_delta_verify_kernel",
+        "ms_per_call": 0.26116291666666674,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "ampere_s16816gemm_bf16_64x64_ldg8_stages_64x5_tn",
+        "ms_per_call": 0.248926166666667,
+        "count_per_call": 60.0
+      },
+      {
+        "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+        "ms_per_call": 0.17757487499999722,
+        "count_per_call": 60.0
+      },
+      {
+        "name": "triton_per_fused__to_copy_add_mean_mm_mul_pow_rsqrt_sum_t_view_15",
+        "ms_per_call": 0.17610920833333327,
+        "count_per_call": 39.0
+      },
+      {
+        "name": "triton_per_fused__to_copy_add_mean_mm_mul_pow_rsqrt_sigmoid_sum_view_16",
+        "ms_per_call": 0.143393291666667,
+        "count_per_call": 28.0
+      },
+      {
+        "name": "triton_poi_fused_copy__index_select_squeeze_sub_47",
+        "ms_per_call": 0.1343932916666671,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_per_fused__softmax__to_copy_exp_prepare_softmax_online_sub_11",
+        "ms_per_call": 0.08873354166666668,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "_decode_attention_kernel",
+        "ms_per_call": 0.08449395833333326,
+        "count_per_call": 11.0
+      },
+      {
+        "name": "triton_per_fused__to_copy_mean_pow_view_7",
+        "ms_per_call": 0.07915704166666698,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "_combine",
+        "ms_per_call": 0.0764401249999997,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy_mul_silu_split_sum_12",
+        "ms_per_call": 0.07542912499999968,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "triton_per_fused__to_copy_add_div_mean_mul_pow_rsqrt_selected_int8_experts_sum_view_13",
+        "ms_per_call": 0.07099979166666624,
+        "count_per_call": 41.0
+      },
+      {
+        "name": "triton_poi_fused_cat_copy__split_with_sizes_transpose_44",
+        "ms_per_call": 0.06980516666666674,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy_cat_mul_split_with_sizes_squeeze_sum_transpose_unfold_unsqueeze_1",
+        "ms_per_call": 0.06791395833333341,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_poi_fused_add_arange_cat_index_select_split_with_sizes_transpose_45",
+        "ms_per_call": 0.0675094583333334,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_mean_mul_pow_rsqrt_silu_split_with_sizes_view_8",
+        "ms_per_call": 0.0659715416666668,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_5",
+        "ms_per_call": 0.058965958333333277,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_4",
+        "ms_per_call": 0.05821574999999987,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_poi_fused_add_arange_cat_copy__index_select_split_with_sizes_transpose_46",
+        "ms_per_call": 0.05683474999999985,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_red_fused__unsafe_view_argmax_mm_42",
+        "ms_per_call": 0.056319999999999995,
+        "count_per_call": 1.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_3",
+        "ms_per_call": 0.055735999999999876,
+        "count_per_call": 30.0
+      },
+      {
+        "name": "triton_red_fused__unsafe_view_argmax_32",
+        "ms_per_call": 0.05567333333333334,
+        "count_per_call": 1.0
+      },
+      {
+        "name": "triton_poi_fused__to_copy__unsafe_view_add_clone_exp_mul_neg_sigmoid_silu_softplus_split_with_sizes_transpose_view_2",
+        "ms_per_call": 0.055369583333333194,
+        "count_per_call": 30.0
+      }
+    ],
+    "scope": "CPU sync API time overlaps GPU execution; it must not be added to GPU kernel time."
+  }
+}

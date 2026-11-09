@@ -1,0 +1,6 @@
+{
+  "sha256": "4446b3e031cb82c9970c2eb5f6c7eb62fbe0171fce9883e4d9730d2ebdde7417",
+  "executed_source": "calibrated-profile-source.py",
+  "initial_diagnostic_executed_source": "profile_qwen3_5_moe_round.py",
+  "note": "Initial diagnostic process had loaded v1 before v2 upload; this fresh process executes v2 and adds calibrated manual full-round control."
+}

@@ -1,0 +1,5 @@
+{
+  "reason": "User requested wrap-up here; leave proper packed/persistent grouped GEMM for the next experiment.",
+  "owned_controller_pid": 11304,
+  "final_controller_stopped": true
+}

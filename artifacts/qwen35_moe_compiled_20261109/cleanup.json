@@ -1,0 +1,8 @@
+{
+  "session": "moe-compiled-a100-20261109",
+  "stop_command": "colab stop -s moe-compiled-a100-20261109",
+  "stop_result": "Session terminated.",
+  "results_recovered_and_verified_before_stop": true,
+  "recorded_at_utc": "2026-11-09T07:49:57.799359+00:00",
+  "server_sessions_after_stop": "No active sessions found on server."
+}

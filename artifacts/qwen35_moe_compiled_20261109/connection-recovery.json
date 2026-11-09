@@ -1,0 +1,7 @@
+{
+  "error": "RuntimeError: Connection was lost. during polling",
+  "runtime_was_still_active": true,
+  "independent_worker_continued": true,
+  "worker_restarted_for_polling_error": false,
+  "recovery": "Downloaded stage archives, raw samples and progress over file transfer; later execution calls reconnected; final worker exit code 0."
+}

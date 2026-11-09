@@ -1,0 +1,23 @@
+[
+  {
+    "kind": 4,
+    "warps": 1,
+    "exact": false,
+    "different": 2805,
+    "max_abs_diff": 7.62939453125e-06
+  },
+  {
+    "kind": 4,
+    "warps": 2,
+    "exact": false,
+    "different": 2805,
+    "max_abs_diff": 7.62939453125e-06
+  },
+  {
+    "kind": 4,
+    "warps": 4,
+    "exact": true,
+    "different": 0,
+    "max_abs_diff": 0.0
+  }
+]

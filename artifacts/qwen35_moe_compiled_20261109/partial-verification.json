@@ -1,0 +1,48 @@
+{
+  "benchmark_rows_verified": [
+    [
+      "plain",
+      "chat_long"
+    ],
+    [
+      "plain",
+      "code_1k"
+    ],
+    [
+      "plain",
+      "prose_1k"
+    ],
+    [
+      "plain",
+      "math"
+    ],
+    [
+      "plain",
+      "korean"
+    ],
+    [
+      "mtp1",
+      "chat_long"
+    ],
+    [
+      "mtp1",
+      "code_1k"
+    ],
+    [
+      "mtp1",
+      "prose_1k"
+    ],
+    [
+      "mtp1",
+      "math"
+    ],
+    [
+      "mtp1",
+      "korean"
+    ]
+  ],
+  "samples_verified": 50,
+  "token_ids_per_sample": 256,
+  "raw_token_parity_and_timing_aggregation_verified": true,
+  "paired_hf_reference_hashes_verified": true
+}

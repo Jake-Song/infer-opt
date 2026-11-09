@@ -1,0 +1,29 @@
+{
+  "args": {
+    "weights": "/tmp/infer-opt-models/q35moe-compiled-20261109/int8/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+    "out": "/content/q35moe-compiled-20261109/results/benchmark",
+    "new_tokens": 256,
+    "repeats": 5,
+    "warmup": 3,
+    "cache_capacity": 2048,
+    "ks": "1,2,3"
+  },
+  "mode": "compile-reduce-overhead",
+  "compile": {
+    "mode": "reduce-overhead",
+    "fullgraph": true,
+    "dynamic": false
+  },
+  "verification": "parallel",
+  "allow_inexact": true,
+  "fused_groups": 82,
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "torch": "2.11.0+cu130",
+  "cache_capacity": 2048,
+  "max_autotune": true,
+  "coordinate_descent_tuning": true,
+  "timing": "synchronized host wall clock; prefill/warmup/compilation excluded; final overshoot included in MTP emitted-token denominator",
+  "mtp_precision": "INT8 group-128",
+  "lm_head": "BF16",
+  "scope": "decode throughput and same-checkpoint greedy parity; not task accuracy"
+}

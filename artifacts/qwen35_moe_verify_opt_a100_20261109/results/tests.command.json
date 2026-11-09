@@ -1,0 +1,7 @@
+[
+  "/usr/bin/python3",
+  "-m",
+  "pytest",
+  "/content/q35moe-verify-opt-20261109/infer-opt/tests/test_moe_shared_routes.py",
+  "-q"
+]

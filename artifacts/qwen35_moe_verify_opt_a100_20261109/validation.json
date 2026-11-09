@@ -1,0 +1,72 @@
+{
+  "gpu": "NVIDIA A100-SXM4-40GB",
+  "source_hashes_verified": [
+    "infer_opt/moe_kernels.py",
+    "scripts/bench_moe_verification_kernel.py",
+    "scripts/bench_moe_target_verify.py",
+    "tests/test_moe_verification_kernel.py"
+  ],
+  "completed_stages": {
+    "micro": {
+      "rows": 48,
+      "samples_per_row": 20
+    },
+    "tiled": {
+      "rows": 54,
+      "samples_per_row": 30
+    },
+    "grouped": {
+      "rows": 36,
+      "samples_per_row": 30
+    },
+    "launch-tuning": {
+      "rows": 126,
+      "samples_per_row": 30
+    },
+    "index32": {
+      "rows": 30,
+      "samples_per_row": 50
+    },
+    "ordered": {
+      "rows": 24,
+      "samples_per_row": 50
+    },
+    "pairs": {
+      "rows": 24,
+      "samples_per_row": 50
+    },
+    "packed": {
+      "rows": 24,
+      "samples_per_row": 50
+    },
+    "final-micro": {
+      "rows": 24,
+      "samples_per_row": 100
+    },
+    "target": {
+      "rows": 12,
+      "samples_per_pair": 30,
+      "complete": true
+    },
+    "target-packed": {
+      "rows": 8,
+      "samples_per_pair": 30,
+      "complete": true
+    },
+    "final-target": {
+      "rows": 2,
+      "samples_per_pair": 100,
+      "complete": false
+    }
+  },
+  "stopped_by_user": {
+    "reason": "User requested wrap-up here; leave proper packed/persistent grouped GEMM for the next experiment.",
+    "owned_controller_pid": 11304,
+    "final_controller_stopped": true
+  },
+  "gpu_tests": {
+    "passed": 37,
+    "deselected": 24
+  },
+  "final_kernel_exact_in_all_saved_micro_cases": true
+}

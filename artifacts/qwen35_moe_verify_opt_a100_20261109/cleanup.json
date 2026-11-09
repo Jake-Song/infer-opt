@@ -1,0 +1,9 @@
+{
+  "session": "moe-verify-opt-a100-20261109",
+  "stopped": true,
+  "stop_output": "[colab] Session terminated.",
+  "server_sessions_output": "[colab] No active sessions found on server.",
+  "user_requested_wrap_up": true,
+  "verified_at_utc": "2026-11-09T10:00:05.696173+00:00",
+  "archive_sha256": "91303fa896cebde39574cf7707fc5f6a29b21ca67252a2f9cb8bcdd50ab45e30"
+}

@@ -1,0 +1,173 @@
+{
+  "samples": [
+    {
+      "wall_ms": 12.018393000062133,
+      "stream_interval_ms": 11.793888092041016,
+      "cpu_graph_call_ms": 1.6150919998381141,
+      "after_graph_call_wall_ms": 10.164831000111008,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 11.887672999819188,
+      "stream_interval_ms": 11.695327758789062,
+      "cpu_graph_call_ms": 1.5547299999525421,
+      "after_graph_call_wall_ms": 10.15220599992972,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 11.83303299990257,
+      "stream_interval_ms": 11.670111656188965,
+      "cpu_graph_call_ms": 1.4945820000775711,
+      "after_graph_call_wall_ms": 10.189224999976432,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 11.843477999946117,
+      "stream_interval_ms": 11.69654369354248,
+      "cpu_graph_call_ms": 1.494991000072332,
+      "after_graph_call_wall_ms": 10.200588000088828,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 11.836735000088083,
+      "stream_interval_ms": 11.684736251831055,
+      "cpu_graph_call_ms": 1.4823920000708313,
+      "after_graph_call_wall_ms": 10.210359999973662,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.726071999897613,
+      "stream_interval_ms": 10.580320358276367,
+      "cpu_graph_call_ms": 1.4975800002048345,
+      "after_graph_call_wall_ms": 9.064753999837194,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.30938500002776,
+      "stream_interval_ms": 10.160032272338867,
+      "cpu_graph_call_ms": 1.461003000031269,
+      "after_graph_call_wall_ms": 8.70484300003227,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.361019999891141,
+      "stream_interval_ms": 10.21513557434082,
+      "cpu_graph_call_ms": 1.5336880001086683,
+      "after_graph_call_wall_ms": 8.679187999860005,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.321940000039831,
+      "stream_interval_ms": 10.175104141235352,
+      "cpu_graph_call_ms": 1.5178789999481523,
+      "after_graph_call_wall_ms": 8.65826700010075,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.267924000118,
+      "stream_interval_ms": 10.117119789123535,
+      "cpu_graph_call_ms": 1.4517570000407432,
+      "after_graph_call_wall_ms": 8.669406000080926,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.259533000180454,
+      "stream_interval_ms": 10.116640090942383,
+      "cpu_graph_call_ms": 1.5201969999907305,
+      "after_graph_call_wall_ms": 8.590970000113884,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.277413000039815,
+      "stream_interval_ms": 10.119744300842285,
+      "cpu_graph_call_ms": 1.4897999999448075,
+      "after_graph_call_wall_ms": 8.637032000024192,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.321008000119036,
+      "stream_interval_ms": 10.154496192932129,
+      "cpu_graph_call_ms": 1.4786489998641628,
+      "after_graph_call_wall_ms": 8.671979000155261,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.33376500004124,
+      "stream_interval_ms": 10.176575660705566,
+      "cpu_graph_call_ms": 1.4800999999806663,
+      "after_graph_call_wall_ms": 8.708436999995683,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.289757000009558,
+      "stream_interval_ms": 10.140095710754395,
+      "cpu_graph_call_ms": 1.4936790000774636,
+      "after_graph_call_wall_ms": 8.643483000014385,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.310138000022562,
+      "stream_interval_ms": 10.145695686340332,
+      "cpu_graph_call_ms": 1.485558000013043,
+      "after_graph_call_wall_ms": 8.667369000022518,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.32517899989216,
+      "stream_interval_ms": 10.163711547851562,
+      "cpu_graph_call_ms": 1.4699280000058934,
+      "after_graph_call_wall_ms": 8.705135999889535,
+      "emitted": 1
+    },
+    {
+      "wall_ms": 10.315965000017968,
+      "stream_interval_ms": 10.160223960876465,
+      "cpu_graph_call_ms": 1.4758300001176394,
+      "after_graph_call_wall_ms": 8.690183999988221,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.31256500004929,
+      "stream_interval_ms": 10.158528327941895,
+      "cpu_graph_call_ms": 1.4613819998885447,
+      "after_graph_call_wall_ms": 8.694250999951691,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.208456000100341,
+      "stream_interval_ms": 10.055583953857422,
+      "cpu_graph_call_ms": 1.4662430000953464,
+      "after_graph_call_wall_ms": 8.597386000019469,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.25058799996259,
+      "stream_interval_ms": 10.10524845123291,
+      "cpu_graph_call_ms": 1.4913399998022214,
+      "after_graph_call_wall_ms": 8.61196599998948,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.35305100003825,
+      "stream_interval_ms": 10.195263862609863,
+      "cpu_graph_call_ms": 1.4670670000214159,
+      "after_graph_call_wall_ms": 8.740865999925518,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.265849999996135,
+      "stream_interval_ms": 10.120512008666992,
+      "cpu_graph_call_ms": 1.4570830001048307,
+      "after_graph_call_wall_ms": 8.65892700016957,
+      "emitted": 2
+    },
+    {
+      "wall_ms": 10.294445999988966,
+      "stream_interval_ms": 10.141951560974121,
+      "cpu_graph_call_ms": 1.4522970000143687,
+      "after_graph_call_wall_ms": 8.680300999913015,
+      "emitted": 2
+    }
+  ],
+  "scope": "Stream interval includes launch gaps. After-call CPU time includes waiting for GPU; intervals overlap."
+}

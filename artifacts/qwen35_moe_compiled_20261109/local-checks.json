@@ -1,0 +1,10 @@
+{
+  "quality_harness_tests": {
+    "command": ".venv/bin/python -m pytest tests/test_compiled_quality.py tests/test_llamacpp_quality.py -q",
+    "passed": 9
+  },
+  "benchmark_and_worker_py_compile": true,
+  "git_diff_check": true,
+  "requested_gpu": "G4",
+  "session": "moe-compiled-20261109"
+}

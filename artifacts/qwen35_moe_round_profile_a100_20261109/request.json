@@ -1,0 +1,10 @@
+{
+  "user_requested_gpu": "A100",
+  "session": "moe-round-profile-a100-20261109",
+  "actual_gpu": "NVIDIA A100-SXM4-80GB",
+  "target": "unchanged fullgraph kernel trace, segmented phase CUDA events, real-route expert sweeps",
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "cache_capacity": 2048,
+  "model_cache_root": "/tmp/infer-opt-models/q35moe-round-profile-20261109"
+}

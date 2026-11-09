@@ -1,0 +1,18 @@
+[
+  "/usr/bin/python3",
+  "/content/q35moe-verify-opt-20261109/infer-opt/scripts/bench_moe_target_verify.py",
+  "--weights",
+  "/tmp/infer-opt-models/q35moe-verify-opt-20261109/int8/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "--inputs",
+  "/content/q35moe-verify-opt-20261109/results/target-inputs.json",
+  "--out",
+  "/content/q35moe-verify-opt-20261109/results/target-packed",
+  "--kernel",
+  "packed",
+  "--config",
+  "256,1:256,2",
+  "--repeats",
+  "30",
+  "--capacity",
+  "256"
+]

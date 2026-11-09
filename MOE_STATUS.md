@@ -161,3 +161,60 @@ had mean KL 0.002135, 426/432 top-1 matches and no strong mismatches. Its HF
 environment used DeltaNet PyTorch fallback, whereas the paired custom experiment
 installed FLA 0.6.0. The HF continuations differed on two code prompts, so the
 aggregate values do not provide a paired ranking across the two engines.
+
+### Compiled parallel MTP on A100 80GB, 2026-11-09
+
+The [completed experiment](artifacts/qwen35_moe_compiled_20261109/README.md)
+uses the published INT8 checkpoint with the dense G4 compiler settings:
+`compile-reduce-overhead`, fullgraph, static shapes, max-autotune and coordinate
+descent enabled. G4 allocation failed twice with 503, then the user-authorized
+A100 fallback ran on an actual A100-SXM4-80GB. PyTorch 2.11.0+cu130 and Triton
+3.6.0 were pinned. Profiling confirmed CUDA Graph launches for plain and all
+three parallel-MTP settings.
+
+Batch 1, five prompts, 256 output tokens, three warmups and five measured repeats:
+ordinary compiled decode was 5.45–5.56 ms/token. Parallel MTP k=3 preserved every
+generated token on math and code in all five repeats: 4.148/4.526 ms/token,
+1.340×/1.224× over their same-session baselines. Math also preserved parity for
+k=1 and k=2 (0.996×/1.228×). All chat/prose/Korean settings and code k=1,2
+diverged, so their timing ratios are diagnostic.
+
+The MTP-off paired HF BF16 replay covered nine prompts and 432 positions.
+Eager/compiled mean KL was 0.001854/0.002055, both matched top-1 at 430/432,
+and both had zero strong mismatches. Strict compiled/eager allclose still failed
+at all 423 actual decode positions (max absolute difference 7.0); nine shared
+eager-prefill positions passed. This is a numerical replay, not task accuracy.
+Raw IDs for all 100 timed generations, per-position quality metrics, source
+hashes, graph evidence and verified aggregation were recovered before stopping
+the dedicated runtime. Model caches stayed under `/tmp/infer-opt-models`.
+
+### A100 round profiling follow-up, 2026-11-09
+
+The [round profiling report](artifacts/qwen35_moe_round_profile_a100_20261109/README.md)
+records six original-path traces (off/k=1/k=3 × math/Korean), independent CUDA-event
+phase diagnostics, and cold-cache expert sweeps. In the math trace, experts
+accounted for 61% of the k=1→3 GPU kernel-time increase; BF16 matmul-containing
+fused kernels accounted for 27%. Four-token expert sweeps cost about 3.1×
+single-token sweeps, even with forced shared routing. Segmented diagnostics put
+the three draft vocabulary projections near 1.8 ms and accept/commit near 0.2 ms.
+Profiler times and separately compiled phase times are not original-path wall times.
+
+Manual fullgraph controls reduced frozen-round host time, but some state tensors
+differed from the original compiled path. These are optimization candidates, not
+validated equivalent speedups. This run's math k=3 generations also diverged in
+all five repeats, unlike the earlier experiment. Neither earlier parity nor
+one-round output-ID equality establishes general compiled MoE equivalence.
+
+### A100 verification kernel optimization, 2026-11-09
+
+The [optimization report](artifacts/qwen35_moe_verify_opt_a100_20261109/README.md)
+records a pair-load expert kernel that preserves reference outputs and uses one warp.
+It is enabled for A100 BF16 T=2/4 with the measured 2048/512/top8/group128 shape.
+The final automatic-path math checks reduced target-body GPU time by 1.38%/2.67%
+for T=2/4, with exact hidden/logits and all 141 cache tensors. GPU tests: 37 passed.
+This is fixed-state target-body timing, not end-to-end MTP throughput.
+The user requested wrap-up after those two final points; Korean automatic-path
+reconfirmation was stopped. Earlier explicit pair-kernel comparisons completed
+both prompts with exact state. Proper route-packed persistent Grouped GEMM is
+[next experiment](artifacts/qwen35_moe_verify_opt_a100_20261109/NEXT_EXPERIMENT.md).
+All results were recovered and the A100 40GB runtime was stopped.

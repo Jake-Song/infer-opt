@@ -1,0 +1,2 @@
+I1109 07:20:43.071000 4713 torch/_inductor/graph.py:947] [0/0] [__perf_hints] Using FallbackKernel: torch.ops.aten.topk.default
+I1109 07:20:43.226000 4713 torch/_inductor/graph.py:947] [0/0] [__perf_hints] Using FallbackKernel: torch.ops.infer_opt.selected_int8_experts.default

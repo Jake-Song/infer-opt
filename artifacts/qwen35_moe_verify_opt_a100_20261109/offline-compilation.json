@@ -1,0 +1,277 @@
+{
+  "triton": "3.6.0",
+  "target": "sm80",
+  "executed_on_gpu": false,
+  "rows": [
+    {
+      "tokens": 1,
+      "gate": true,
+      "bn": 1,
+      "shared_bytes": 16,
+      "ptx": "t1-gate1-bn1.ptx",
+      "ptx_sha256": "fb20080aad3669fcb73f96d762494259bd2def7bf1491dc69d3d39b0b3b73208",
+      "compiled": true
+    },
+    {
+      "tokens": 1,
+      "gate": true,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t1-gate1-bn2.ptx",
+      "ptx_sha256": "4cca02d6e4d693a1c77a56b73efd9ed2e137ffd0973903581a1a15ef1fa1bbfc",
+      "compiled": true
+    },
+    {
+      "tokens": 1,
+      "gate": true,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t1-gate1-bn4.ptx",
+      "ptx_sha256": "bcce8320dea4b126e77b52c217200b6a0aca7e24274f567bf26545a35f7ff3eb",
+      "compiled": true
+    },
+    {
+      "tokens": 1,
+      "gate": false,
+      "bn": 1,
+      "shared_bytes": 16,
+      "ptx": "t1-gate0-bn1.ptx",
+      "ptx_sha256": "f9e738b078dc6b3879cf706cee07a796854b049519144bb514feae2755b3c488",
+      "compiled": true
+    },
+    {
+      "tokens": 1,
+      "gate": false,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t1-gate0-bn2.ptx",
+      "ptx_sha256": "ec8d5594aab943d1e6717675f8612ffa27a0c9c3deab58044283fd24eac219b4",
+      "compiled": true
+    },
+    {
+      "tokens": 1,
+      "gate": false,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t1-gate0-bn4.ptx",
+      "ptx_sha256": "515d764b194513be04520e62850995bd301c0fd508f56dbcd51426f5aaedb6b7",
+      "compiled": true
+    },
+    {
+      "tokens": 2,
+      "gate": true,
+      "bn": 1,
+      "shared_bytes": 32,
+      "ptx": "t2-gate1-bn1.ptx",
+      "ptx_sha256": "af9f707c00993d8f9cbf5049cf866d8e0c086b33b7029a404838498d22a66218",
+      "compiled": true
+    },
+    {
+      "tokens": 2,
+      "gate": true,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t2-gate1-bn2.ptx",
+      "ptx_sha256": "fd3c97fb8326c91a3c412fe33050bf4dc6af00f2d3cc8304c83d49c1a908a2db",
+      "compiled": true
+    },
+    {
+      "tokens": 2,
+      "gate": true,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t2-gate1-bn4.ptx",
+      "ptx_sha256": "35a6c12a20486d414c55308e0c7dbc12dff9b4b81824e1ec51566ed390958711",
+      "compiled": true
+    },
+    {
+      "tokens": 2,
+      "gate": false,
+      "bn": 1,
+      "shared_bytes": 32,
+      "ptx": "t2-gate0-bn1.ptx",
+      "ptx_sha256": "c26a3b377a0dbd67c99787ddbfd1ab1a3eddd898702fe26fa9e0354192650462",
+      "compiled": true
+    },
+    {
+      "tokens": 2,
+      "gate": false,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t2-gate0-bn2.ptx",
+      "ptx_sha256": "24c043bd2adfa4da02bd55d7cb071ebe20e35870cf7f3f5a84e428b112f42983",
+      "compiled": true
+    },
+    {
+      "tokens": 2,
+      "gate": false,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t2-gate0-bn4.ptx",
+      "ptx_sha256": "b94a0ed55ad663b9cb649a345523c1c49b3387683fc3750cd9ec1f23a02c56fe",
+      "compiled": true
+    },
+    {
+      "tokens": 3,
+      "gate": true,
+      "bn": 1,
+      "shared_bytes": 64,
+      "ptx": "t3-gate1-bn1.ptx",
+      "ptx_sha256": "09df4feb72b048a40e7c3160bce2725483d29294d685476b2e4322141ec7e2b7",
+      "compiled": true
+    },
+    {
+      "tokens": 3,
+      "gate": true,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t3-gate1-bn2.ptx",
+      "ptx_sha256": "18c1be62a13c78dd00723a444715fd097fccaf6135ae60d7189bca599d684dd6",
+      "compiled": true
+    },
+    {
+      "tokens": 3,
+      "gate": true,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t3-gate1-bn4.ptx",
+      "ptx_sha256": "23a063256a662b6347813d67facd12bfe0b72ee521d865a3f1c1d9a3426f3bdb",
+      "compiled": true
+    },
+    {
+      "tokens": 3,
+      "gate": false,
+      "bn": 1,
+      "shared_bytes": 64,
+      "ptx": "t3-gate0-bn1.ptx",
+      "ptx_sha256": "223035835cb577a28bbe63b0f1867a55bd00b0c2568bdf1ea134623a418932c6",
+      "compiled": true
+    },
+    {
+      "tokens": 3,
+      "gate": false,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t3-gate0-bn2.ptx",
+      "ptx_sha256": "bcc240fe78361c4af3de01d4d42591b173f0bd5cf552ef47c2da3c1054be4477",
+      "compiled": true
+    },
+    {
+      "tokens": 3,
+      "gate": false,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t3-gate0-bn4.ptx",
+      "ptx_sha256": "8f5eadd8029230886b9420fb26cef5fd953f6a9f81c16dc48c7fbcd094a678fd",
+      "compiled": true
+    },
+    {
+      "tokens": 4,
+      "gate": true,
+      "bn": 1,
+      "shared_bytes": 64,
+      "ptx": "t4-gate1-bn1.ptx",
+      "ptx_sha256": "3dea6208c85d1dca957ddb42cb43a54885452a82d8a778bc9b04fff5b2c8cfd3",
+      "compiled": true
+    },
+    {
+      "tokens": 4,
+      "gate": true,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t4-gate1-bn2.ptx",
+      "ptx_sha256": "aa8b73f300bd81eb1a0bc3a537dea2764047a6c2d98094bedbc1346fc33364fe",
+      "compiled": true
+    },
+    {
+      "tokens": 4,
+      "gate": true,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t4-gate1-bn4.ptx",
+      "ptx_sha256": "4a68700aa2da37462b2bd9041b40bcacb379a3a7aa28c80244550d5d7ea18993",
+      "compiled": true
+    },
+    {
+      "tokens": 4,
+      "gate": false,
+      "bn": 1,
+      "shared_bytes": 64,
+      "ptx": "t4-gate0-bn1.ptx",
+      "ptx_sha256": "bca3ca67b6b7b0e1df37eb78a29b6518364f49bb66d22b772765b4c6d3849c77",
+      "compiled": true
+    },
+    {
+      "tokens": 4,
+      "gate": false,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t4-gate0-bn2.ptx",
+      "ptx_sha256": "14b537e76d7bde70372c56df3876378418fa6573da6dd079d8a5d05c719fc813",
+      "compiled": true
+    },
+    {
+      "tokens": 4,
+      "gate": false,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t4-gate0-bn4.ptx",
+      "ptx_sha256": "1e969e557913ec39f528d204cfdd3894f206355497ba0e8ceda6f2fb0f8d64db",
+      "compiled": true
+    },
+    {
+      "tokens": 5,
+      "gate": true,
+      "bn": 1,
+      "shared_bytes": 128,
+      "ptx": "t5-gate1-bn1.ptx",
+      "ptx_sha256": "3348ce75bf641bd9fedce5bb9beb28ebf91ee63f6254fa6422e3e2ba48aa7c74",
+      "compiled": true
+    },
+    {
+      "tokens": 5,
+      "gate": true,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t5-gate1-bn2.ptx",
+      "ptx_sha256": "7b21efe2d5b51862ad680645434ad8da1aeb33da2f2fbf48d1d3b6fa7de02223",
+      "compiled": true
+    },
+    {
+      "tokens": 5,
+      "gate": true,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t5-gate1-bn4.ptx",
+      "ptx_sha256": "db76499d192539ac344f2e6ac0f6ad5398532d56b6a53417b2ccdc31f9943422",
+      "compiled": true
+    },
+    {
+      "tokens": 5,
+      "gate": false,
+      "bn": 1,
+      "shared_bytes": 128,
+      "ptx": "t5-gate0-bn1.ptx",
+      "ptx_sha256": "c722f01926858a69167e2ec3eb37014b69e3b9359c7503c2b6805656da3a226f",
+      "compiled": true
+    },
+    {
+      "tokens": 5,
+      "gate": false,
+      "bn": 2,
+      "shared_bytes": 1024,
+      "ptx": "t5-gate0-bn2.ptx",
+      "ptx_sha256": "29225f16eeb9200a14b4cf481c4c094ae4aa5be00f9a5021c80887a5993e4299",
+      "compiled": true
+    },
+    {
+      "tokens": 5,
+      "gate": false,
+      "bn": 4,
+      "shared_bytes": 2048,
+      "ptx": "t5-gate0-bn4.ptx",
+      "ptx_sha256": "0f92f1b5675c973e0f7dbfbd64e5459856ac234ba16face28e8a657c5abe2d51",
+      "compiled": true
+    }
+  ]
+}

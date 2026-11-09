@@ -1,0 +1,7639 @@
+{
+  "rows": [
+    {
+      "tokens": 1,
+      "routing": "actual",
+      "sweep_median_ms": 1.416703999042511,
+      "samples_ms": [
+        1.551360011100769,
+        1.4192639589309692,
+        1.4192639589309692,
+        1.4172159433364868,
+        1.4172159433364868,
+        1.4161920547485352,
+        1.4141440391540527,
+        1.415168046951294,
+        1.4141440391540527,
+        1.4161920547485352
+      ],
+      "routing_by_layer": [
+        {
+          "layer": 0,
+          "ids": [
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 1,
+          "ids": [
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 2,
+          "ids": [
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 3,
+          "ids": [
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 4,
+          "ids": [
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 5,
+          "ids": [
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 6,
+          "ids": [
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 7,
+          "ids": [
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 8,
+          "ids": [
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 9,
+          "ids": [
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 10,
+          "ids": [
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 11,
+          "ids": [
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 12,
+          "ids": [
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 13,
+          "ids": [
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 14,
+          "ids": [
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 15,
+          "ids": [
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 16,
+          "ids": [
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 17,
+          "ids": [
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 18,
+          "ids": [
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 19,
+          "ids": [
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 20,
+          "ids": [
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 21,
+          "ids": [
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 22,
+          "ids": [
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 23,
+          "ids": [
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 24,
+          "ids": [
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 25,
+          "ids": [
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 26,
+          "ids": [
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 27,
+          "ids": [
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 28,
+          "ids": [
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 29,
+          "ids": [
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 30,
+          "ids": [
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 31,
+          "ids": [
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 32,
+          "ids": [
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 33,
+          "ids": [
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 34,
+          "ids": [
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 35,
+          "ids": [
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 36,
+          "ids": [
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 37,
+          "ids": [
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 38,
+          "ids": [
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 39,
+          "ids": [
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        }
+      ]
+    },
+    {
+      "tokens": 1,
+      "routing": "forced_shared",
+      "sweep_median_ms": 1.4172159433364868,
+      "samples_ms": [
+        1.551360011100769,
+        1.4213119745254517,
+        1.4161920547485352,
+        1.4172159433364868,
+        1.4172159433364868,
+        1.415168046951294,
+        1.4172159433364868,
+        1.4161920547485352,
+        1.4202879667282104,
+        1.415168046951294
+      ],
+      "routing_by_layer": [
+        {
+          "layer": 0,
+          "ids": [
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 1,
+          "ids": [
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 2,
+          "ids": [
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 3,
+          "ids": [
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 4,
+          "ids": [
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 5,
+          "ids": [
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 6,
+          "ids": [
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 7,
+          "ids": [
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 8,
+          "ids": [
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 9,
+          "ids": [
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 10,
+          "ids": [
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 11,
+          "ids": [
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 12,
+          "ids": [
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 13,
+          "ids": [
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 14,
+          "ids": [
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 15,
+          "ids": [
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 16,
+          "ids": [
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 17,
+          "ids": [
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 18,
+          "ids": [
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 19,
+          "ids": [
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 20,
+          "ids": [
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 21,
+          "ids": [
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 22,
+          "ids": [
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 23,
+          "ids": [
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 24,
+          "ids": [
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 25,
+          "ids": [
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 26,
+          "ids": [
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 27,
+          "ids": [
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 28,
+          "ids": [
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 29,
+          "ids": [
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 30,
+          "ids": [
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 31,
+          "ids": [
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 32,
+          "ids": [
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 33,
+          "ids": [
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 34,
+          "ids": [
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 35,
+          "ids": [
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 36,
+          "ids": [
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 37,
+          "ids": [
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 38,
+          "ids": [
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 39,
+          "ids": [
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 8,
+          "reuse_potential": 0.0
+        }
+      ]
+    },
+    {
+      "tokens": 2,
+      "routing": "actual",
+      "sweep_median_ms": 2.4084479808807373,
+      "samples_ms": [
+        2.5538558959960938,
+        2.412544012069702,
+        2.4084479808807373,
+        2.4084479808807373,
+        2.4053759574890137,
+        2.4145920276641846,
+        2.4084479808807373,
+        2.4094719886779785,
+        2.4043519496917725,
+        2.406399965286255
+      ],
+      "routing_by_layer": [
+        {
+          "layer": 0,
+          "ids": [
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ],
+            [
+              204,
+              128,
+              107,
+              13,
+              187,
+              11,
+              247,
+              243
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 16,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 1,
+          "ids": [
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ],
+            [
+              174,
+              232,
+              10,
+              107,
+              77,
+              162,
+              141,
+              166
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 16,
+          "reuse_potential": 0.0
+        },
+        {
+          "layer": 2,
+          "ids": [
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ],
+            [
+              38,
+              98,
+              122,
+              208,
+              53,
+              4,
+              241,
+              162
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 3,
+          "ids": [
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ],
+            [
+              178,
+              143,
+              239,
+              246,
+              21,
+              191,
+              43,
+              5
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 16,
+          "reuse_potential": 0.1875
+        },
+        {
+          "layer": 4,
+          "ids": [
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ],
+            [
+              181,
+              219,
+              230,
+              255,
+              87,
+              39,
+              135,
+              186
+            ]
+          ],
+          "unique_experts": 14,
+          "routes": 16,
+          "reuse_potential": 0.125
+        },
+        {
+          "layer": 5,
+          "ids": [
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ],
+            [
+              235,
+              180,
+              120,
+              241,
+              105,
+              243,
+              184,
+              131
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 6,
+          "ids": [
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ],
+            [
+              48,
+              54,
+              221,
+              45,
+              83,
+              85,
+              130,
+              109
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 7,
+          "ids": [
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ],
+            [
+              68,
+              129,
+              251,
+              219,
+              78,
+              195,
+              5,
+              254
+            ]
+          ],
+          "unique_experts": 14,
+          "routes": 16,
+          "reuse_potential": 0.125
+        },
+        {
+          "layer": 8,
+          "ids": [
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ],
+            [
+              68,
+              23,
+              168,
+              204,
+              26,
+              41,
+              57,
+              11
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 16,
+          "reuse_potential": 0.1875
+        },
+        {
+          "layer": 9,
+          "ids": [
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ],
+            [
+              78,
+              5,
+              0,
+              9,
+              99,
+              228,
+              31,
+              83
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 10,
+          "ids": [
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ],
+            [
+              181,
+              18,
+              105,
+              101,
+              171,
+              40,
+              224,
+              28
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 16,
+          "reuse_potential": 0.1875
+        },
+        {
+          "layer": 11,
+          "ids": [
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ],
+            [
+              101,
+              136,
+              251,
+              124,
+              19,
+              231,
+              167,
+              198
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 12,
+          "ids": [
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ],
+            [
+              230,
+              222,
+              242,
+              3,
+              119,
+              180,
+              200,
+              237
+            ]
+          ],
+          "unique_experts": 14,
+          "routes": 16,
+          "reuse_potential": 0.125
+        },
+        {
+          "layer": 13,
+          "ids": [
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ],
+            [
+              169,
+              245,
+              132,
+              204,
+              74,
+              2,
+              199,
+              186
+            ]
+          ],
+          "unique_experts": 15,
+          "routes": 16,
+          "reuse_potential": 0.0625
+        },
+        {
+          "layer": 14,
+          "ids": [
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ],
+            [
+              68,
+              203,
+              181,
+              9,
+              129,
+              27,
+              135,
+              246
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 15,
+          "ids": [
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ],
+            [
+              26,
+              131,
+              177,
+              17,
+              102,
+              168,
+              91,
+              141
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 16,
+          "reuse_potential": 0.1875
+        },
+        {
+          "layer": 16,
+          "ids": [
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ],
+            [
+              69,
+              20,
+              30,
+              49,
+              144,
+              137,
+              221,
+              174
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 16,
+          "reuse_potential": 0.1875
+        },
+        {
+          "layer": 17,
+          "ids": [
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ],
+            [
+              39,
+              112,
+              80,
+              101,
+              137,
+              26,
+              70,
+              116
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 18,
+          "ids": [
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ],
+            [
+              165,
+              41,
+              221,
+              235,
+              238,
+              65,
+              185,
+              182
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 16,
+          "reuse_potential": 0.1875
+        },
+        {
+          "layer": 19,
+          "ids": [
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ],
+            [
+              249,
+              8,
+              14,
+              72,
+              131,
+              79,
+              192,
+              87
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 20,
+          "ids": [
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ],
+            [
+              168,
+              26,
+              146,
+              125,
+              68,
+              200,
+              142,
+              97
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 21,
+          "ids": [
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ],
+            [
+              78,
+              5,
+              139,
+              228,
+              0,
+              33,
+              63,
+              41
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 22,
+          "ids": [
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ],
+            [
+              18,
+              128,
+              181,
+              105,
+              199,
+              212,
+              224,
+              108
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 23,
+          "ids": [
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ],
+            [
+              251,
+              136,
+              248,
+              168,
+              198,
+              137,
+              176,
+              21
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 24,
+          "ids": [
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ],
+            [
+              230,
+              180,
+              82,
+              254,
+              252,
+              200,
+              253,
+              222
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 25,
+          "ids": [
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ],
+            [
+              169,
+              5,
+              122,
+              255,
+              225,
+              35,
+              74,
+              132
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 26,
+          "ids": [
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ],
+            [
+              68,
+              135,
+              250,
+              129,
+              152,
+              123,
+              164,
+              27
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 27,
+          "ids": [
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ],
+            [
+              131,
+              26,
+              17,
+              89,
+              91,
+              148,
+              209,
+              161
+            ]
+          ],
+          "unique_experts": 10,
+          "routes": 16,
+          "reuse_potential": 0.375
+        },
+        {
+          "layer": 28,
+          "ids": [
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ],
+            [
+              20,
+              30,
+              49,
+              132,
+              137,
+              21,
+              220,
+              144
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 29,
+          "ids": [
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ],
+            [
+              39,
+              116,
+              101,
+              112,
+              137,
+              119,
+              109,
+              80
+            ]
+          ],
+          "unique_experts": 12,
+          "routes": 16,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 30,
+          "ids": [
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ],
+            [
+              57,
+              219,
+              41,
+              221,
+              235,
+              1,
+              238,
+              165
+            ]
+          ],
+          "unique_experts": 10,
+          "routes": 16,
+          "reuse_potential": 0.375
+        },
+        {
+          "layer": 31,
+          "ids": [
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ],
+            [
+              8,
+              72,
+              14,
+              216,
+              131,
+              13,
+              97,
+              192
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 32,
+          "ids": [
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ],
+            [
+              63,
+              231,
+              10,
+              171,
+              218,
+              249,
+              207,
+              226
+            ]
+          ],
+          "unique_experts": 9,
+          "routes": 16,
+          "reuse_potential": 0.4375
+        },
+        {
+          "layer": 33,
+          "ids": [
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ],
+            [
+              44,
+              188,
+              155,
+              35,
+              85,
+              68,
+              125,
+              177
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 34,
+          "ids": [
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ],
+            [
+              142,
+              165,
+              192,
+              55,
+              132,
+              184,
+              216,
+              172
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 35,
+          "ids": [
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ],
+            [
+              137,
+              69,
+              199,
+              255,
+              193,
+              141,
+              174,
+              184
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 36,
+          "ids": [
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ],
+            [
+              240,
+              151,
+              64,
+              230,
+              87,
+              224,
+              244,
+              108
+            ]
+          ],
+          "unique_experts": 10,
+          "routes": 16,
+          "reuse_potential": 0.375
+        },
+        {
+          "layer": 37,
+          "ids": [
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ],
+            [
+              180,
+              76,
+              155,
+              12,
+              46,
+              197,
+              136,
+              72
+            ]
+          ],
+          "unique_experts": 10,
+          "routes": 16,
+          "reuse_potential": 0.375
+        },
+        {
+          "layer": 38,
+          "ids": [
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ],
+            [
+              206,
+              6,
+              235,
+              203,
+              153,
+              38,
+              125,
+              93
+            ]
+          ],
+          "unique_experts": 11,
+          "routes": 16,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 39,
+          "ids": [
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ],
+            [
+              159,
+              105,
+              148,
+              245,
+              191,
+              20,
+              85,
+              53
+            ]
+          ],
+          "unique_experts": 10,
+          "routes": 16,
+          "reuse_potential": 0.375
+        }
+      ]
+    },
+    {
+      "tokens": 2,
+      "routing": "forced_shared",
+      "sweep_median_ms": 2.3459839820861816,
+      "samples_ms": [
+        2.481152057647705,
+        2.352128028869629,
+        2.342911958694458,
+        2.348031997680664,
+        2.3459839820861816,
+        2.343935966491699,
+        2.3459839820861816,
+        2.343935966491699,
+        2.3449599742889404,
+        2.352128028869629
+      ],
+      "routing_by_layer": [
+        {
+          "layer": 0,
+          "ids": [
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ],
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 1,
+          "ids": [
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ],
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 2,
+          "ids": [
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ],
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 3,
+          "ids": [
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ],
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 4,
+          "ids": [
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ],
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 5,
+          "ids": [
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ],
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 6,
+          "ids": [
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ],
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 7,
+          "ids": [
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ],
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 8,
+          "ids": [
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ],
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 9,
+          "ids": [
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ],
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 10,
+          "ids": [
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ],
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 11,
+          "ids": [
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ],
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 12,
+          "ids": [
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ],
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 13,
+          "ids": [
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ],
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 14,
+          "ids": [
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ],
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 15,
+          "ids": [
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ],
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 16,
+          "ids": [
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ],
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 17,
+          "ids": [
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ],
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 18,
+          "ids": [
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ],
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 19,
+          "ids": [
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ],
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 20,
+          "ids": [
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ],
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 21,
+          "ids": [
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ],
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 22,
+          "ids": [
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ],
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 23,
+          "ids": [
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ],
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 24,
+          "ids": [
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ],
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 25,
+          "ids": [
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ],
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 26,
+          "ids": [
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ],
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 27,
+          "ids": [
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ],
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 28,
+          "ids": [
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ],
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 29,
+          "ids": [
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ],
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 30,
+          "ids": [
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ],
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 31,
+          "ids": [
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ],
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 32,
+          "ids": [
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ],
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 33,
+          "ids": [
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ],
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 34,
+          "ids": [
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ],
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 35,
+          "ids": [
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ],
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 36,
+          "ids": [
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ],
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 37,
+          "ids": [
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ],
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 38,
+          "ids": [
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ],
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 39,
+          "ids": [
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ],
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 16,
+          "reuse_potential": 0.5
+        }
+      ]
+    },
+    {
+      "tokens": 4,
+      "routing": "actual",
+      "sweep_median_ms": 4.392960071563721,
+      "samples_ms": [
+        4.531199932098389,
+        4.396031856536865,
+        4.395008087158203,
+        4.392960071563721,
+        4.392960071563721,
+        4.3970561027526855,
+        4.392960071563721,
+        4.3878397941589355,
+        4.388864040374756,
+        4.389887809753418
+      ],
+      "routing_by_layer": [
+        {
+          "layer": 0,
+          "ids": [
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ],
+            [
+              204,
+              128,
+              107,
+              13,
+              187,
+              11,
+              247,
+              243
+            ],
+            [
+              180,
+              237,
+              31,
+              55,
+              199,
+              41,
+              74,
+              2
+            ],
+            [
+              49,
+              198,
+              22,
+              159,
+              209,
+              19,
+              204,
+              13
+            ]
+          ],
+          "unique_experts": 29,
+          "routes": 32,
+          "reuse_potential": 0.09375
+        },
+        {
+          "layer": 1,
+          "ids": [
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ],
+            [
+              174,
+              232,
+              10,
+              107,
+              77,
+              162,
+              141,
+              166
+            ],
+            [
+              190,
+              217,
+              73,
+              140,
+              122,
+              201,
+              85,
+              176
+            ],
+            [
+              10,
+              88,
+              17,
+              253,
+              162,
+              174,
+              206,
+              44
+            ]
+          ],
+          "unique_experts": 29,
+          "routes": 32,
+          "reuse_potential": 0.09375
+        },
+        {
+          "layer": 2,
+          "ids": [
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ],
+            [
+              38,
+              98,
+              122,
+              208,
+              53,
+              4,
+              241,
+              162
+            ],
+            [
+              199,
+              207,
+              38,
+              98,
+              122,
+              4,
+              130,
+              70
+            ],
+            [
+              43,
+              64,
+              83,
+              71,
+              241,
+              21,
+              149,
+              56
+            ]
+          ],
+          "unique_experts": 23,
+          "routes": 32,
+          "reuse_potential": 0.28125
+        },
+        {
+          "layer": 3,
+          "ids": [
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ],
+            [
+              178,
+              143,
+              239,
+              246,
+              21,
+              191,
+              43,
+              5
+            ],
+            [
+              202,
+              207,
+              66,
+              191,
+              113,
+              166,
+              219,
+              136
+            ],
+            [
+              180,
+              221,
+              202,
+              207,
+              236,
+              55,
+              113,
+              170
+            ]
+          ],
+          "unique_experts": 24,
+          "routes": 32,
+          "reuse_potential": 0.25
+        },
+        {
+          "layer": 4,
+          "ids": [
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ],
+            [
+              181,
+              219,
+              230,
+              255,
+              87,
+              39,
+              135,
+              186
+            ],
+            [
+              230,
+              61,
+              220,
+              207,
+              255,
+              87,
+              183,
+              157
+            ],
+            [
+              230,
+              220,
+              207,
+              255,
+              204,
+              9,
+              148,
+              44
+            ]
+          ],
+          "unique_experts": 22,
+          "routes": 32,
+          "reuse_potential": 0.3125
+        },
+        {
+          "layer": 5,
+          "ids": [
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ],
+            [
+              235,
+              180,
+              120,
+              241,
+              105,
+              243,
+              184,
+              131
+            ],
+            [
+              93,
+              133,
+              142,
+              212,
+              180,
+              48,
+              105,
+              109
+            ],
+            [
+              142,
+              93,
+              133,
+              119,
+              232,
+              74,
+              48,
+              216
+            ]
+          ],
+          "unique_experts": 21,
+          "routes": 32,
+          "reuse_potential": 0.34375
+        },
+        {
+          "layer": 6,
+          "ids": [
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ],
+            [
+              48,
+              54,
+              221,
+              45,
+              83,
+              85,
+              130,
+              109
+            ],
+            [
+              48,
+              100,
+              45,
+              85,
+              216,
+              54,
+              62,
+              83
+            ],
+            [
+              100,
+              62,
+              48,
+              85,
+              216,
+              58,
+              45,
+              83
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 32,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 7,
+          "ids": [
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ],
+            [
+              68,
+              129,
+              251,
+              219,
+              78,
+              195,
+              5,
+              254
+            ],
+            [
+              85,
+              251,
+              68,
+              219,
+              94,
+              69,
+              121,
+              12
+            ],
+            [
+              85,
+              251,
+              68,
+              94,
+              245,
+              219,
+              177,
+              97
+            ]
+          ],
+          "unique_experts": 20,
+          "routes": 32,
+          "reuse_potential": 0.375
+        },
+        {
+          "layer": 8,
+          "ids": [
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ],
+            [
+              68,
+              23,
+              168,
+              204,
+              26,
+              41,
+              57,
+              11
+            ],
+            [
+              168,
+              68,
+              26,
+              183,
+              146,
+              200,
+              97,
+              82
+            ],
+            [
+              183,
+              146,
+              26,
+              168,
+              68,
+              82,
+              97,
+              200
+            ]
+          ],
+          "unique_experts": 14,
+          "routes": 32,
+          "reuse_potential": 0.5625
+        },
+        {
+          "layer": 9,
+          "ids": [
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ],
+            [
+              78,
+              5,
+              0,
+              9,
+              99,
+              228,
+              31,
+              83
+            ],
+            [
+              139,
+              78,
+              5,
+              244,
+              228,
+              0,
+              99,
+              118
+            ],
+            [
+              139,
+              78,
+              0,
+              228,
+              68,
+              244,
+              24,
+              41
+            ]
+          ],
+          "unique_experts": 15,
+          "routes": 32,
+          "reuse_potential": 0.53125
+        },
+        {
+          "layer": 10,
+          "ids": [
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ],
+            [
+              181,
+              18,
+              105,
+              101,
+              171,
+              40,
+              224,
+              28
+            ],
+            [
+              181,
+              105,
+              128,
+              18,
+              101,
+              69,
+              59,
+              136
+            ],
+            [
+              181,
+              18,
+              105,
+              40,
+              128,
+              59,
+              108,
+              101
+            ]
+          ],
+          "unique_experts": 17,
+          "routes": 32,
+          "reuse_potential": 0.46875
+        },
+        {
+          "layer": 11,
+          "ids": [
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ],
+            [
+              101,
+              136,
+              251,
+              124,
+              19,
+              231,
+              167,
+              198
+            ],
+            [
+              101,
+              248,
+              251,
+              131,
+              198,
+              103,
+              124,
+              81
+            ],
+            [
+              101,
+              248,
+              168,
+              251,
+              220,
+              103,
+              131,
+              84
+            ]
+          ],
+          "unique_experts": 18,
+          "routes": 32,
+          "reuse_potential": 0.4375
+        },
+        {
+          "layer": 12,
+          "ids": [
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ],
+            [
+              230,
+              222,
+              242,
+              3,
+              119,
+              180,
+              200,
+              237
+            ],
+            [
+              230,
+              254,
+              82,
+              200,
+              252,
+              3,
+              57,
+              222
+            ],
+            [
+              230,
+              3,
+              222,
+              57,
+              254,
+              71,
+              119,
+              82
+            ]
+          ],
+          "unique_experts": 17,
+          "routes": 32,
+          "reuse_potential": 0.46875
+        },
+        {
+          "layer": 13,
+          "ids": [
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ],
+            [
+              169,
+              245,
+              132,
+              204,
+              74,
+              2,
+              199,
+              186
+            ],
+            [
+              169,
+              122,
+              5,
+              186,
+              74,
+              225,
+              239,
+              27
+            ],
+            [
+              74,
+              122,
+              132,
+              5,
+              186,
+              169,
+              51,
+              55
+            ]
+          ],
+          "unique_experts": 20,
+          "routes": 32,
+          "reuse_potential": 0.375
+        },
+        {
+          "layer": 14,
+          "ids": [
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ],
+            [
+              68,
+              203,
+              181,
+              9,
+              129,
+              27,
+              135,
+              246
+            ],
+            [
+              135,
+              250,
+              70,
+              68,
+              246,
+              27,
+              152,
+              232
+            ],
+            [
+              135,
+              232,
+              250,
+              3,
+              246,
+              70,
+              152,
+              129
+            ]
+          ],
+          "unique_experts": 15,
+          "routes": 32,
+          "reuse_potential": 0.53125
+        },
+        {
+          "layer": 15,
+          "ids": [
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ],
+            [
+              26,
+              131,
+              177,
+              17,
+              102,
+              168,
+              91,
+              141
+            ],
+            [
+              26,
+              17,
+              131,
+              102,
+              89,
+              209,
+              177,
+              141
+            ],
+            [
+              26,
+              17,
+              209,
+              2,
+              141,
+              148,
+              220,
+              138
+            ]
+          ],
+          "unique_experts": 18,
+          "routes": 32,
+          "reuse_potential": 0.4375
+        },
+        {
+          "layer": 16,
+          "ids": [
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ],
+            [
+              69,
+              20,
+              30,
+              49,
+              144,
+              137,
+              221,
+              174
+            ],
+            [
+              69,
+              30,
+              20,
+              49,
+              144,
+              193,
+              169,
+              132
+            ],
+            [
+              30,
+              193,
+              217,
+              144,
+              69,
+              14,
+              51,
+              35
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 17,
+          "ids": [
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ],
+            [
+              39,
+              112,
+              80,
+              101,
+              137,
+              26,
+              70,
+              116
+            ],
+            [
+              101,
+              39,
+              180,
+              78,
+              80,
+              103,
+              116,
+              215
+            ],
+            [
+              101,
+              246,
+              39,
+              180,
+              171,
+              196,
+              215,
+              81
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 18,
+          "ids": [
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ],
+            [
+              165,
+              41,
+              221,
+              235,
+              238,
+              65,
+              185,
+              182
+            ],
+            [
+              221,
+              165,
+              41,
+              235,
+              151,
+              1,
+              145,
+              238
+            ],
+            [
+              221,
+              151,
+              1,
+              23,
+              13,
+              104,
+              54,
+              83
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 19,
+          "ids": [
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ],
+            [
+              249,
+              8,
+              14,
+              72,
+              131,
+              79,
+              192,
+              87
+            ],
+            [
+              8,
+              14,
+              249,
+              197,
+              72,
+              139,
+              87,
+              158
+            ],
+            [
+              197,
+              14,
+              8,
+              194,
+              87,
+              158,
+              128,
+              152
+            ]
+          ],
+          "unique_experts": 17,
+          "routes": 32,
+          "reuse_potential": 0.46875
+        },
+        {
+          "layer": 20,
+          "ids": [
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ],
+            [
+              168,
+              26,
+              146,
+              125,
+              68,
+              200,
+              142,
+              97
+            ],
+            [
+              168,
+              26,
+              68,
+              146,
+              125,
+              82,
+              142,
+              138
+            ],
+            [
+              26,
+              183,
+              240,
+              233,
+              146,
+              4,
+              72,
+              82
+            ]
+          ],
+          "unique_experts": 17,
+          "routes": 32,
+          "reuse_potential": 0.46875
+        },
+        {
+          "layer": 21,
+          "ids": [
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ],
+            [
+              78,
+              5,
+              139,
+              228,
+              0,
+              33,
+              63,
+              41
+            ],
+            [
+              78,
+              139,
+              5,
+              41,
+              228,
+              209,
+              63,
+              0
+            ],
+            [
+              78,
+              63,
+              41,
+              139,
+              0,
+              136,
+              172,
+              243
+            ]
+          ],
+          "unique_experts": 15,
+          "routes": 32,
+          "reuse_potential": 0.53125
+        },
+        {
+          "layer": 22,
+          "ids": [
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ],
+            [
+              18,
+              128,
+              181,
+              105,
+              199,
+              212,
+              224,
+              108
+            ],
+            [
+              18,
+              216,
+              128,
+              181,
+              105,
+              212,
+              255,
+              252
+            ],
+            [
+              216,
+              183,
+              18,
+              224,
+              199,
+              71,
+              171,
+              151
+            ]
+          ],
+          "unique_experts": 18,
+          "routes": 32,
+          "reuse_potential": 0.4375
+        },
+        {
+          "layer": 23,
+          "ids": [
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ],
+            [
+              251,
+              136,
+              248,
+              168,
+              198,
+              137,
+              176,
+              21
+            ],
+            [
+              248,
+              251,
+              137,
+              211,
+              59,
+              176,
+              168,
+              25
+            ],
+            [
+              248,
+              251,
+              46,
+              176,
+              137,
+              107,
+              168,
+              220
+            ]
+          ],
+          "unique_experts": 17,
+          "routes": 32,
+          "reuse_potential": 0.46875
+        },
+        {
+          "layer": 24,
+          "ids": [
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ],
+            [
+              230,
+              180,
+              82,
+              254,
+              252,
+              200,
+              253,
+              222
+            ],
+            [
+              128,
+              119,
+              180,
+              3,
+              230,
+              188,
+              1,
+              252
+            ],
+            [
+              128,
+              3,
+              184,
+              1,
+              119,
+              153,
+              180,
+              149
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 25,
+          "ids": [
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ],
+            [
+              169,
+              5,
+              122,
+              255,
+              225,
+              35,
+              74,
+              132
+            ],
+            [
+              169,
+              5,
+              25,
+              74,
+              242,
+              31,
+              237,
+              27
+            ],
+            [
+              74,
+              25,
+              5,
+              22,
+              50,
+              97,
+              154,
+              83
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 26,
+          "ids": [
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ],
+            [
+              68,
+              135,
+              250,
+              129,
+              152,
+              123,
+              164,
+              27
+            ],
+            [
+              68,
+              47,
+              181,
+              135,
+              207,
+              203,
+              164,
+              152
+            ],
+            [
+              47,
+              68,
+              207,
+              181,
+              203,
+              222,
+              9,
+              164
+            ]
+          ],
+          "unique_experts": 17,
+          "routes": 32,
+          "reuse_potential": 0.46875
+        },
+        {
+          "layer": 27,
+          "ids": [
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ],
+            [
+              131,
+              26,
+              17,
+              89,
+              91,
+              148,
+              209,
+              161
+            ],
+            [
+              131,
+              26,
+              17,
+              141,
+              148,
+              254,
+              156,
+              89
+            ],
+            [
+              26,
+              148,
+              131,
+              141,
+              254,
+              39,
+              114,
+              17
+            ]
+          ],
+          "unique_experts": 15,
+          "routes": 32,
+          "reuse_potential": 0.53125
+        },
+        {
+          "layer": 28,
+          "ids": [
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ],
+            [
+              20,
+              30,
+              49,
+              132,
+              137,
+              21,
+              220,
+              144
+            ],
+            [
+              49,
+              30,
+              69,
+              144,
+              137,
+              121,
+              217,
+              51
+            ],
+            [
+              49,
+              69,
+              121,
+              30,
+              0,
+              217,
+              196,
+              188
+            ]
+          ],
+          "unique_experts": 18,
+          "routes": 32,
+          "reuse_potential": 0.4375
+        },
+        {
+          "layer": 29,
+          "ids": [
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ],
+            [
+              39,
+              116,
+              101,
+              112,
+              137,
+              119,
+              109,
+              80
+            ],
+            [
+              39,
+              116,
+              166,
+              180,
+              101,
+              107,
+              175,
+              13
+            ],
+            [
+              39,
+              166,
+              116,
+              61,
+              217,
+              13,
+              238,
+              192
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 30,
+          "ids": [
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ],
+            [
+              57,
+              219,
+              41,
+              221,
+              235,
+              1,
+              238,
+              165
+            ],
+            [
+              57,
+              130,
+              46,
+              235,
+              41,
+              1,
+              165,
+              240
+            ],
+            [
+              57,
+              41,
+              1,
+              17,
+              8,
+              235,
+              240,
+              13
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 32,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 31,
+          "ids": [
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ],
+            [
+              8,
+              72,
+              14,
+              216,
+              131,
+              13,
+              97,
+              192
+            ],
+            [
+              72,
+              8,
+              216,
+              14,
+              139,
+              197,
+              190,
+              189
+            ],
+            [
+              72,
+              216,
+              8,
+              197,
+              139,
+              194,
+              190,
+              158
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 32,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 32,
+          "ids": [
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ],
+            [
+              63,
+              231,
+              10,
+              171,
+              218,
+              249,
+              207,
+              226
+            ],
+            [
+              63,
+              10,
+              231,
+              171,
+              249,
+              157,
+              66,
+              218
+            ],
+            [
+              63,
+              10,
+              231,
+              249,
+              171,
+              66,
+              232,
+              43
+            ]
+          ],
+          "unique_experts": 13,
+          "routes": 32,
+          "reuse_potential": 0.59375
+        },
+        {
+          "layer": 33,
+          "ids": [
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ],
+            [
+              44,
+              188,
+              155,
+              35,
+              85,
+              68,
+              125,
+              177
+            ],
+            [
+              44,
+              155,
+              35,
+              125,
+              54,
+              87,
+              51,
+              85
+            ],
+            [
+              44,
+              155,
+              35,
+              46,
+              196,
+              255,
+              1,
+              53
+            ]
+          ],
+          "unique_experts": 19,
+          "routes": 32,
+          "reuse_potential": 0.40625
+        },
+        {
+          "layer": 34,
+          "ids": [
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ],
+            [
+              142,
+              165,
+              192,
+              55,
+              132,
+              184,
+              216,
+              172
+            ],
+            [
+              190,
+              192,
+              142,
+              165,
+              172,
+              184,
+              154,
+              30
+            ],
+            [
+              142,
+              165,
+              172,
+              184,
+              192,
+              154,
+              132,
+              57
+            ]
+          ],
+          "unique_experts": 14,
+          "routes": 32,
+          "reuse_potential": 0.5625
+        },
+        {
+          "layer": 35,
+          "ids": [
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ],
+            [
+              137,
+              69,
+              199,
+              255,
+              193,
+              141,
+              174,
+              184
+            ],
+            [
+              137,
+              69,
+              199,
+              255,
+              117,
+              247,
+              118,
+              68
+            ],
+            [
+              199,
+              137,
+              69,
+              118,
+              68,
+              215,
+              240,
+              146
+            ]
+          ],
+          "unique_experts": 18,
+          "routes": 32,
+          "reuse_potential": 0.4375
+        },
+        {
+          "layer": 36,
+          "ids": [
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ],
+            [
+              240,
+              151,
+              64,
+              230,
+              87,
+              224,
+              244,
+              108
+            ],
+            [
+              240,
+              151,
+              64,
+              230,
+              183,
+              224,
+              244,
+              75
+            ],
+            [
+              240,
+              151,
+              64,
+              230,
+              87,
+              89,
+              75,
+              56
+            ]
+          ],
+          "unique_experts": 14,
+          "routes": 32,
+          "reuse_potential": 0.5625
+        },
+        {
+          "layer": 37,
+          "ids": [
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ],
+            [
+              180,
+              76,
+              155,
+              12,
+              46,
+              197,
+              136,
+              72
+            ],
+            [
+              180,
+              76,
+              12,
+              46,
+              251,
+              155,
+              197,
+              136
+            ],
+            [
+              180,
+              76,
+              12,
+              131,
+              132,
+              134,
+              213,
+              209
+            ]
+          ],
+          "unique_experts": 15,
+          "routes": 32,
+          "reuse_potential": 0.53125
+        },
+        {
+          "layer": 38,
+          "ids": [
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ],
+            [
+              206,
+              6,
+              235,
+              203,
+              153,
+              38,
+              125,
+              93
+            ],
+            [
+              206,
+              235,
+              6,
+              203,
+              193,
+              209,
+              90,
+              125
+            ],
+            [
+              206,
+              235,
+              6,
+              193,
+              203,
+              169,
+              209,
+              134
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 32,
+          "reuse_potential": 0.5
+        },
+        {
+          "layer": 39,
+          "ids": [
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ],
+            [
+              159,
+              105,
+              148,
+              245,
+              191,
+              20,
+              85,
+              53
+            ],
+            [
+              159,
+              105,
+              148,
+              53,
+              245,
+              14,
+              172,
+              98
+            ],
+            [
+              159,
+              148,
+              105,
+              53,
+              37,
+              3,
+              122,
+              14
+            ]
+          ],
+          "unique_experts": 16,
+          "routes": 32,
+          "reuse_potential": 0.5
+        }
+      ]
+    },
+    {
+      "tokens": 4,
+      "routing": "forced_shared",
+      "sweep_median_ms": 4.280832052230835,
+      "samples_ms": [
+        4.413440227508545,
+        4.288512229919434,
+        4.284416198730469,
+        4.280320167541504,
+        4.280320167541504,
+        4.2782721519470215,
+        4.283391952514648,
+        4.281343936920166,
+        4.280320167541504,
+        4.279295921325684
+      ],
+      "routing_by_layer": [
+        {
+          "layer": 0,
+          "ids": [
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ],
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ],
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ],
+            [
+              222,
+              28,
+              31,
+              81,
+              137,
+              0,
+              203,
+              189
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 1,
+          "ids": [
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ],
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ],
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ],
+            [
+              191,
+              173,
+              98,
+              109,
+              53,
+              165,
+              160,
+              136
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 2,
+          "ids": [
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ],
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ],
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ],
+            [
+              98,
+              76,
+              208,
+              163,
+              61,
+              38,
+              122,
+              229
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 3,
+          "ids": [
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ],
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ],
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ],
+            [
+              178,
+              207,
+              209,
+              139,
+              134,
+              49,
+              21,
+              5
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 4,
+          "ids": [
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ],
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ],
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ],
+            [
+              255,
+              203,
+              230,
+              171,
+              83,
+              247,
+              26,
+              183
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 5,
+          "ids": [
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ],
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ],
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ],
+            [
+              227,
+              105,
+              243,
+              133,
+              228,
+              184,
+              131,
+              166
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 6,
+          "ids": [
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ],
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ],
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ],
+            [
+              48,
+              45,
+              54,
+              208,
+              85,
+              164,
+              94,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 7,
+          "ids": [
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ],
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ],
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ],
+            [
+              251,
+              207,
+              141,
+              230,
+              12,
+              236,
+              177,
+              78
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 8,
+          "ids": [
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ],
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ],
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ],
+            [
+              168,
+              183,
+              26,
+              146,
+              68,
+              97,
+              200,
+              253
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 9,
+          "ids": [
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ],
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ],
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ],
+            [
+              0,
+              78,
+              118,
+              228,
+              31,
+              41,
+              68,
+              234
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 10,
+          "ids": [
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ],
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ],
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ],
+            [
+              105,
+              181,
+              119,
+              101,
+              59,
+              104,
+              10,
+              138
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 11,
+          "ids": [
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ],
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ],
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ],
+            [
+              136,
+              231,
+              101,
+              59,
+              34,
+              251,
+              157,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 12,
+          "ids": [
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ],
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ],
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ],
+            [
+              115,
+              82,
+              208,
+              252,
+              230,
+              200,
+              188,
+              187
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 13,
+          "ids": [
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ],
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ],
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ],
+            [
+              122,
+              239,
+              78,
+              236,
+              169,
+              209,
+              227,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 14,
+          "ids": [
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ],
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ],
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ],
+            [
+              27,
+              171,
+              250,
+              135,
+              68,
+              232,
+              246,
+              209
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 15,
+          "ids": [
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ],
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ],
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ],
+            [
+              26,
+              152,
+              209,
+              17,
+              189,
+              48,
+              131,
+              69
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 16,
+          "ids": [
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ],
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ],
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ],
+            [
+              30,
+              82,
+              203,
+              144,
+              49,
+              132,
+              53,
+              184
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 17,
+          "ids": [
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ],
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ],
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ],
+            [
+              116,
+              137,
+              80,
+              184,
+              131,
+              19,
+              39,
+              103
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 18,
+          "ids": [
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ],
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ],
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ],
+            [
+              219,
+              41,
+              221,
+              1,
+              194,
+              165,
+              46,
+              145
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 19,
+          "ids": [
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ],
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ],
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ],
+            [
+              23,
+              8,
+              14,
+              247,
+              249,
+              72,
+              246,
+              131
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 20,
+          "ids": [
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ],
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ],
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ],
+            [
+              168,
+              200,
+              26,
+              146,
+              156,
+              64,
+              125,
+              82
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 21,
+          "ids": [
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ],
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ],
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ],
+            [
+              63,
+              78,
+              0,
+              118,
+              65,
+              139,
+              228,
+              201
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 22,
+          "ids": [
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ],
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ],
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ],
+            [
+              105,
+              119,
+              146,
+              212,
+              29,
+              224,
+              181,
+              199
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 23,
+          "ids": [
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ],
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ],
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ],
+            [
+              136,
+              231,
+              251,
+              157,
+              137,
+              124,
+              59,
+              176
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 24,
+          "ids": [
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ],
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ],
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ],
+            [
+              115,
+              180,
+              242,
+              128,
+              230,
+              82,
+              252,
+              210
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 25,
+          "ids": [
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ],
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ],
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ],
+            [
+              169,
+              122,
+              74,
+              132,
+              239,
+              255,
+              83,
+              25
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 26,
+          "ids": [
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ],
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ],
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ],
+            [
+              68,
+              50,
+              171,
+              27,
+              135,
+              181,
+              246,
+              123
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 27,
+          "ids": [
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ],
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ],
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ],
+            [
+              189,
+              26,
+              131,
+              152,
+              89,
+              148,
+              209,
+              91
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 28,
+          "ids": [
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ],
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ],
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ],
+            [
+              49,
+              30,
+              20,
+              212,
+              144,
+              154,
+              220,
+              191
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 29,
+          "ids": [
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ],
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ],
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ],
+            [
+              39,
+              119,
+              19,
+              137,
+              116,
+              107,
+              217,
+              70
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 30,
+          "ids": [
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ],
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ],
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ],
+            [
+              219,
+              57,
+              41,
+              165,
+              1,
+              86,
+              199,
+              235
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 31,
+          "ids": [
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ],
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ],
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ],
+            [
+              8,
+              72,
+              23,
+              249,
+              216,
+              131,
+              139,
+              14
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 32,
+          "ids": [
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ],
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ],
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ],
+            [
+              63,
+              231,
+              10,
+              171,
+              249,
+              226,
+              207,
+              57
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 33,
+          "ids": [
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ],
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ],
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ],
+            [
+              155,
+              44,
+              35,
+              249,
+              85,
+              144,
+              162,
+              68
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 34,
+          "ids": [
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ],
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ],
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ],
+            [
+              142,
+              165,
+              192,
+              190,
+              132,
+              172,
+              179,
+              74
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 35,
+          "ids": [
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ],
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ],
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ],
+            [
+              137,
+              69,
+              46,
+              199,
+              110,
+              255,
+              184,
+              175
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 36,
+          "ids": [
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ],
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ],
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ],
+            [
+              240,
+              64,
+              151,
+              230,
+              215,
+              108,
+              244,
+              44
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 37,
+          "ids": [
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ],
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ],
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ],
+            [
+              180,
+              76,
+              155,
+              251,
+              46,
+              12,
+              197,
+              159
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 38,
+          "ids": [
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ],
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ],
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ],
+            [
+              206,
+              235,
+              6,
+              203,
+              53,
+              38,
+              208,
+              26
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        },
+        {
+          "layer": 39,
+          "ids": [
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ],
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ],
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ],
+            [
+              159,
+              105,
+              148,
+              245,
+              44,
+              53,
+              75,
+              20
+            ]
+          ],
+          "unique_experts": 8,
+          "routes": 32,
+          "reuse_potential": 0.75
+        }
+      ]
+    }
+  ],
+  "scope": "40 target expert blocks only; cold L2 via 128MiB flush before timing. Eager diagnostic replay routes, not fullgraph routing instrumentation."
+}

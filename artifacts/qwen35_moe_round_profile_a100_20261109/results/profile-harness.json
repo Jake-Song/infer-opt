@@ -1,0 +1,17 @@
+{
+  "sha256": "614971dcdae6a5157449573dca2ca99b64adf582f9f7e5f34ad5437e474a3dee",
+  "source": "scripts/profile_qwen3_5_moe_round.py",
+  "local_parser_tests_passed": 3,
+  "stages": [
+    "production",
+    "diagnostic"
+  ],
+  "ks": [
+    1,
+    3
+  ],
+  "prompts": [
+    "math",
+    "korean"
+  ]
+}

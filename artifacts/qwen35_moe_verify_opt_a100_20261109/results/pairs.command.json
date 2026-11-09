@@ -1,0 +1,1 @@
+["/usr/bin/python3", "/content/q35moe-verify-opt-20261109/bench-pairs.py", "--kernel", "pairs", "--out", "/content/q35moe-verify-opt-20261109/results/pairs", "--repeats", "50"]

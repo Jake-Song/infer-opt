@@ -1,0 +1,32 @@
+{
+  "model": "Qwen3.5-35B-A3B INT8 group-128 + INT8 MTP, BF16 lm_head",
+  "requested_gpu": "G4 with A100 fallback explicitly authorized",
+  "actual_gpu": "NVIDIA A100-SXM4-80GB",
+  "session": "moe-compiled-a100-20261109",
+  "compile": {
+    "mode": "reduce-overhead",
+    "fullgraph": true,
+    "dynamic": false,
+    "max_autotune": true,
+    "coordinate_descent_tuning": true
+  },
+  "quality": {
+    "mtp": false,
+    "prompts": 9,
+    "positions_per_prompt": 48,
+    "paired_eager_compiled_hf_reference": true
+  },
+  "benchmark": {
+    "verification": "parallel",
+    "ks": [
+      1,
+      2,
+      3
+    ],
+    "output_tokens": 256,
+    "repeats": 5,
+    "warmup": 3
+  },
+  "runtime_setup_adjustment": "Initial worker stopped before inference because base runtime shipped torch 2.14.1; worker restarted with torch 2.11.0+cu130 and triton 3.6.0 pinned. Partial HF downloads reused under /tmp/infer-opt-models.",
+  "recorded_at_utc": "2026-11-09T07:05:14.405695+00:00"
+}

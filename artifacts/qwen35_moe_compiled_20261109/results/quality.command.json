@@ -1,0 +1,15 @@
+[
+  "/usr/bin/python3",
+  "/content/q35moe-compiled-20261109/infer-opt/scripts/validate_compiled_qwen3_5_moe_quality.py",
+  "--weights",
+  "/tmp/infer-opt-models/q35moe-compiled-20261109/int8/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "--reference-dir",
+  "/tmp/infer-opt-models/q35moe-compiled-20261109/reference-logits",
+  "--out",
+  "/content/q35moe-compiled-20261109/results/quality",
+  "--scratch",
+  "/tmp/infer-opt-models/q35moe-compiled-20261109/eager-logits",
+  "--cache-capacity",
+  "2048",
+  "--max-autotune"
+]

@@ -1,0 +1,225 @@
+{
+  "k": 1,
+  "prompt": "korean",
+  "frozen_production_stream_ms": 10.478079795837402,
+  "segmented_phase_medians_ms": {
+    "verify_body": 7.037951946258545,
+    "verify_lm_head": 0.6154239773750305,
+    "accept_commit": 0.20070399343967438,
+    "mtp_first": 0.20684799551963806,
+    "draft_lm_head_0": 0.6123520135879517,
+    "pack_next_inputs": 0.006144000217318535,
+    "total_ms": 8.681471824645996
+  },
+  "segmented_samples_ms": [
+    {
+      "verify_body": 8.269824028015137,
+      "verify_lm_head": 0.6195200085639954,
+      "accept_commit": 0.2017280012369156,
+      "mtp_first": 0.2099200040102005,
+      "draft_lm_head_0": 0.6113280057907104,
+      "pack_next_inputs": 0.008191999979317188,
+      "total_ms": 9.920512199401855
+    },
+    {
+      "verify_body": 7.0359039306640625,
+      "verify_lm_head": 0.6144000291824341,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.676351547241211
+    },
+    {
+      "verify_body": 7.038976192474365,
+      "verify_lm_head": 0.6133760213851929,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.677375793457031
+    },
+    {
+      "verify_body": 7.0359039306640625,
+      "verify_lm_head": 0.6164479851722717,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6154239773750305,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.681471824645996
+    },
+    {
+      "verify_body": 7.0359039306640625,
+      "verify_lm_head": 0.6133760213851929,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6113280057907104,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.676351547241211
+    },
+    {
+      "verify_body": 7.0359039306640625,
+      "verify_lm_head": 0.6184960007667542,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20582400262355804,
+      "draft_lm_head_0": 0.6154239773750305,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.682496070861816
+    },
+    {
+      "verify_body": 7.032832145690918,
+      "verify_lm_head": 0.6154239773750305,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6133760213851929,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.674304008483887
+    },
+    {
+      "verify_body": 7.037951946258545,
+      "verify_lm_head": 0.6144000291824341,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.679424285888672
+    },
+    {
+      "verify_body": 7.0359039306640625,
+      "verify_lm_head": 0.6164479851722717,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6113280057907104,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.677375793457031
+    },
+    {
+      "verify_body": 7.0348801612854,
+      "verify_lm_head": 0.6195200085639954,
+      "accept_commit": 0.19865599274635315,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6133760213851929,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.681471824645996
+    },
+    {
+      "verify_body": 7.038976192474365,
+      "verify_lm_head": 0.6154239773750305,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.682496070861816
+    },
+    {
+      "verify_body": 7.036928176879883,
+      "verify_lm_head": 0.6113280057907104,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.674304008483887
+    },
+    {
+      "verify_body": 7.037951946258545,
+      "verify_lm_head": 0.6174719929695129,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6144000291824341,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.682496070861816
+    },
+    {
+      "verify_body": 7.038976192474365,
+      "verify_lm_head": 0.6144000291824341,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6144000291824341,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.683520317077637
+    },
+    {
+      "verify_body": 7.041024208068848,
+      "verify_lm_head": 0.6154239773750305,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6184960007667542,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.688639640808105
+    },
+    {
+      "verify_body": 7.041024208068848,
+      "verify_lm_head": 0.6154239773750305,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.681471824645996
+    },
+    {
+      "verify_body": 7.04204797744751,
+      "verify_lm_head": 0.6154239773750305,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6123520135879517,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.683520317077637
+    },
+    {
+      "verify_body": 7.037951946258545,
+      "verify_lm_head": 0.6123520135879517,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20787200331687927,
+      "draft_lm_head_0": 0.6133760213851929,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.678400039672852
+    },
+    {
+      "verify_body": 7.038976192474365,
+      "verify_lm_head": 0.6164479851722717,
+      "accept_commit": 0.20070399343967438,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6103039979934692,
+      "pack_next_inputs": 0.0071680000983178616,
+      "total_ms": 8.680447578430176
+    },
+    {
+      "verify_body": 7.041024208068848,
+      "verify_lm_head": 0.6123520135879517,
+      "accept_commit": 0.19968000054359436,
+      "mtp_first": 0.20684799551963806,
+      "draft_lm_head_0": 0.6164479851722717,
+      "pack_next_inputs": 0.006144000217318535,
+      "total_ms": 8.682496070861816
+    }
+  ],
+  "production_samples_ms": [
+    10.498047828674316,
+    10.511360168457031,
+    10.455039978027344,
+    10.478591918945312,
+    10.43455982208252,
+    10.42636775970459,
+    10.447872161865234,
+    10.470399856567383,
+    10.477567672729492,
+    10.504192352294922,
+    10.496000289916992,
+    10.51750373840332,
+    10.463232040405273,
+    10.470399856567383,
+    15.960063934326172,
+    10.491904258728027,
+    10.504192352294922,
+    10.52774429321289,
+    10.475520133972168,
+    10.463232040405273
+  ],
+  "outputs_vs_production": {
+    "target_ids_equal": true,
+    "accepted_equal": true,
+    "next_input_ids_equal": true
+  },
+  "segmented_over_production": 0.8285365251842098,
+  "scope": "Separate compiled regions inside manual CUDA Graph with external CUDA-event nodes. Fusion/tuning boundaries differ from production."
+}

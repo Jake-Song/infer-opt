@@ -1,0 +1,6 @@
+I1109 08:54:17.219000 8652 torch/_inductor/graph.py:947] [1/0] [__perf_hints] Using FallbackKernel: torch.ops.aten.topk.default
+I1109 08:54:17.368000 8652 torch/_inductor/graph.py:947] [1/0] [__perf_hints] Using FallbackKernel: torch.ops.infer_opt.selected_int8_experts.default
+I1109 08:55:35.874000 8652 torch/_inductor/graph.py:947] [4/0] [__perf_hints] Using FallbackKernel: torch.ops.aten.topk.default
+I1109 08:55:36.019000 8652 torch/_inductor/graph.py:947] [4/0] [__perf_hints] Using FallbackKernel: torch.ops.infer_opt.selected_int8_experts.default
+I1109 08:57:40.265000 8652 torch/_inductor/graph.py:947] [1/1] [__perf_hints] Using FallbackKernel: torch.ops.aten.topk.default
+I1109 08:57:40.402000 8652 torch/_inductor/graph.py:947] [1/1] [__perf_hints] Using FallbackKernel: torch.ops.infer_opt.selected_int8_experts.default

@@ -1,0 +1,88 @@
+{
+  "repository": "ggml-org/llama.cpp",
+  "commit": "a0ad695cb212db3850f163121ddc687513448d42",
+  "commit_date_utc": "2026-11-09T08:51:18Z",
+  "review": "Static source review; no GPU benchmark or model download.",
+  "files": [
+    {
+      "path": "src/models/qwen35moe.cpp",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/src/models/qwen35moe.cpp",
+      "sha256": "b006183c014d927acc177860bb28d595db1707af911068386579696aab1e75be"
+    },
+    {
+      "path": "src/llama-graph.cpp",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/src/llama-graph.cpp",
+      "sha256": "62418701824f9fc78bbd47b5f8b3fd142c6aa9e243273ff9ef3878761b98048f"
+    },
+    {
+      "path": "src/llama-context.cpp",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/src/llama-context.cpp",
+      "sha256": "4a6a7b8cac76b79aa067d2aa393158ffd2dce97b06048a1d206ccad3edd0357d"
+    },
+    {
+      "path": "common/speculative.cpp",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/common/speculative.cpp",
+      "sha256": "6bfab079d889cbcf4e16d659913537d3e9b217e02029ee0c72bc6dee961cc5b2"
+    },
+    {
+      "path": "tools/server/server-context.cpp",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/tools/server/server-context.cpp",
+      "sha256": "7951bd7d768f158d9be2234f87a44beca18d89b075e88c948234b6572da391f0"
+    },
+    {
+      "path": "ggml/src/ggml-common.h",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-common.h",
+      "sha256": "0061131b615c5721fc88a78feeb22c1f8c450f1c2646a317d80796a653bf595c"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/ggml-cuda.cu",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/ggml-cuda.cu",
+      "sha256": "0b6fb8c09cf9d0bbfeb5570f9fa9a1f1332f6b1784d2e40af7f34f3bc14e3946"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmvq.cuh",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmvq.cuh",
+      "sha256": "b37f8359f519ba90ddecd9cb3ca5f8c2ae05685bfae6813d435d75763c2bb006"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmvq.cu",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmvq.cu",
+      "sha256": "6ee15011d1636be10c2619133adcb54a813d108c9785b3c2090fed38d738b0d1"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/vecdotq.cuh",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/vecdotq.cuh",
+      "sha256": "5e6882fe30b86f2f1ba294542ec88866c962e8f90500d4e035882eff3942f975"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmid.cuh",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmid.cuh",
+      "sha256": "5e0900519e6e8b8c8636b8199daff03b0197bf7a9d06d45276d5cf77477397a7"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmid.cu",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmid.cu",
+      "sha256": "795b5da0471197362f1029b85271a139d7e9035cbbc5a955f8fb220b116d1c7b"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmq.cu",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmq.cu",
+      "sha256": "398c667089b3959d28172a3d2ed8e2ff7b96ffb3a22394bcf5734687c7ff1bf6"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmq.cuh",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmq.cuh",
+      "sha256": "2e3c7e31c3e0ad447f67b6cb971a8c6640ba43b25036be7dcbc899bfe1b77923"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmq-vec-dot.cuh",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mmq-vec-dot.cuh",
+      "sha256": "c038cf45ca87552e8c7c81f71f8c908c7d07460a55a571522abd562640c692b3"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mma.cuh",
+      "url": "https://github.com/ggml-org/llama.cpp/blob/a0ad695cb212db3850f163121ddc687513448d42/ggml/src/ggml-cuda/mma.cuh",
+      "sha256": "86e43e369ebea395bb7f7bf7abea3fb8edd407238ca1d983c4d913f30f1e8ad1"
+    }
+  ]
+}

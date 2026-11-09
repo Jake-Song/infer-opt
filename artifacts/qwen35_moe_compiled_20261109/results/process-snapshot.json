@@ -1,0 +1,29 @@
+{
+  "time": 1794209475.6239016,
+  "processes": [
+    {
+      "pid": 1109,
+      "ppid": 667,
+      "name": "python3",
+      "state": "S",
+      "cpu_ticks": 73727,
+      "rss_mib": 1287.2109375
+    },
+    {
+      "pid": 6423,
+      "ppid": 1109,
+      "name": "python3",
+      "state": "R",
+      "cpu_ticks": 50625,
+      "rss_mib": 2756.94140625
+    },
+    {
+      "pid": 6602,
+      "ppid": 6423,
+      "name": "python3",
+      "state": "S",
+      "cpu_ticks": 454,
+      "rss_mib": 791.98046875
+    }
+  ]
+}

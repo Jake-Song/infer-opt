@@ -1,0 +1,1 @@
+["/usr/bin/python3", "/content/q35moe-verify-opt-20261109/bench-ordered.py", "--kernel", "ordered", "--out", "/content/q35moe-verify-opt-20261109/results/ordered", "--repeats", "50"]

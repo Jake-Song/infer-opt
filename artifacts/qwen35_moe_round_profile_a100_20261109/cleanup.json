@@ -1,0 +1,18 @@
+{
+  "session": "moe-round-profile-a100-20261109",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "stopped": true,
+  "stop_output": "[colab] Session terminated.",
+  "server_sessions_output": "[colab] No active sessions found on server.",
+  "verified_at_utc": "2026-11-09T09:11:02.586582+00:00",
+  "results_recovered_before_stop": true,
+  "results_archive": "final-results.tar.gz",
+  "results_archive_sha256": "b178aa82984c847adb5987425bb40d842f54b348f9b0b4618f10c1e402d4495a",
+  "source_hashes_verified": true,
+  "compiler_source_modules_verified": 494,
+  "local_tests": {
+    "command": ".venv/bin/python -m pytest tests/test_moe_round_profile.py -q",
+    "passed": 3,
+    "elapsed_s": 3.1
+  }
+}
