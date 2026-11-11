@@ -1,0 +1,2 @@
+{"stage": "timing", "time": 1794386698.221556, "command": ["/usr/bin/python3", "/tmp/down-issue-source/scripts/down_issue/benchmark.py", "--out", "/tmp/down-issue-a100-20261111/timing"]}
+{"stage": "failed", "time": 1794386707.0636246, "error": "Timing failed"}

@@ -1,0 +1,8 @@
+{
+  "returncode": 0,
+  "command": [
+    "ncu",
+    "--list-sections"
+  ],
+  "seconds": 0.4655890464782715
+}

@@ -1,0 +1,24 @@
+{
+  "git_head": "6cf7afe7184135574cfc170e7498db47f3b1a693",
+  "measurement_source_archive": "source.tar.gz",
+  "shared_followup_upload": "scripts/expert_issue/shared_followup.py",
+  "final_harness_archive": "source-final.tar.gz",
+  "files": {
+    "infer_opt/moe_kernels.py": "48206513d148522b6a2e498c666fe989ff30b02b135e6312605db8abe840b21a",
+    "scripts/down_issue/benchmark.py": "2206ae892d6ee189a255ce940a7518e95019ee07804574b373f1bb3c44dad3ac",
+    "scripts/down_issue/analyze.py": "ba16974d375eb7b033ef21b3979763901906e6c666886b32aaf2fc8dcf8b10c7",
+    "scripts/expert_issue/analyze.py": "3864d528fe487d6ba139954e0d9b6dd76b495ec863b12de1d314774b3e5df783",
+    "scripts/expert_issue/benchmark.py": "839a59570feb0352a801bdad95f6c1f6c4c2604a7de4dc78cf5e8787ec04e028",
+    "scripts/expert_issue/counter_probe.py": "ad4d3a388fe5bb67878cc27b5f00117753cc2e3eacf358003769bbca00f484e6",
+    "scripts/expert_issue/launch.py": "95603d0663da98ef6dfbf06b2d2afa7c3f13b337bc5887b66e96c78caa4aa0e0",
+    "scripts/expert_issue/launch_shared.py": "3247e06ea2c8c33add06986386670efc18ff93496bc02a63c3aec52e27ad8b8e",
+    "scripts/expert_issue/preflight.py": "31d1b7e68d18293e226e35aa9374228b12d22cf406addf82f6571644d118d7a3",
+    "scripts/expert_issue/shared_followup.py": "fecc19ce40f66b0dd9b03c691af81fbfdd651a8e3de1926a57587e25a70eefb8",
+    "scripts/expert_issue/status.py": "7c37b8b8267a76430f08a8895cfeae977b2e2afd2e72d62a72cbba25bc023793",
+    "scripts/expert_issue/worker.py": "6ff3386f142b6228c7556e4009758d3a710966a6474bb51cdc855ee900112c2f"
+  },
+  "archives": {
+    "source-final.tar.gz": "c09793525d16bb63bd4f82f064d0ecc9e67cf2b9832d0cf8e580e8541d09a7ef",
+    "source.tar.gz": "b91dc07ced57ecaf9100ed945b548643286d8299afeea85c55628d8bda90bdff"
+  }
+}

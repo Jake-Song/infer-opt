@@ -1,0 +1,10 @@
+{
+  "returncode": 0,
+  "command": [
+    "ncu",
+    "--query-metrics",
+    "--query-metrics-mode",
+    "all"
+  ],
+  "seconds": 18.21276330947876
+}

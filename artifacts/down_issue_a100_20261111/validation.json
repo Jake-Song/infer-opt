@@ -1,0 +1,23 @@
+{
+  "timing_samples": 12000,
+  "timing_conditions": 40,
+  "batches_per_condition": 3,
+  "samples_per_batch": 100,
+  "successful_ncu_reports": 8,
+  "profile_timing_hash_matches": 8,
+  "kernel_grid_block_checks": 8,
+  "core_scope_complete": true,
+  "production_kernel_unchanged": true,
+  "kernel_sha256": "48206513d148522b6a2e498c666fe989ff30b02b135e6312605db8abe840b21a",
+  "reference_exact_by_variant": {
+    "packed4": true,
+    "scalar1": false,
+    "scalar4": true,
+    "packed1": true
+  },
+  "pure_issue_saturation_supported": false,
+  "unique_bottleneck_established": false,
+  "profile_frequency_ghz_approx": 1.09,
+  "timing_telemetry_frequency_ghz_typical": 1.41,
+  "scope": "Synthetic W8A16 down only; no model/whole-MTP throughput measured."
+}

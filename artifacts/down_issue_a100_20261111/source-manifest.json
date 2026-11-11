@@ -1,0 +1,28 @@
+{
+  "git_head": "6cf7afe7184135574cfc170e7498db47f3b1a693",
+  "files": {
+    "infer_opt/moe_kernels.py": "48206513d148522b6a2e498c666fe989ff30b02b135e6312605db8abe840b21a",
+    "scripts/down_issue/analyze.py": "ba16974d375eb7b033ef21b3979763901906e6c666886b32aaf2fc8dcf8b10c7",
+    "scripts/down_issue/benchmark.py": "2206ae892d6ee189a255ce940a7518e95019ee07804574b373f1bb3c44dad3ac",
+    "scripts/down_issue/counter_probe.py": "9a5e579dc219cef62674145144071b72e1b1cb89f1bbcb1193d7c94d72a115f6",
+    "scripts/down_issue/finish_core.py": "6b8e58c5782ab45958f91e8aa0ac97b38187699826dcab13a0911955df173c5d",
+    "scripts/down_issue/focused_worker.py": "1415207c7305d04027f0dcd87ca706a4e39c6ac96e55d46a964f9495a0d57aa2",
+    "scripts/down_issue/launch.py": "6f341eddcb1290049ecd5c6435aeb0ac7e92581908ccb009f83e9c683d365139",
+    "scripts/down_issue/launch_focused.py": "de4e2ed6158cf4edfd528bcf6af1573c40e14b318f2838083135c12adb3bbc70",
+    "scripts/down_issue/preflight.py": "7831228ab9e87751dc9ad50d79c7bea0a04b0f6af3fe9720a78fb335288a336c",
+    "scripts/down_issue/status.py": "59846d59c481b3fc4d4561fb9259214c7e01fa56d6fd64af5fcd90d8387ea500",
+    "scripts/down_issue/worker.py": "0a6d73a9b8a02cd80e1a07fb1f7f979b7c4dcd73bbe1a94958dc2005746ae78a"
+  },
+  "stage_sources": {
+    "first_attempt": "source.tar.gz",
+    "timing_and_broad_profiles": "source-v2.tar.gz",
+    "focused_profiles": "source-v3.tar.gz"
+  },
+  "source_archives": {
+    "source-final.tar.gz": "9b8786afe7386e6c1e1faab74cc99ea906432b5a90d91399b72a05555865137f",
+    "source-v2.tar.gz": "486098656308fd16cc2409b2fe339ce6783199f84d46c9b361840e4fad282895",
+    "source-v3.tar.gz": "50c7cb323cf1efbde2ac8d8697fbe7cb1734a1d0d732315433ac3a45580535c2",
+    "source.tar.gz": "c5a74534d50967b45df38e511cba228513d82e4c6784a3984a3cc615be1f9093"
+  },
+  "final_harness_archive": "source-final.tar.gz"
+}

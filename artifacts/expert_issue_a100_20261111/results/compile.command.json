@@ -1,0 +1,12 @@
+{
+  "command": [
+    "nvcc",
+    "-O3",
+    "-lineinfo",
+    "-arch=sm_80",
+    "/tmp/expert-issue-a100-20261111/probe.cu",
+    "-o",
+    "/tmp/expert-issue-a100-20261111/probe"
+  ],
+  "returncode": 0
+}

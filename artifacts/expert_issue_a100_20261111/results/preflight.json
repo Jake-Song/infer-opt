@@ -1,0 +1,53 @@
+{
+  "uid": 0,
+  "tools": {
+    "nvidia-smi": "/opt/bin/nvidia-smi",
+    "nvcc": "/usr/local/cuda/bin/nvcc",
+    "ncu": "/usr/local/cuda/bin/ncu"
+  },
+  "ncu_candidates": [
+    "/usr/local/cuda-13.0/bin/ncu",
+    "/usr/local/cuda-13/bin/ncu",
+    "/usr/local/cuda/bin/ncu",
+    "/opt/nvidia/nsight-compute/2025.3.1/ncu",
+    "/opt/nvidia/nsight-compute/2025.3.1/target/linux-desktop-glibc_2_11_3-x64/ncu",
+    "/opt/nvidia/nsight-compute/2025.3.1/target/linux-desktop-t210-a64/ncu"
+  ],
+  "driver_params": [
+    "RmProfilingAdminOnly: 1"
+  ],
+  "capabilities": [
+    "CapPrm:\t00000000a82c25fb",
+    "CapEff:\t00000000a82c25fb",
+    "CapBnd:\t00000000a82c25fb"
+  ],
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA A100-SXM4-40GB, 40960 MiB, 580.82.07\n",
+    "stderr": ""
+  },
+  "nvcc": {
+    "returncode": 0,
+    "stdout": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Aug_20_01:58:59_PM_PDT_2025\nCuda compilation tools, release 13.0, V13.0.88\nBuild cuda_13.0.r13.0/compiler.36424714_0\n",
+    "stderr": ""
+  },
+  "python_gpu": {
+    "torch": "2.14.1+cu130",
+    "triton": "3.8.0",
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "capability": [
+      8,
+      0
+    ]
+  },
+  "clock_lock": {
+    "command": [
+      "nvidia-smi",
+      "--lock-gpu-clocks=1095,1095"
+    ],
+    "returncode": 0,
+    "stdout": "GPU clocks set to \"(gpuClkMin 1095, gpuClkMax 1095)\" for GPU 00000000:00:04.0\n\nWarning: persistence mode is disabled on device 00000000:00:04.0. See the Known Issues section of the nvidia-smi(1) man page for more information. Run with [--help | -h] switch to get more information on how to enable persistence mode.\nAll done.\n",
+    "stderr": "",
+    "requested_mhz": 1095
+  }
+}

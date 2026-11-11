@@ -251,3 +251,35 @@ SYS_ADMIN/PERFMON capabilities in the effective, permitted and bounding sets.
 CUDA compilation/execution succeeded, but counter collection did not. The probe
 completed and results were recovered; the larger MoE profiling job was not
 submitted. The instruction-issue hypothesis remains unresolved.
+
+### A100 down counter diagnosis, 2026-11-11
+
+The [Colab A100 40GB follow-up](artifacts/down_issue_a100_20261111/README.md)
+successfully collected eight NCU reports and 12,000 unprofiled synthetic down
+timing samples. Current packed one-warp T=4 partial-route issue activity was
+62.68% hot / 56.05% after flushing, with achieved occupancy 25.36% / 27.23%.
+A one-warp scalar diagnostic reduced dynamic warp instructions by 28.16% but
+barely changed latency; it was not bit-exact and was not adopted. These results
+do not support a pure issue-throughput saturation diagnosis for the current
+packed down kernel. The old four-warp reference had higher hot issue activity
+(87.66%). Memory/execution dependency stalls and low achieved occupancy remain
+observations, not a uniquely established root cause. Profiling ran near 1.09 GHz
+while unprofiled telemetry was generally 1.41 GHz; durations are kept separate.
+No production kernel changed. The verified archive, reports and lifecycle record
+were recovered, and the dedicated Colab runtime was terminated.
+
+### Matched gate/up and down counter follow-up, 2026-11-11
+
+The [fixed-clock expert follow-up](artifacts/expert_issue_a100_20261111/README.md)
+measured fused gate/up + SwiGLU, standalone down and the full routed expert block
+on A100 40GB at a locked 1095 MHz. It recovered 25,200 timing samples and nine
+NCU reports. Current one-warp partial-hot gate/up issue activity was 75.53%
+(71.10% over elapsed cycles), versus down 62.87% (49.74%). Partial-hot gate/up
+still moved 45 MB through DRAM because its selected weight set exceeds L2.
+Fully shared hot reduced DRAM traffic to 1.39 MB, but issue activity was 81.22%
+(76.54% elapsed), not a pure saturation result. A non-exact one-warp old-kernel
+diagnostic reduced gate/up instructions 37.10% and NCU latency 24.24%; it was not
+adopted. Four-warp results are historical/launch controls, not the current T=2/4
+baseline. All recorded block configurations matched their production dispatcher,
+but no model quality or MTP throughput was measured. Kernel sources are unchanged;
+clocks were restored, results verified, and the dedicated runtime terminated.

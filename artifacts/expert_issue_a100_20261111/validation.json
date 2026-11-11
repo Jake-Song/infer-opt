@@ -1,0 +1,18 @@
+{
+  "timing_samples": 25200,
+  "timing_conditions": 84,
+  "verified_ncu_reports": 9,
+  "profile_timing_hash_matches": 9,
+  "verified_kernel_grid_block_cases": 9,
+  "production_dispatch_block_configs_exact": 14,
+  "requested_sm_clock_mhz": 1095,
+  "all_timing_telemetry_matches_requested_clock": true,
+  "main_clock_reset_returncode": 0,
+  "shared_clock_reset_returncode": 0,
+  "production_kernel_sha256": "48206513d148522b6a2e498c666fe989ff30b02b135e6312605db8abe840b21a",
+  "production_kernel_matches_git_head": true,
+  "pure_issue_saturation_established": false,
+  "instruction_related_gate_up_cost_material": true,
+  "non_exact_variant_adopted": false,
+  "model_quality_or_mtp_throughput_measured": false
+}

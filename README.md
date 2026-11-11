@@ -34,6 +34,12 @@ adds an exact pair-load path for the measured MoE verification shape. Final math
 checks reduced target-body time by 1.38–2.67%; 37 GPU tests passed. Whole MTP
 throughput was not remeasured. Proper packed Grouped GEMM remains the next experiment.
 
+The [fixed-clock A100 expert counter experiment](artifacts/expert_issue_a100_20261111/README.md)
+compares fused gate/up, down and the routed expert block with the current one-warp
+path and diagnostic controls. It collected 25,200 timing samples and nine NCU
+reports. Gate/up showed higher instruction pressure, but pure issue-throughput
+saturation was not established; no production kernel or model-quality claim changed.
+
 The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
 measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
 9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded

@@ -1,0 +1,9 @@
+{
+  "name": "counter-probe",
+  "command": [
+    "/usr/bin/python3",
+    "/tmp/expert-issue-source/scripts/expert_issue/counter_probe.py"
+  ],
+  "returncode": 0,
+  "seconds": 5.82864236831665
+}

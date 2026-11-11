@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/tmp/down-issue-source/scripts/down_issue/benchmark.py", line 163, in <module>
+    main()
+    ~~~~^^
+  File "/usr/local/lib/python3.13/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "/tmp/down-issue-source/scripts/down_issue/benchmark.py", line 130, in main
+    cases[(t,routing,variant)]=prepare(t,routing,variant)
+                               ~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/tmp/down-issue-source/scripts/down_issue/benchmark.py", line 89, in prepare
+    raise RuntimeError(f'Invalid variant: {t}/{routing}/{variant}: {validation}')
+RuntimeError: Invalid variant: 1/partial/scalar1: {'reference_exact': False, 'max_abs_diff': 3.0517578125e-05, 'independent_max_abs_diff': 0.0009765625, 'finite': True, 'ids': [[0, 1, 2, 3, 4, 5, 6, 7]], 'output_sha256': '2f1fc4c2797297d71d1d6c17ab509ff09fcaf0858576c701fce0528b344d8499'}

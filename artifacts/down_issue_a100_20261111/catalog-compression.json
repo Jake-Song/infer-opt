@@ -1,0 +1,6 @@
+{
+  "repository_path": "artifacts/down_issue_a100_20261111/results/ncu-metrics.stdout.gz",
+  "original_sha256": "321f5dc221323681b6927bae7dee43a4b0c840aa01499019f98c4be14b571410",
+  "lossless_verified": true,
+  "original_also_in": "final-results.tar.gz"
+}

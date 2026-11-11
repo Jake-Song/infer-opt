@@ -1,0 +1,14 @@
+{
+  "command": [
+    "ncu",
+    "--set",
+    "basic",
+    "--launch-skip",
+    "3",
+    "--launch-count",
+    "1",
+    "--csv",
+    "/tmp/down-issue-a100-20261111/probe"
+  ],
+  "returncode": 0
+}

@@ -1,0 +1,10 @@
+{
+  "returncode": 0,
+  "command": [
+    "/usr/bin/python3",
+    "/tmp/down-issue-source/scripts/down_issue/benchmark.py",
+    "--out",
+    "/tmp/down-issue-a100-20261111/timing"
+  ],
+  "seconds": 17.711631298065186
+}
