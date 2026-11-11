@@ -1,0 +1,10 @@
+[
+  "nsys",
+  "start",
+  "--session=llama-mtp-k3",
+  "--sample=none",
+  "--cpuctxsw=none",
+  "--force-overwrite=true",
+  "--export=sqlite",
+  "--output=/tmp/llama-mtp-a100-20261111/results/traces/trace-k3-korean"
+]

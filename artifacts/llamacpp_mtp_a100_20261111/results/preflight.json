@@ -1,0 +1,13 @@
+{
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "vram_gib": 79.250732421875,
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "torch": "2.14.1+cu130",
+  "disk_free_gib": 235.57941055297852,
+  "tools": {
+    "nvcc": "/usr/local/cuda/bin/nvcc",
+    "cmake": "/usr/local/bin/cmake",
+    "nsys": "/usr/local/bin/nsys",
+    "ncu": "/usr/local/cuda/bin/ncu"
+  }
+}

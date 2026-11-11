@@ -1,0 +1,3 @@
+# Raw traces are preserved in final-results.tar.gz; keep extracted copies local.
+/results/traces/*.nsys-rep
+/results/traces/*.sqlite

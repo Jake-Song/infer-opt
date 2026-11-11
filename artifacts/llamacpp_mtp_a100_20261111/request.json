@@ -1,0 +1,31 @@
+{
+  "model": "Qwen3.5-35B-A3B",
+  "engine": "llama.cpp",
+  "source_commit": "a0ad695cb212db3850f163121ddc687513448d42",
+  "model_repo": "unsloth/Qwen3.5-35B-A3B-MTP-GGUF",
+  "model_revision": "63af8373893a7a73c6dfcb84cb63d815981da5e0",
+  "quantization": "Q8_0",
+  "speculative_modes": [
+    "off",
+    "k=1",
+    "k=2",
+    "k=3"
+  ],
+  "warp_override": false,
+  "cuda_kernel_changes": false,
+  "gpu_selector": "A100 --high-mem",
+  "actual_gpu": "NVIDIA A100-SXM4-80GB",
+  "visible_vram_gib": 79.250732421875,
+  "sm_clock_mhz": 1095,
+  "prompts": [
+    "math",
+    "korean"
+  ],
+  "batch_size": 1,
+  "context_capacity": 2048,
+  "generated_tokens": 256,
+  "timed_repeats": 5,
+  "timing_boundary": "server decode after first emitted token / 255 tokens; HTTP and prefill excluded",
+  "separate_node_traces": true,
+  "session": "llama-mtp-a100-20261111"
+}

@@ -1,0 +1,167 @@
+{
+  "fields": {
+    "general.architecture": "qwen35moe",
+    "qwen35moe.block_count": 41,
+    "qwen35moe.expert_count": 256,
+    "qwen35moe.expert_used_count": 8,
+    "qwen35moe.nextn_predict_layers": 1
+  },
+  "mtp_tensors": [
+    {
+      "name": "blk.40.attn_k.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.attn_k_norm.weight",
+      "shape": [
+        256
+      ],
+      "type": "0"
+    },
+    {
+      "name": "blk.40.attn_norm.weight",
+      "shape": [
+        2048
+      ],
+      "type": "0"
+    },
+    {
+      "name": "blk.40.attn_output.weight",
+      "shape": [
+        4096,
+        2048
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.attn_q.weight",
+      "shape": [
+        2048,
+        8192
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.attn_q_norm.weight",
+      "shape": [
+        256
+      ],
+      "type": "0"
+    },
+    {
+      "name": "blk.40.attn_v.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.ffn_down_exps.weight",
+      "shape": [
+        512,
+        2048,
+        256
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.ffn_down_shexp.weight",
+      "shape": [
+        512,
+        2048
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.ffn_gate_exps.weight",
+      "shape": [
+        2048,
+        512,
+        256
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.ffn_gate_inp.weight",
+      "shape": [
+        2048,
+        256
+      ],
+      "type": "30"
+    },
+    {
+      "name": "blk.40.ffn_gate_inp_shexp.weight",
+      "shape": [
+        2048
+      ],
+      "type": "30"
+    },
+    {
+      "name": "blk.40.ffn_gate_shexp.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.ffn_up_exps.weight",
+      "shape": [
+        2048,
+        512,
+        256
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.ffn_up_shexp.weight",
+      "shape": [
+        2048,
+        512
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.nextn.eh_proj.weight",
+      "shape": [
+        4096,
+        2048
+      ],
+      "type": "8"
+    },
+    {
+      "name": "blk.40.nextn.enorm.weight",
+      "shape": [
+        2048
+      ],
+      "type": "0"
+    },
+    {
+      "name": "blk.40.nextn.hnorm.weight",
+      "shape": [
+        2048
+      ],
+      "type": "0"
+    },
+    {
+      "name": "blk.40.nextn.shared_head_norm.weight",
+      "shape": [
+        2048
+      ],
+      "type": "0"
+    },
+    {
+      "name": "blk.40.post_attention_norm.weight",
+      "shape": [
+        2048
+      ],
+      "type": "0"
+    }
+  ],
+  "tensor_count": 753
+}

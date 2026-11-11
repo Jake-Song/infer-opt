@@ -1,0 +1,7 @@
+[
+  "nsys",
+  "stats",
+  "--report=cuda_gpu_kern_sum",
+  "--format=csv",
+  "/tmp/llama-mtp-a100-20261111/results/traces/trace-k0-korean.nsys-rep"
+]

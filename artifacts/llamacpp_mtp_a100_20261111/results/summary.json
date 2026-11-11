@@ -1,0 +1,186 @@
+{
+  "rows": [
+    {
+      "prompt": "math",
+      "k": 0,
+      "samples": 5,
+      "ms_token": 9.131764705882352,
+      "tokens_s": 109.50785879927855,
+      "timing_ratio_vs_off": 1.0,
+      "acceptance": null,
+      "rounds": 0.0,
+      "ms_round": null,
+      "tokens_round": null,
+      "exact_runs": 5,
+      "first_differences": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "min_ms_token": 9.097188235294118,
+      "max_ms_token": 9.22935294117647
+    },
+    {
+      "prompt": "math",
+      "k": 1,
+      "samples": 5,
+      "ms_token": 6.789003921568627,
+      "tokens_s": 147.29701316315428,
+      "timing_ratio_vs_off": 1.3450816660851803,
+      "acceptance": 0.9389312977099237,
+      "rounds": 131.0,
+      "ms_round": 13.215236641221374,
+      "tokens_round": 1.9465648854961832,
+      "exact_runs": 0,
+      "first_differences": [
+        43,
+        43,
+        43,
+        43,
+        43
+      ],
+      "min_ms_token": 6.787650980392157,
+      "max_ms_token": 6.8213960784313725
+    },
+    {
+      "prompt": "math",
+      "k": 2,
+      "samples": 5,
+      "ms_token": 5.957619607843137,
+      "tokens_s": 167.85227420084217,
+      "timing_ratio_vs_off": 1.5327874733493374,
+      "acceptance": 0.8956043956043956,
+      "rounds": 91.0,
+      "ms_round": 16.69442857142857,
+      "tokens_round": 2.802197802197802,
+      "exact_runs": 0,
+      "first_differences": [
+        48,
+        48,
+        48,
+        48,
+        48
+      ],
+      "min_ms_token": 5.931450980392157,
+      "max_ms_token": 6.0822705882352945
+    },
+    {
+      "prompt": "math",
+      "k": 3,
+      "samples": 5,
+      "ms_token": 5.641329411764706,
+      "tokens_s": 177.26318160300139,
+      "timing_ratio_vs_off": 1.618725665414702,
+      "acceptance": 0.8851674641148325,
+      "rounds": 70.0,
+      "ms_round": 20.550557142857144,
+      "tokens_round": 3.642857142857143,
+      "exact_runs": 0,
+      "first_differences": [
+        43,
+        43,
+        43,
+        43,
+        43
+      ],
+      "min_ms_token": 5.552870588235294,
+      "max_ms_token": 5.656376470588235
+    },
+    {
+      "prompt": "korean",
+      "k": 0,
+      "samples": 5,
+      "ms_token": 9.18873725490196,
+      "tokens_s": 108.82888173416049,
+      "timing_ratio_vs_off": 1.0,
+      "acceptance": null,
+      "rounds": 0.0,
+      "ms_round": null,
+      "tokens_round": null,
+      "exact_runs": 5,
+      "first_differences": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "min_ms_token": 9.100827450980391,
+      "max_ms_token": 9.437690196078432
+    },
+    {
+      "prompt": "korean",
+      "k": 1,
+      "samples": 5,
+      "ms_token": 7.474984313725491,
+      "tokens_s": 133.7795449501894,
+      "timing_ratio_vs_off": 1.2292650886276368,
+      "acceptance": 0.7517241379310344,
+      "rounds": 145.0,
+      "ms_round": 13.145662068965517,
+      "tokens_round": 1.7586206896551724,
+      "exact_runs": 0,
+      "first_differences": [
+        43,
+        43,
+        43,
+        43,
+        43
+      ],
+      "min_ms_token": 7.428917647058824,
+      "max_ms_token": 7.535478431372549
+    },
+    {
+      "prompt": "korean",
+      "k": 2,
+      "samples": 5,
+      "ms_token": 7.396192156862745,
+      "tokens_s": 135.20470788094985,
+      "timing_ratio_vs_off": 1.2423605363438208,
+      "acceptance": 0.5879828326180258,
+      "rounds": 117.0,
+      "ms_round": 15.98914406779661,
+      "tokens_round": 2.1794871794871793,
+      "exact_runs": 0,
+      "first_differences": [
+        43,
+        43,
+        43,
+        43,
+        43
+      ],
+      "min_ms_token": 7.29501568627451,
+      "max_ms_token": 7.402023529411765
+    },
+    {
+      "prompt": "korean",
+      "k": 3,
+      "samples": 5,
+      "ms_token": 8.403925490196078,
+      "tokens_s": 118.99201166961657,
+      "timing_ratio_vs_off": 1.0933863306643348,
+      "acceptance": 0.4420731707317073,
+      "rounds": 110.0,
+      "ms_round": 19.35354054054054,
+      "tokens_round": 2.3181818181818183,
+      "exact_runs": 0,
+      "first_differences": [
+        47,
+        47,
+        47,
+        47,
+        47
+      ],
+      "min_ms_token": 8.274364705882354,
+      "max_ms_token": 8.536070588235294
+    }
+  ],
+  "timed_requests": 40,
+  "source_revision": "a0ad695cb212db3850f163121ddc687513448d42",
+  "model_revision": "63af8373893a7a73c6dfcb84cb63d815981da5e0",
+  "boundary": "server generation wall time after first token / 255 emitted tokens; HTTP, prefill, first token, loading and warmup excluded",
+  "kernel_modifications": false,
+  "warp_override": false
+}

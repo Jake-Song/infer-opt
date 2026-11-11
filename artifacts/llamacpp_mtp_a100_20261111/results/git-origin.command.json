@@ -1,0 +1,9 @@
+[
+  "git",
+  "-C",
+  "/tmp/llama-mtp-a100-20261111/llama.cpp",
+  "remote",
+  "add",
+  "origin",
+  "https://github.com/ggml-org/llama.cpp.git"
+]

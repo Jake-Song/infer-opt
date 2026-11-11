@@ -1,0 +1,4 @@
+[
+  "/tmp/llama-mtp-a100-20261111/llama.cpp/build/bin/llama-server",
+  "--help"
+]

@@ -1,0 +1,8 @@
+[
+  "git",
+  "-C",
+  "/tmp/llama-mtp-a100-20261111/llama.cpp",
+  "checkout",
+  "--detach",
+  "FETCH_HEAD"
+]

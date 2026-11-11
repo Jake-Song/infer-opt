@@ -1,0 +1,552 @@
+{
+  "passed": true,
+  "traces": [
+    {
+      "prompt": "math",
+      "k": 0,
+      "cuda_graph_launches": 2032,
+      "kernel_calls": 377598,
+      "gpu_kernel_sum_ms_including_prefill": 2202.190257,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 39,
+          "gpu_ms": 2.731045
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 39,
+          "gpu_ms": 1.277428
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "korean",
+      "k": 0,
+      "cuda_graph_launches": 2032,
+      "kernel_calls": 377559,
+      "gpu_kernel_sum_ms_including_prefill": 2193.40146,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 39,
+          "gpu_ms": 2.7561
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 39,
+          "gpu_ms": 1.285619
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "math",
+      "k": 1,
+      "cuda_graph_launches": 1298,
+      "kernel_calls": 230460,
+      "gpu_kernel_sum_ms_including_prefill": 1468.615758,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 5371,
+          "gpu_ms": 256.068469
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 2.875359
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 5371,
+          "gpu_ms": 95.366573
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.344404
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "korean",
+      "k": 1,
+      "cuda_graph_launches": 1438,
+      "kernel_calls": 254442,
+      "gpu_kernel_sum_ms_including_prefill": 1602.558821,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 5945,
+          "gpu_ms": 277.687905
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 2.895425
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 5945,
+          "gpu_ms": 104.366179
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.348214
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "math",
+      "k": 2,
+      "cuda_graph_launches": 989,
+      "kernel_calls": 166643,
+      "gpu_kernel_sum_ms_including_prefill": 1223.998297,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            3,
+            1
+          ],
+          "calls": 3731,
+          "gpu_ms": 198.546536
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 2.895237
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            3,
+            1
+          ],
+          "calls": 3731,
+          "gpu_ms": 90.279622
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.342994
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "korean",
+      "k": 2,
+      "cuda_graph_launches": 1277,
+      "kernel_calls": 214364,
+      "gpu_kernel_sum_ms_including_prefill": 1549.87004,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.910795
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            3,
+            1
+          ],
+          "calls": 4797,
+          "gpu_ms": 246.577456
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 2.914913
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 0.748825
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            3,
+            1
+          ],
+          "calls": 4797,
+          "gpu_ms": 114.413075
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.356146
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "math",
+      "k": 3,
+      "cuda_graph_launches": 820,
+      "kernel_calls": 134372,
+      "gpu_kernel_sum_ms_including_prefill": 1162.208488,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            3,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 2.211114
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 2870,
+          "gpu_ms": 206.727471
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            3,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.020272
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 2870,
+          "gpu_ms": 90.343757
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    },
+    {
+      "prompt": "korean",
+      "k": 3,
+      "cuda_graph_launches": 1310,
+      "kernel_calls": 210672,
+      "gpu_kernel_sum_ms_including_prefill": 1790.16224,
+      "native_moe_kernels": [
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 1.924459
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)1>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            256,
+            9,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 4551,
+          "gpu_ms": 315.627549
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            2,
+            1
+          ],
+          "calls": 41,
+          "gpu_ms": 0.754874
+        },
+        {
+          "name": "void mul_mat_vec_q_moe<(ggml_type)8, (int)2, (bool)0>(const void *, const void *, const int *, ggml_cuda_mm_fusion_args_device, float *, unsigned int, uint3, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "grid": [
+            1024,
+            8,
+            1
+          ],
+          "block": [
+            32,
+            4,
+            1
+          ],
+          "calls": 4551,
+          "gpu_ms": 140.60143
+        }
+      ],
+      "generic_mmvq_present": true,
+      "profiled_ids_match_same_mode_unprofiled": true,
+      "boundary": "whole request including prefill; target and draft are not separately labeled"
+    }
+  ],
+  "all_profiled_ids_match_same_mode_unprofiled": true
+}

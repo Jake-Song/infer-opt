@@ -1,0 +1,14 @@
+[
+  "cmake",
+  "-S",
+  "/tmp/llama-mtp-a100-20261111/llama.cpp",
+  "-B",
+  "/tmp/llama-mtp-a100-20261111/llama.cpp/build",
+  "-DCMAKE_BUILD_TYPE=Release",
+  "-DGGML_CUDA=ON",
+  "-DCMAKE_CUDA_ARCHITECTURES=80",
+  "-DGGML_CUDA_GRAPHS=ON",
+  "-DGGML_CUDA_NCCL=OFF",
+  "-DBUILD_SHARED_LIBS=OFF",
+  "-DLLAMA_CURL=OFF"
+]

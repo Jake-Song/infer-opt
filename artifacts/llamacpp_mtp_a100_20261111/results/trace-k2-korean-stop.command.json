@@ -1,0 +1,5 @@
+[
+  "nsys",
+  "stop",
+  "--session=llama-mtp-k2"
+]

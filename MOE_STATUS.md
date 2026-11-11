@@ -283,3 +283,28 @@ adopted. Four-warp results are historical/launch controls, not the current T=2/4
 baseline. All recorded block configurations matched their production dispatcher,
 but no model quality or MTP throughput was measured. Kernel sources are unchanged;
 clocks were restored, results verified, and the dedicated runtime terminated.
+
+### Native llama.cpp MTP measurement, 2026-11-11/12
+
+The [native MTP report](artifacts/llamacpp_mtp_a100_20261111/README.md) records
+unmodified llama.cpp at `a0ad695c`, an MTP-inclusive Unsloth Q8_0 GGUF and
+A100-SXM4-80GB at a locked 1095 MHz. Off/k=1/2/3 measured
+9.13/6.79/5.96/5.64 ms/token on math and 9.19/7.48/7.40/8.40 on Korean.
+Every MTP configuration diverged from the same model's MTP-off output in all
+five repetitions. Timings are diagnostic; no output-preserving speedup or
+paired ranking against historical infer-opt/G4 results is established.
+Forty timed requests and 10,240 generated IDs were independently checked.
+Eight separate full-request CUDA node traces retain prefill and are kept apart
+from unprofiled decode timings; target/draft phase costs are not separately labeled.
+CUDA kernels and warp settings were not changed.
+
+### G4 compiled parallel MTP preparation, 2026-11-12
+
+The [prepared G4 experiment](artifacts/qwen35_moe_compiled_g4_20261112/README.md)
+compares compiled MTP-off against compiled parallel k=1/2/3 on the five original
+prompts. The original G4 compiled record used consistent verification.
+The initial allocation and one explicitly authorized retry both returned
+503 Service Unavailable; the retry disabled the CLI's internal automatic retries.
+No GPU execution, model download or new performance measurement occurred.
+The harness and independent validator are prepared, all active sessions are gone,
+and the user deferred execution to a later session.

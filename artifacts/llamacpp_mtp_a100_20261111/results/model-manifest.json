@@ -1,0 +1,9 @@
+{
+  "repo": "unsloth/Qwen3.5-35B-A3B-MTP-GGUF",
+  "revision": "63af8373893a7a73c6dfcb84cb63d815981da5e0",
+  "filename": "Qwen3.5-35B-A3B-Q8_0.gguf",
+  "bytes": 37801097376,
+  "sha256": "b08e017b6ffcd1f57343a603a9e6d9e498373ef09da55537a2788af70ceb1d0d",
+  "expected_sha256": "b08e017b6ffcd1f57343a603a9e6d9e498373ef09da55537a2788af70ceb1d0d",
+  "cache_path": "/tmp/infer-opt-models/llama-mtp-20261111/hf/hub/models--unsloth--Qwen3.5-35B-A3B-MTP-GGUF/snapshots/63af8373893a7a73c6dfcb84cb63d815981da5e0/Qwen3.5-35B-A3B-Q8_0.gguf"
+}

@@ -1,0 +1,8 @@
+[
+  "/usr/bin/python3",
+  "-m",
+  "pip",
+  "install",
+  "huggingface_hub",
+  "gguf"
+]

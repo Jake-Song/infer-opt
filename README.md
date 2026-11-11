@@ -40,6 +40,12 @@ path and diagnostic controls. It collected 25,200 timing samples and nine NCU
 reports. Gate/up showed higher instruction pressure, but pure issue-throughput
 saturation was not established; no production kernel or model-quality claim changed.
 
+The [native llama.cpp MTP measurement](artifacts/llamacpp_mtp_a100_20261111/README.md)
+uses an MTP-inclusive Q8_0 model on A100 80GB at 1095 MHz, with default CUDA kernels
+and off/k=1/2/3. Math measured 9.13/6.79/5.96/5.64 ms/token; Korean measured
+9.19/7.48/7.40/8.40 ms/token. All MTP settings diverged from MTP-off, so these
+are diagnostic timings, not output-preserving speedups or a paired infer-opt ranking.
+
 The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
 measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
 9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded

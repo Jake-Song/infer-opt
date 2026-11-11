@@ -1,0 +1,6 @@
+{
+  "requested_sm_mhz": 1095,
+  "returncode": 0,
+  "stdout": "GPU clocks set to \"(gpuClkMin 1095, gpuClkMax 1095)\" for GPU 00000000:00:05.0\n\nWarning: persistence mode is disabled on device 00000000:00:05.0. See the Known Issues section of the nvidia-smi(1) man page for more information. Run with [--help | -h] switch to get more information on how to enable persistence mode.\nAll done.\n",
+  "stderr": ""
+}

@@ -1,0 +1,24 @@
+
+usage: nsys start [<args>]
+
+	--session=
+
+	   Launch the application in the given session.
+	   The option argument must represent a valid session name or ID as reported by 'nsys sessions
+	   list'.
+	   Any '%q{ENV_VAR}' pattern in the option argument will be substituted with the value of the
+	   environment variable.
+	   Any '%h' pattern in the option argument will be substituted with the hostname of the system.
+	   Any '%%' pattern in the option argument will be substituted with '%'.
+
+	--session-new=
+
+	   Start the collection in a new named session. The option  argument represents the session
+	   name.
+	   The session name must start with an alphabetical character followed by printable or space
+	   characters.
+	   Any '%q{ENV_VAR}' pattern in the session name will be substituted with the value of the
+	   environment variable.
+	   Any '%h' pattern in the option argument will be substituted with the hostname of the system.
+	   Any '%%' pattern in the option argument will be substituted with '%'.
+

@@ -1,0 +1,23 @@
+{
+  "command": [
+    "colab",
+    "new",
+    "-s",
+    "moe-compiled-parallel-g4-20261112",
+    "--gpu",
+    "G4"
+  ],
+  "cli_version": "0.7.5",
+  "returncode": 1,
+  "error": "ColabRequestError: POST /tun/m/assign variant=GPU accelerator=G4: Service Unavailable",
+  "hardware_verified": false,
+  "model_downloaded": false,
+  "benchmark_executed": false,
+  "manual_allocation_commands": 1,
+  "manual_retry_commands": 0,
+  "client_internal_retry_default": 3,
+  "actual_internal_post_count": "not asserted",
+  "future_retry_env": {
+    "COLAB_CLI_ASSIGN_RETRIES": "0"
+  }
+}

@@ -1,0 +1,9 @@
+[
+  "cmake",
+  "--build",
+  "/tmp/llama-mtp-a100-20261111/llama.cpp/build",
+  "-j",
+  "12",
+  "--target",
+  "llama-server"
+]

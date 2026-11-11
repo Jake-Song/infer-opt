@@ -1,0 +1,5 @@
+[
+  "nvidia-smi",
+  "--query-gpu=clocks.sm,clocks.mem,temperature.gpu,power.draw",
+  "--format=csv"
+]

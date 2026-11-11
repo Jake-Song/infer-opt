@@ -1,0 +1,5 @@
+{
+  "returncode": 0,
+  "traces": 8,
+  "boundary": "whole request, includes prefill; separate from unprofiled timing"
+}

@@ -1,0 +1,73 @@
+
+usage: nsys start [<args>]
+
+	--cpuctxsw=
+
+	   Possible values are 'process-tree', 'system-wide', or 'none'.
+	   Trace OS thread scheduling activity. Select 'none' to disable tracing CPU context switches. 
+	   'system-wide' requires root privileges or a paranoid level of 0 or less.
+	   If CPU IP/backtrace sampling is enabled, --cpuctxsw equals the --sample setting.
+	   For example, if --sample=process-tree, then --cpuctxsw=process-tree.
+	   If --sample=none and a target application is launched, the default is 'process-tree',
+	   otherwise the default is 'none'.
+
+	--flush-on-cudaprofilerstop=
+
+           If set to 'true', any call to cudaProfilerStop() will
+           cause the CUDA trace buffers to be flushed. Note that the CUDA trace
+           buffers will be flushed when the collection ends, irrespective of the
+           value of this switch. Default value is 'true'.
+
+	--ftrace=
+
+	   Collect ftrace events.
+	   Argument should list events to collect as: subsystem1/event1,subsystem2/event2.
+	   To collect trace markers, set '--ftrace=ftrace/print'.
+	   Requires root privileges.
+	   Default is '' (no ftrace events are collected by default). System scope.
+
+	--ftrace-keep-user-config=
+
+	   Possible values are 'true' or 'false'.
+	   Skip initial ftrace setup and collect already configured events.
+	   Default is 'false' (nsys will reset the ftrace configuration).
+
+	--gpu-metrics-devices=
+
+	   Collect GPU Metrics from the specified devices.
+	   Possible values are:
+	     'none', 'cuda-visible', 'all',
+	   or a comma separated list of GPU IDs reported by '--gpu-metrics-devices=help' switch.
+	   Default is 'none'. System scope.
+
+	--gpu-metrics-frequency=
+
+	   Specify the sampling frequency for GPU Metrics.
+	   Minimum supported frequency is '10' (Hz).
+	   Maximum supported frequency is '200000' (Hz).
+	   Default is '10000'. System scope.
+
+	--gpu-metrics-set=
+
+	   Specify the metric set for GPU Metrics.
+	   The option argument must be one of aliases reported by '--gpu-metrics-set=help' switch.
+	   Default is the first metric set that supports all selected GPU. System scope.
+
+	--gpu-video-device=
+
+           Collect GPU video accelerator traces from specified devices.
+           The argument must be 'none' or one or more GPU IDs reported by '--gpu-video-device=help'.
+           Default is 'none'. System scope.
+
+	--gpuctxsw=
+
+	   Possible values are 'true' or 'false'.
+	   Trace GPU context switches. This switch requires CUDA driver r435.17 or higher.
+	   Default is 'false'. System scope.
+
+	--nic-metrics=
+
+	   Possible values are 'true' or 'false'.
+	   Collect metrics from NIC/HCA devices.
+	   Default is 'false'. System scope.
+

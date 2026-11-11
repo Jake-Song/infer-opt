@@ -1,0 +1,29 @@
+{
+  "model": "Qwen3.5-35B-A3B",
+  "checkpoint": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "revision": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "gpu_selector": "G4",
+  "session": "moe-compiled-parallel-g4-20261112",
+  "modes": [
+    "compiled off",
+    "compiled parallel k=1",
+    "compiled parallel k=2",
+    "compiled parallel k=3"
+  ],
+  "prompts": [
+    "chat_long",
+    "code_1k",
+    "prose_1k",
+    "math",
+    "korean"
+  ],
+  "new_tokens": 256,
+  "warmup": 3,
+  "repeats": 5,
+  "cache_capacity": 2048,
+  "max_autotune": true,
+  "coordinate_descent_tuning": true,
+  "warp_override": false,
+  "quality_scope": "greedy token equality against the same compiled MTP-off decoder; not HF BF16 equality or task accuracy",
+  "weights_and_caches": "/tmp/infer-opt-models/moe-compiled-g4-20261112"
+}

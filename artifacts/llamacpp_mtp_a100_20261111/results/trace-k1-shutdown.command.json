@@ -1,0 +1,6 @@
+[
+  "nsys",
+  "shutdown",
+  "--session=llama-mtp-k1",
+  "--kill=sigterm"
+]

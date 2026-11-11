@@ -1,0 +1,10 @@
+{
+  "passed": false,
+  "error": "Command '['nsys', 'launch', '--session-new=llama-mtp-probe', '--trace=cuda', '--cuda-graph-trace=node', '/usr/bin/python3', '/tmp/llama-mtp-a100-20261111/probe/gpu.py']' timed out after 120 seconds",
+  "commands": [],
+  "cleanup": {
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

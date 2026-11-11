@@ -1,8 +1,8 @@
 # 다음 시험: llama.cpp expert의 MTP round 비용 측정
 
-2026-11-11 사용자 요청으로 우선순위를 변경했다. **먼저 `test-backend-ops perf`로 llama.cpp expert 연산을 독립 측정하고, 이후 실제 MTP round에서 비용을 확인한 뒤 route pack + Grouped GEMM 착수 여부를 결정한다.** 독립 측정은 [RunPod A100 결과](../llamacpp_moe_kernel_a100_20261111/README.md)로 완료했다. 실제 MTP round 비교와 Grouped GEMM 구현은 아직 시작하지 않았다.
+2026-11-11 사용자 요청으로 우선순위를 변경했다. **먼저 `test-backend-ops perf`로 llama.cpp expert 연산을 독립 측정하고, 이후 실제 MTP round에서 비용을 확인한 뒤 route pack + Grouped GEMM 착수 여부를 결정한다.** 독립 측정은 [RunPod A100 결과](../llamacpp_moe_kernel_a100_20261111/README.md)로 완료했다. 이후 [native MTP 생성 측정](../llamacpp_mtp_a100_20261111/README.md)에서 off/k=1/2/3의 속도·수락률·출력 일치와 별도 CUDA trace를 수집했다. 모든 MTP 설정에서 출력이 불일치해 시간은 진단용이며, target/draft expert의 구간별 비용 분해와 Grouped GEMM 구현은 남아 있다.
 
-독립 측정에서 부분 공유·flush 후 T=4 down은 current infer-opt/llama.cpp **55.94/40.90 µs**였지만, 전체 routed expert block은 **114.40/118.64 µs**였다. Native gate/up fusion은 CUDA Graph에서 확인했다. `ERR_NVGPUCTRPERM`으로 하드웨어 counter가 차단되어 instruction-issue bound 가설은 미확정이다. 아래 첫 단계 항목은 실행 조건의 기록으로 유지하고, 다음 실행은 두 번째 단계인 실제 MTP round 계측이다.
+독립 측정에서 부분 공유·flush 후 T=4 down은 current infer-opt/llama.cpp **55.94/40.90 µs**였지만, 전체 routed expert block은 **114.40/118.64 µs**였다. Native gate/up fusion은 CUDA Graph에서 확인했다. 해당 RunPod에서는 `ERR_NVGPUCTRPERM`으로 counter가 차단됐고, 이후 Colab counter 대조에서도 순수 issue-throughput 포화를 확정하지 않았다. 아래 첫 단계 항목은 실행 조건의 기록으로 유지한다. 두 번째 단계의 native 생성 측정은 위 보고서로 완료했으며, expert별 구간 계측은 아직 남아 있다.
 
 ## 첫 단계: 모델 없이 expert 연산 독립 측정
 
