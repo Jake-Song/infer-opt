@@ -1,0 +1,8 @@
+[
+  "/tmp/infer-opt-llama-venv/bin/python",
+  "-m",
+  "pip",
+  "install",
+  "numpy",
+  "pytest"
+]

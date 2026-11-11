@@ -1,0 +1,19 @@
+[
+  "cmake",
+  "-S",
+  "/workspace/infer-opt-llama-moe/llama.cpp",
+  "-B",
+  "/workspace/infer-opt-llama-moe/llama.cpp/build",
+  "-DCMAKE_BUILD_TYPE=Release",
+  "-DGGML_CUDA=ON",
+  "-DCMAKE_CUDA_ARCHITECTURES=80",
+  "-DGGML_CUDA_GRAPHS=ON",
+  "-DGGML_CUDA_FA=OFF",
+  "-DGGML_CUDA_NCCL=OFF",
+  "-DCMAKE_CUDA_FLAGS=-lineinfo",
+  "-DBUILD_SHARED_LIBS=OFF",
+  "-DLLAMA_BUILD_TESTS=ON",
+  "-DLLAMA_BUILD_TOOLS=OFF",
+  "-DLLAMA_BUILD_EXAMPLES=OFF",
+  "-DLLAMA_CURL=OFF"
+]

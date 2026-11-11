@@ -1,0 +1,12 @@
+{
+  "command": [
+    "nvcc",
+    "-O3",
+    "-lineinfo",
+    "-arch=sm_80",
+    "/tmp/hf-issue-check/probe.cu",
+    "-o",
+    "/tmp/hf-issue-check/probe"
+  ],
+  "returncode": 0
+}

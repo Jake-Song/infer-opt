@@ -1,0 +1,214 @@
+{
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "torch": "2.9.1+cu130",
+  "repeats": 2,
+  "prelude_cycles": 300000,
+  "rows": [
+    {
+      "tokens": 4,
+      "routing": "shared",
+      "implementation": "packed",
+      "packed_active": true,
+      "kind": "gate_up",
+      "cache": "hot",
+      "median_us": 124.1919994354248,
+      "gpu_samples_us": [
+        185.66399812698364,
+        62.72000074386597
+      ],
+      "replay_exact": true,
+      "x": {
+        "shape": [
+          4,
+          2048
+        ],
+        "stride": [
+          2048,
+          1
+        ],
+        "dtype": "torch.bfloat16",
+        "byte_stride": [
+          4096,
+          2
+        ]
+      },
+      "ids": {
+        "shape": [
+          4,
+          8
+        ],
+        "stride": [
+          8,
+          1
+        ],
+        "dtype": "torch.int32",
+        "byte_stride": [
+          32,
+          4
+        ]
+      },
+      "out": {
+        "shape": [
+          32,
+          512
+        ],
+        "stride": [
+          512,
+          1
+        ],
+        "dtype": "torch.bfloat16",
+        "byte_stride": [
+          1024,
+          2
+        ]
+      },
+      "ids_values": [
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          0
+        ],
+        [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          0,
+          1
+        ],
+        [
+          3,
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ]
+      ],
+      "flush_bytes": 0,
+      "output_sha256": "42a8fd46e8f3e4bd34d449a2e5e3026aafea11ddb80f97394c6df4ef0c706dd9"
+    },
+    {
+      "tokens": 4,
+      "routing": "shared",
+      "implementation": "packed",
+      "packed_active": true,
+      "kind": "gate_up",
+      "cache": "cold",
+      "median_us": 81.24800026416779,
+      "gpu_samples_us": [
+        94.40000355243683,
+        68.09599697589874
+      ],
+      "replay_exact": true,
+      "x": {
+        "shape": [
+          4,
+          2048
+        ],
+        "stride": [
+          2048,
+          1
+        ],
+        "dtype": "torch.bfloat16",
+        "byte_stride": [
+          4096,
+          2
+        ]
+      },
+      "ids": {
+        "shape": [
+          4,
+          8
+        ],
+        "stride": [
+          8,
+          1
+        ],
+        "dtype": "torch.int32",
+        "byte_stride": [
+          32,
+          4
+        ]
+      },
+      "out": {
+        "shape": [
+          32,
+          512
+        ],
+        "stride": [
+          512,
+          1
+        ],
+        "dtype": "torch.bfloat16",
+        "byte_stride": [
+          1024,
+          2
+        ]
+      },
+      "ids_values": [
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          0
+        ],
+        [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          0,
+          1
+        ],
+        [
+          3,
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ]
+      ],
+      "flush_bytes": 134217728,
+      "output_sha256": "42a8fd46e8f3e4bd34d449a2e5e3026aafea11ddb80f97394c6df4ef0c706dd9"
+    }
+  ]
+}

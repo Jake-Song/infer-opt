@@ -1,0 +1,23 @@
+[
+  "ncu",
+  "--target-processes",
+  "all",
+  "--set",
+  "full",
+  "--kernel-name",
+  "regex:.*_project.*",
+  "--launch-skip",
+  "3",
+  "--launch-count",
+  "1",
+  "--csv",
+  "/tmp/infer-opt-llama-venv/bin/python",
+  "/workspace/infer-opt-llama-moe/source/scripts/llamacpp_moe/compare.py",
+  "--out",
+  "/workspace/infer-opt-llama-moe/results/ncu-reference-samples.json",
+  "--profile",
+  "--implementation",
+  "reference",
+  "--repeats",
+  "2"
+]

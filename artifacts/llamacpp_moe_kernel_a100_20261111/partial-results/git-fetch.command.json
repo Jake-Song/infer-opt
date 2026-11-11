@@ -1,0 +1,10 @@
+[
+  "git",
+  "-C",
+  "/workspace/infer-opt-llama-moe/llama.cpp",
+  "fetch",
+  "--depth",
+  "1",
+  "origin",
+  "a0ad695cb212db3850f163121ddc687513448d42"
+]

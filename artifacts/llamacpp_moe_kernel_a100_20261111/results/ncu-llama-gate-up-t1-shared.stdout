@@ -1,0 +1,11 @@
+==PROF== Connected to process 4946 (/workspace/infer-opt-llama-moe/llama.cpp/build/bin/test-backend-ops)
+INFER_LAYOUT {"tokens":1,"kind":"gate_up","routing":"shared","tensors":[{"name":"ids","type":"i32","op":"NONE","ne":[8,1,1,1],"nb":[4,32,32,32],"view_offset":0},{"name":"gu","type":"q8_0","op":"NONE","ne":[2048,1024,256,1],"nb":[34,2176,2228224,570425344],"view_offset":0},{"name":"gu (view)","type":"q8_0","op":"VIEW","ne":[2048,512,256,1],"nb":[34,2176,2228224,570425344],"view_offset":0},{"name":"x","type":"f32","op":"NONE","ne":[2048,1,1,1],"nb":[4,8192,8192,8192],"view_offset":0},{"name":"node_1","type":"f32","op":"MUL_MAT_ID","ne":[512,8,1,1],"nb":[4,2048,16384,16384],"view_offset":0},{"name":"gu (view)","type":"q8_0","op":"VIEW","ne":[2048,512,256,1],"nb":[34,2176,2228224,570425344],"view_offset":1114112},{"name":"node_3","type":"f32","op":"MUL_MAT_ID","ne":[512,8,1,1],"nb":[4,2048,16384,16384],"view_offset":0},{"name":"out","type":"f32","op":"GLU","ne":[512,8,1,1],"nb":[4,2048,16384,16384],"view_offset":0}],"ids":[0,1,2,3,4,5,6,7]}
+INFER_RESULT {"tokens":1,"kind":"gate_up","routing":"shared","cache":"hot","gpu_samples_us":[195.520004,171.903992],"replay_exact":true,"flush_bytes":0}
+INFER_RESULT {"tokens":1,"kind":"gate_up","routing":"shared","cache":"cold","gpu_samples_us":[177.088013,160.255997],"replay_exact":true,"flush_bytes":134217728}
+==PROF== Disconnected from process 4946
+==WARNING== No kernels were profiled.
+Available Kernels:
+1. infer_moe_prelude_kernel
+2. mul_mat_vec_q
+3. quantize_q8_1
+4. unary_gated_op_kernel

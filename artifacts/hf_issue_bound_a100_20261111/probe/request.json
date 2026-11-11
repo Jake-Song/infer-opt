@@ -1,0 +1,7 @@
+{
+  "image": "runpod/pytorch:1.0.7-cu1300-torch291-ubuntu2404-cluster",
+  "flavor": "a100-large",
+  "timeout": "10m",
+  "script_sha256": "25acaa416f2fe08d124024de9549401953e0d48807c5fa7116dab0de3cd92127",
+  "name": "moe-counter-access-probe"
+}

@@ -1,0 +1,11 @@
+{
+  "provider": "RunPod",
+  "pod_id": "w49om2wcugflqd",
+  "deleted": true,
+  "server_pod_list": [],
+  "colab_active_sessions": 0,
+  "verified_at_utc": "2026-11-11 06:47:51 UTC",
+  "final_archive_sha256": "4ec90c6b9c211d9037c26d09b3553c927b36e066996c40faf069eebd3e4214f7",
+  "remote_archive_hash_matches_local": true,
+  "persistent_volume_gb": 0
+}

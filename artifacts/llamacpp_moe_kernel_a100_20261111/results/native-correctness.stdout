@@ -1,0 +1,48 @@
+Testing 2 devices
+
+Backend 1/2: CUDA0
+  Device description: NVIDIA A100-SXM4-80GB
+  Device memory: 81152 MB (80727 MB free)
+
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=gate,routing=shared,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=down,routing=shared,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=1,kind=gate_up,routing=shared,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=1,kind=block,routing=shared,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=gate,routing=partial,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=down,routing=partial,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=1,kind=gate_up,routing=partial,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=1,kind=block,routing=partial,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=gate,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=down,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=1,kind=gate_up,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=1,kind=block,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=gate,routing=shared,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=down,routing=shared,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=2,kind=gate_up,routing=shared,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=2,kind=block,routing=shared,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=gate,routing=partial,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=down,routing=partial,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=2,kind=gate_up,routing=partial,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=2,kind=block,routing=partial,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=gate,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=down,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=2,kind=gate_up,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=2,kind=block,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=gate,routing=shared,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=down,routing=shared,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=4,kind=gate_up,routing=shared,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=4,kind=block,routing=shared,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=gate,routing=partial,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=down,routing=partial,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=4,kind=gate_up,routing=partial,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=4,kind=block,routing=partial,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=gate,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=down,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=4,kind=gate_up,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  INFER_MOE_FUSED(type_a=q8_0,tokens=4,kind=block,routing=disjoint,weight_layout=native): [1;32mOK[0m
+  36/36 tests passed
+  Backend CUDA0: [1;32mOK[0m
+Backend 2/2: CPU
+  Skipping
+2/2 backends passed
+[1;32mOK[0m

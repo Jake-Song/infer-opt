@@ -56,7 +56,7 @@
 
 ## 다음 시험
 
-[NEXT_EXPERIMENT.md](NEXT_EXPERIMENT.md)에 route pack + Grouped GEMM의 작업 범위와 비교 조건을 남겼다. 새 GPU 실험은 시작하지 않았다.
+[NEXT_EXPERIMENT.md](NEXT_EXPERIMENT.md)에 다음 시험을 정리했다. 2026-11-11 사용자 요청으로 **llama.cpp expert 독립 측정 후 실제 MTP round 계측**을 먼저 하고, 그 결과로 route pack + Grouped GEMM 등 후속 구현의 우선순위를 결정하도록 변경했다. [독립 커널 실험](../llamacpp_moe_kernel_a100_20261111/README.md)은 완료했고 실제 MTP round 비교는 아직 시작하지 않았다.
 
 ## 정리 상태
 

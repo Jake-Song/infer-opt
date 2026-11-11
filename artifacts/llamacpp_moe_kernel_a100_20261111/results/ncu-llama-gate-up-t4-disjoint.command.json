@@ -1,0 +1,15 @@
+[
+  "ncu",
+  "--target-processes",
+  "all",
+  "--set",
+  "full",
+  "--kernel-name",
+  "regex:.*mul_mat_vec_q_moe.*",
+  "--launch-skip",
+  "3",
+  "--launch-count",
+  "1",
+  "--csv",
+  "/workspace/infer-opt-llama-moe/llama.cpp/build/bin/test-backend-ops"
+]

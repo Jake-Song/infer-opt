@@ -1,0 +1,8 @@
+[
+  "/workspace/infer-opt-llama-moe/llama.cpp/build/bin/test-backend-ops",
+  "perf",
+  "-b",
+  "CUDA0",
+  "-o",
+  "MUL_MAT_ID"
+]

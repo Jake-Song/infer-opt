@@ -1,0 +1,29 @@
+Testing 2 devices
+
+Backend 1/2: CUDA0
+  Device description: NVIDIA A100-SXM4-80GB
+  Device memory: 81152 MB (80727 MB free)
+
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=gate,routing=shared):                   89415 runs -    11.26 us/run -  16.78 MFLOP/run - [1;34m  1.49 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=down,routing=shared):                  101337 runs -    10.00 us/run -  16.78 MFLOP/run - [1;34m  1.68 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=gate,routing=partial):                  35766 runs -    28.89 us/run -  16.78 MFLOP/run - [1;34m580.65 GFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=down,routing=partial):                 101337 runs -    10.14 us/run -  16.78 MFLOP/run - [1;34m  1.65 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=gate,routing=disjoint):                 95376 runs -    10.90 us/run -  16.78 MFLOP/run - [1;34m  1.54 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=1,kind=down,routing=disjoint):                101337 runs -    10.04 us/run -  16.78 MFLOP/run - [1;34m  1.67 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=gate,routing=shared):                   86449 runs -    11.94 us/run -  33.55 MFLOP/run - [1;34m  2.81 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=down,routing=shared):                   77506 runs -    13.24 us/run -  33.55 MFLOP/run - [1;34m  2.53 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=gate,routing=partial):                  83468 runs -    12.09 us/run -  33.55 MFLOP/run - [1;34m  2.77 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=down,routing=partial):                  77506 runs -    13.24 us/run -  33.55 MFLOP/run - [1;34m  2.53 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=gate,routing=disjoint):                 83468 runs -    12.27 us/run -  33.55 MFLOP/run - [1;34m  2.73 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=2,kind=down,routing=disjoint):                 77506 runs -    13.22 us/run -  33.55 MFLOP/run - [1;34m  2.54 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=gate,routing=shared):                   53676 runs -    18.70 us/run -  67.11 MFLOP/run - [1;34m  3.59 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=down,routing=shared):                   46221 runs -    22.24 us/run -  67.11 MFLOP/run - [1;34m  3.02 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=gate,routing=partial):                  50694 runs -    19.91 us/run -  67.11 MFLOP/run - [1;34m  3.37 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=down,routing=partial):                  44730 runs -    22.77 us/run -  67.11 MFLOP/run - [1;34m  2.95 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=gate,routing=disjoint):                 40257 runs -    25.11 us/run -  67.11 MFLOP/run - [1;34m  2.67 TFLOPS[0m
+  MUL_MAT_ID(type_a=q8_0,tokens=4,kind=down,routing=disjoint):                 35784 runs -    28.67 us/run -  67.11 MFLOP/run - [1;34m  2.34 TFLOPS[0m
+  Backend CUDA0: [1;32mOK[0m
+Backend 2/2: CPU
+  Skipping
+2/2 backends passed
+[1;32mOK[0m

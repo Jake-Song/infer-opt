@@ -1,0 +1,23 @@
+{
+  "uid": 0,
+  "nvcc": "/usr/local/cuda/bin/nvcc",
+  "ncu": "/usr/local/cuda/bin/ncu",
+  "CapEff": {
+    "hex": "00000000a80405fb",
+    "SYS_ADMIN": false,
+    "PERFMON": false
+  },
+  "CapPrm": {
+    "hex": "00000000a80405fb",
+    "SYS_ADMIN": false,
+    "PERFMON": false
+  },
+  "CapBnd": {
+    "hex": "00000000a80405fb",
+    "SYS_ADMIN": false,
+    "PERFMON": false
+  },
+  "driver_profiling_params": [
+    "RmProfilingAdminOnly: 1"
+  ]
+}

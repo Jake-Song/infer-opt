@@ -215,6 +215,39 @@ for T=2/4, with exact hidden/logits and all 141 cache tensors. GPU tests: 37 pas
 This is fixed-state target-body timing, not end-to-end MTP throughput.
 The user requested wrap-up after those two final points; Korean automatic-path
 reconfirmation was stopped. Earlier explicit pair-kernel comparisons completed
-both prompts with exact state. Proper route-packed persistent Grouped GEMM is
+both prompts with exact state. On 2026-11-11, the user prioritized measuring
+llama.cpp expert costs per MTP round before choosing a follow-up implementation.
+Route-packed persistent Grouped GEMM remains a subsequent candidate; see the
 [next experiment](artifacts/qwen35_moe_verify_opt_a100_20261109/NEXT_EXPERIMENT.md).
 All results were recovered and the A100 40GB runtime was stopped.
+
+### Model-free llama.cpp expert comparison, 2026-11-11
+
+The [standalone experiment](artifacts/llamacpp_moe_kernel_a100_20261111/README.md)
+ran Qwen3.5-35B-A3B expert shapes on a RunPod A100-SXM4-80GB, without model
+downloads. Native Q8_0/Q8_1 W8A8 and the current group128 W8A16 kernels were
+measured on the same GPU, with PyTorch 2.9.1+cu130 and Triton 3.5.1. T=1/2/4,
+top-k=8, three route-sharing patterns, hot and 128 MiB flush-before-run conditions
+were covered. These toolchain versions differ from the earlier model runs.
+
+For partially shared routes after flushing, native llama.cpp down cost 40.90 us
+at T=4 versus 55.94 us for current infer-opt. Gate/up was slower, and the full
+routed expert block cost 118.64 versus 114.40 us. Native T=1/2 block time was
+also slower; fully shared hot T=4 was a favorable exception. No general block
+speedup or MTP throughput improvement is established. Clocks were not locked.
+
+Both combined-weight view and native contiguous-weight variants passed 36/36
+CPU-reference CUDA cases. Actual captured graphs confirmed native fused gate/up
+(two kernels including activation quantization) and the unfused view control
+(five kernels). Hardware counters were blocked by ERR_NVGPUCTRPERM, so the
+instruction-issue-bound hypothesis remains unresolved. All results and source
+hashes were recovered, and the dedicated Pod was deleted. The next step remains
+measuring costs in an actual native llama.cpp MTP round.
+
+The separate [HF Jobs A100 permission probe](artifacts/hf_issue_bound_a100_20261111/README.md)
+also returned ERR_NVGPUCTRPERM after the user-requested HF CLI update to 2.4.0.
+This time diagnostics recorded uid 0, host `RmProfilingAdminOnly=1`, and absent
+SYS_ADMIN/PERFMON capabilities in the effective, permitted and bounding sets.
+CUDA compilation/execution succeeded, but counter collection did not. The probe
+completed and results were recovered; the larger MoE profiling job was not
+submitted. The instruction-issue hypothesis remains unresolved.

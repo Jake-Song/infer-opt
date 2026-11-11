@@ -1,0 +1,22 @@
+{
+  "objective": "Model-free llama.cpp Q8_0 MoE expert perf; T=1/2/4; compare native infer-opt kernels; investigate instruction-issue hypothesis",
+  "user_constraints": [
+    "No Colab high-mem",
+    "Use runpodctl if Colab A100 unavailable",
+    "Match input shapes, broadcast and strides"
+  ],
+  "colab": {
+    "ordinary_a100_attempts": 2,
+    "result": "503 Service Unavailable",
+    "high_mem_attempt": "cancelled on user steering; no active session"
+  },
+  "runpod": {
+    "pod_id": "w49om2wcugflqd",
+    "gpu": "A100 SXM",
+    "gpu_count": 1,
+    "usd_per_hour": 1.79,
+    "persistent_volume_gb": 0
+  },
+  "llama_cpp_commit": "a0ad695cb212db3850f163121ddc687513448d42",
+  "model_downloads": false
+}

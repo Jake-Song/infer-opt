@@ -1,0 +1,318 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 162a7d2..fc04ea6 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -3137,6 +3137,13 @@ static void ggml_cuda_graph_launch_chunk(ggml_backend_cuda_context * cuda_ctx, g
+         graph->instances.emplace_back(nullptr);
+         CUDA_CHECK(cudaGraphInstantiate(&graph->instances[idx], cuda_graph, nullptr, nullptr, 0));
+     }
++
++    if (const char * directory = getenv("INFER_MOE_DOT_DIR")) {
++        const char * name = getenv("INFER_MOE_CASE_NAME");
++        char filename[4096];
++        snprintf(filename, sizeof(filename), "%s/%s-%zu.dot", directory, name ? name : "capture", idx);
++        CUDA_CHECK(cudaGraphDebugDotPrint(cuda_graph, filename, cudaGraphDebugDotFlagsVerbose));
++    }
+     CUDA_CHECK(cudaGraphDestroy(cuda_graph));
+ 
+     CUDA_CHECK(cudaGraphLaunch(graph->instances[idx], cuda_ctx->stream()));
+@@ -6645,3 +6652,26 @@ ggml_backend_t ggml_backend_cuda_init(int device) {
+ }
+ 
+ GGML_BACKEND_DL_IMPL(ggml_backend_cuda_reg)
++
++// Measurement-only accessors. Kernel implementations and dispatch are unchanged.
++extern "C" GGML_BACKEND_API void * infer_moe_cuda_stream(ggml_backend_t backend) {
++    auto * ctx = (ggml_backend_cuda_context *) backend->context;
++    return (void *) ctx->stream();
++}
++extern "C" GGML_BACKEND_API void * infer_moe_cuda_graph(ggml_backend_t backend, ggml_cgraph * gf) {
++#ifdef USE_CUDA_GRAPH
++    auto * ctx = (ggml_backend_cuda_context *) backend->context;
++    auto * graph = ctx->cuda_graph(ggml_cuda_graph_get_key(gf));
++    if (graph->instances.size() != 1) return nullptr;
++    return (void *) graph->instances[0];
++#else
++    return nullptr;
++#endif
++}
++__global__ static void infer_moe_prelude_kernel() {
++    const unsigned long long start = clock64();
++    while (clock64() - start < 300000ULL) {}
++}
++extern "C" GGML_BACKEND_API void infer_moe_prelude(void * stream) {
++    infer_moe_prelude_kernel<<<1,32,0,(cudaStream_t)stream>>>();
++}
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index 4224a15..e2fec84 100644
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -422,3 +422,6 @@ if (TARGET gguf-model-data)
+     target_link_libraries(test-export-graph-ops PRIVATE gguf-model-data)
+     target_compile_definitions(test-export-graph-ops PRIVATE LLAMA_HF_FETCH)
+ endif()
++
++find_package(CUDAToolkit REQUIRED)
++target_link_libraries(test-backend-ops PRIVATE CUDA::cudart)
+diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
+index bea65c7..70e58be 100644
+--- a/tests/test-backend-ops.cpp
++++ b/tests/test-backend-ops.cpp
+@@ -1,3 +1,5 @@
++#include <cuda_runtime_api.h>
++#include "ggml-cuda.h"
+ // This file defines tests for various GGML ops and backends.
+ // For the forward pass it asserts that the results of multiple backends computing the same GGML ops are consistent.
+ // For the backward pass it asserts that the gradients from backpropagation are consistent
+@@ -10378,7 +10380,235 @@ static const ggml_type other_types[] = {
+ #endif
+ 
+ // Test cases for evaluation: should try to cover edge cases while using small input sizes to keep the runtime low
++// Included by test-backend-ops.cpp; only adds benchmark cases/host measurement.
++extern "C" void * infer_moe_cuda_stream(ggml_backend_t);
++extern "C" void * infer_moe_cuda_graph(ggml_backend_t, ggml_cgraph *);
++extern "C" void infer_moe_prelude(void *);
++
++static void infer_cuda_check(cudaError_t status) {
++    if (status != cudaSuccess) {
++        fprintf(stderr, "CUDA benchmark error: %s\n", cudaGetErrorString(status));
++        std::exit(2);
++    }
++}
++
++static uint32_t infer_hash(uint32_t v) {
++    v ^= v >> 16; v *= 0x7feb352dU;
++    v ^= v >> 15; v *= 0x846ca68bU;
++    return v ^ (v >> 16);
++}
++
++// BF16-representable source values; identical algorithm in the Python baseline.
++static float infer_value(uint32_t index, uint32_t salt, bool weight) {
++    int v = int(infer_hash(index + salt) & 255U) - 128;
++    return float(v) * (weight ? (1.0f / 8192.0f) : (1.0f / 64.0f));
++}
++
++static void infer_fill(ggml_tensor * t) {
++    if (ggml_is_view_op(t->op) || ggml_is_empty(t)) return;
++    if (t->type != GGML_TYPE_F32 && t->type != GGML_TYPE_Q8_0) return;
++    const bool weight = t->type == GGML_TYPE_Q8_0;
++    const bool native_gate = strcmp(t->name, "native_gate") == 0;
++    const bool native_up = strcmp(t->name, "native_up") == 0;
++    uint32_t salt = strcmp(t->name, "gu") == 0 || native_gate || native_up ? 901U : strcmp(t->name, "down") == 0 ? 902U : 903U;
++    const int64_t rows = ggml_nrows(t), k = t->ne[0], chunk = 32;
++    const size_t row_bytes = ggml_row_size(t->type, k);
++    std::vector<float> values(chunk * k);
++    std::vector<uint8_t> quantized(chunk * row_bytes);
++    for (int64_t row = 0; row < rows; row += chunk) {
++        int64_t nr = std::min(chunk, rows - row);
++        for (int64_t i = 0; i < nr * k; ++i) {
++            uint32_t index = uint32_t(row * k + i);
++            if (native_gate || native_up) {
++                uint32_t logical_row = index / uint32_t(k);
++                index = ((logical_row / 512) * 1024 + logical_row % 512 + (native_up ? 512 : 0)) * uint32_t(k) + index % uint32_t(k);
++            }
++            values[i] = infer_value(index, salt, weight);
++        }
++        if (weight) {
++            size_t bytes = ggml_quantize_chunk(t->type, values.data(), quantized.data(), 0, nr, k, nullptr);
++            GGML_ASSERT(bytes == nr * row_bytes);
++            ggml_backend_tensor_set(t, quantized.data(), row * row_bytes, bytes);
++        } else {
++            ggml_backend_tensor_set(t, values.data(), row * row_bytes, nr * row_bytes);
++        }
++    }
++}
++
++struct infer_moe_case : public test_case {
++    int tokens;
++    std::string kind, routing;
++    bool native_layout = std::getenv("INFER_MOE_NATIVE_LAYOUT") != nullptr;
++    ggml_tensor * result = nullptr;
++    infer_moe_case(int t, std::string k, std::string r) : tokens(t), kind(k), routing(r) {}
++    std::string op_desc(ggml_tensor *) override { return kind == "gate" || kind == "down" ? "MUL_MAT_ID" : "INFER_MOE_FUSED"; }
++    std::string vars() override { return "type_a=q8_0,tokens=" + std::to_string(tokens) + ",kind=" + kind + ",routing=" + routing + ",weight_layout=" + (native_layout ? "native" : "view"); }
++    bool run_whole_graph() override { return kind == "gate_up" || kind == "block"; }
++    double max_nmse_err() override { return 5e-4; }
++    uint64_t op_flops(ggml_tensor *) override { return uint64_t(2) * 2048 * 512 * 8 * tokens; }
++
++    ggml_tensor * build_graph(ggml_context * ctx) override {
++        auto * ids = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, 8, tokens);
++        ggml_set_name(ids, "ids");
++        GGML_ASSERT(ids->nb[1] == 8 * sizeof(int32_t));
++        if (kind == "down") {
++            auto * weight = ggml_new_tensor_3d(ctx, GGML_TYPE_Q8_0, 512, 2048, 256);
++            ggml_set_name(weight, "down");
++            auto * x = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, 512, 8, tokens);
++            ggml_set_name(x, "x");
++            result = ggml_mul_mat_id(ctx, weight, x, ids);
++        } else {
++            ggml_tensor * gu = nullptr;
++            ggml_tensor * gate;
++            ggml_tensor * up = nullptr;
++            if (native_layout) {
++                gate = ggml_new_tensor_3d(ctx, GGML_TYPE_Q8_0, 2048, 512, 256);
++                ggml_set_name(gate, "native_gate");
++                if (kind != "gate") {
++                    up = ggml_new_tensor_3d(ctx, GGML_TYPE_Q8_0, 2048, 512, 256);
++                    ggml_set_name(up, "native_up");
++                }
++            } else {
++                gu = ggml_new_tensor_3d(ctx, GGML_TYPE_Q8_0, 2048, 1024, 256);
++                ggml_set_name(gu, "gu");
++                gate = ggml_view_3d(ctx, gu, 2048, 512, 256, gu->nb[1], gu->nb[2], 0);
++            }
++            auto * x = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, 2048, 1, tokens);
++            ggml_set_name(x, "x");
++            auto * g = ggml_mul_mat_id(ctx, gate, x, ids);
++            if (kind == "gate") result = g;
++            else {
++                if (!native_layout) up = ggml_view_3d(ctx, gu, 2048, 512, 256, gu->nb[1], gu->nb[2], 512 * gu->nb[1]);
++                auto * u = ggml_mul_mat_id(ctx, up, x, ids);
++                result = ggml_swiglu_split(ctx, g, u);
++                if (kind == "block") {
++                    auto * down = ggml_new_tensor_3d(ctx, GGML_TYPE_Q8_0, 512, 2048, 256);
++                    ggml_set_name(down, "down");
++                    result = ggml_mul_mat_id(ctx, down, result, ids);
++                    auto * rw = ggml_new_tensor_3d(ctx, GGML_TYPE_F32, 1, 8, tokens);
++                    ggml_set_name(rw, "rw");
++                    result = ggml_mul(ctx, result, rw);
++                    result = ggml_cont(ctx, ggml_permute(ctx, result, 1, 0, 2, 3));
++                    result = ggml_reshape_2d(ctx, ggml_sum_rows(ctx, result), 2048, tokens);
++                }
++            }
++        }
++        ggml_set_name(result, "out");
++        return result;
++    }
++
++    std::vector<int32_t> routes() const {
++        std::vector<int32_t> ids(8 * tokens);
++        for (int t = 0; t < tokens; ++t) for (int s = 0; s < 8; ++s) {
++            int slot = (s + t) % 8;
++            int expert = routing == "shared" ? slot : routing == "partial" && slot < 4 ? slot : 4 + 4 * t + slot - 4;
++            if (routing == "disjoint") expert = 8 * t + slot;
++            ids[t * 8 + s] = expert;
++        }
++        return ids;
++    }
++
++    void set_routes(ggml_context * ctx) {
++        auto data = routes();
++        auto * ids = ggml_get_tensor(ctx, "ids");
++        GGML_ASSERT(ids && ggml_nbytes(ids) == data.size() * sizeof(int32_t));
++        ggml_backend_tensor_set(ids, data.data(), 0, data.size() * sizeof(int32_t));
++    }
++
++    void initialize_tensors(ggml_context * ctx) override {
++        for (auto * t = ggml_get_first_tensor(ctx); t; t = ggml_get_next_tensor(ctx, t)) infer_fill(t);
++        auto * rw = ggml_get_tensor(ctx, "rw");
++        if (rw) {
++            std::vector<float> v(8 * tokens);
++            for (int i = 0; i < 8 * tokens; ++i) v[i] = float(i % 8 + 1) / 36.f;
++            ggml_backend_tensor_set(rw, v.data(), 0, v.size() * sizeof(float));
++        }
++        set_routes(ctx);
++    }
++    void reinit_perf_iter(ggml_context * ctx) override { set_routes(ctx); }
++};
++
++static std::vector<std::unique_ptr<test_case>> infer_moe_cases() {
++    std::vector<std::unique_ptr<test_case>> cases;
++    for (int t : {1, 2, 4}) for (const char * routing : {"shared", "partial", "disjoint"}) {
++        for (const char * kind : {"gate", "down", "gate_up", "block"}) {
++            if (std::getenv("INFER_MOE_SIMPLE") && std::string(kind) != "gate" && std::string(kind) != "down") continue;
++            cases.emplace_back(new infer_moe_case(t, kind, routing));
++        }
++    }
++    return cases;
++}
++
++static int infer_moe_measure() {
++    ggml_backend_load_all();
++    ggml_backend_ptr backend(ggml_backend_cuda_init(0));
++    GGML_ASSERT(backend);
++    auto stream = (cudaStream_t) infer_moe_cuda_stream(backend.get());
++    cudaEvent_t a, b;
++    infer_cuda_check(cudaEventCreate(&a)); infer_cuda_check(cudaEventCreate(&b));
++    void * flush;
++    constexpr size_t flush_bytes = 128ULL << 20;
++    infer_cuda_check(cudaMalloc(&flush, flush_bytes));
++    auto cases = infer_moe_cases();
++    int repeats = std::getenv("INFER_MOE_REPEATS") ? std::atoi(std::getenv("INFER_MOE_REPEATS")) : 100;
++    const char * select = std::getenv("INFER_MOE_SELECT");
++    for (auto & base : cases) {
++        auto & tc = (infer_moe_case &) *base;
++        if (select && tc.vars().find(select) == std::string::npos) continue;
++        std::string case_name = "t" + std::to_string(tc.tokens) + "-" + tc.kind + "-" + tc.routing + "-" + (tc.native_layout ? "native" : "view");
++        setenv("INFER_MOE_CASE_NAME", case_name.c_str(), 1);
++        tc.mode = MODE_PERF;
++        ggml_init_params params = {ggml_tensor_overhead() * 128 + ggml_graph_overhead_custom(128, false), nullptr, true};
++        ggml_context_ptr ctx(ggml_init(params));
++        auto * out = tc.build_graph(ctx.get());
++        ggml_backend_buffer_ptr buf(ggml_backend_alloc_ctx_tensors(ctx.get(), backend.get()));
++        GGML_ASSERT(buf);
++        auto * gf = ggml_new_graph_custom(ctx.get(), 128, false);
++        ggml_build_forward_expand(gf, out);
++        tc.initialize_tensors(ctx.get());
++        for (int i = 0; i < 10; ++i) GGML_ASSERT(ggml_backend_graph_compute(backend.get(), gf) == GGML_STATUS_SUCCESS);
++        auto graph = (cudaGraphExec_t) infer_moe_cuda_graph(backend.get(), gf);
++        GGML_ASSERT(graph);
++        std::vector<float> reference(ggml_nelements(out)), got(reference.size());
++        ggml_backend_tensor_get(out, reference.data(), 0, reference.size() * sizeof(float));
++        printf("INFER_LAYOUT {\"tokens\":%d,\"kind\":\"%s\",\"routing\":\"%s\",\"weight_layout\":\"%s\",\"tensors\":[", tc.tokens, tc.kind.c_str(), tc.routing.c_str(),tc.native_layout?"native":"view");
++        bool first = true;
++        for (auto * t = ggml_get_first_tensor(ctx.get()); t; t = ggml_get_next_tensor(ctx.get(), t)) {
++            if (!first) printf(","); first = false;
++            printf("{\"name\":\"%s\",\"type\":\"%s\",\"op\":\"%s\",\"ne\":[%lld,%lld,%lld,%lld],\"nb\":[%zu,%zu,%zu,%zu],\"view_offset\":%zu}", t->name, ggml_type_name(t->type), ggml_op_name(t->op), (long long)t->ne[0], (long long)t->ne[1], (long long)t->ne[2], (long long)t->ne[3], t->nb[0], t->nb[1], t->nb[2], t->nb[3], t->view_offs);
++        }
++        printf("],\"ids\":["); auto ids = tc.routes();
++        for (size_t i=0; i<ids.size(); ++i) printf("%s%d",i?",":"",ids[i]);
++        printf("]}\n"); fflush(stdout);
++        for (const char * cache : {"hot", "cold"}) {
++            printf("INFER_RESULT {\"tokens\":%d,\"kind\":\"%s\",\"routing\":\"%s\",\"weight_layout\":\"%s\",\"cache\":\"%s\",\"gpu_samples_us\":[", tc.tokens, tc.kind.c_str(), tc.routing.c_str(),tc.native_layout?"native":"view", cache);
++            for (int i = 0; i < repeats; ++i) {
++                if (strcmp(cache, "cold") == 0) infer_cuda_check(cudaMemsetAsync(flush, 0, flush_bytes, stream));
++                // Keep events/launch queued before the GPU reaches the start event.
++                // The prelude touches no data and is outside the measured interval.
++                infer_moe_prelude((void *)stream);
++                // Directly replay the graph captured by the unchanged backend dispatch.
++                // Events share its stream; flushing is before the measured interval.
++                infer_cuda_check(cudaEventRecord(a, stream));
++                infer_cuda_check(cudaGraphLaunch(graph, stream));
++                infer_cuda_check(cudaEventRecord(b, stream));
++                infer_cuda_check(cudaEventSynchronize(b));
++                float ms; infer_cuda_check(cudaEventElapsedTime(&ms, a, b));
++                printf("%s%.6f", i ? "," : "", ms * 1000.f);
++            }
++            ggml_backend_tensor_get(out, got.data(), 0, got.size() * sizeof(float));
++            bool exact = memcmp(reference.data(), got.data(), got.size() * sizeof(float)) == 0;
++            for (float v : got) GGML_ASSERT(std::isfinite(v));
++            GGML_ASSERT(exact);
++            printf("],\"replay_exact\":true,\"flush_bytes\":%zu}\n", strcmp(cache,"cold")==0 ? flush_bytes : 0); fflush(stdout);
++        }
++    }
++    infer_cuda_check(cudaFree(flush)); infer_cuda_check(cudaEventDestroy(a)); infer_cuda_check(cudaEventDestroy(b));
++    return 0;
++}
++
+ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
++    if (std::getenv("INFER_MOE_CASES")) return infer_moe_cases();
+     std::vector<std::unique_ptr<test_case>> test_cases;
+     std::default_random_engine rng(0);
+ 
+@@ -13108,6 +13338,7 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+ 
+ // Test cases for performance evaluation: should be representative of real-world use cases
+ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
++    if (std::getenv("INFER_MOE_CASES")) return infer_moe_cases();
+     std::vector<std::unique_ptr<test_case>> test_cases;
+ 
+     for (float n : {128.0f, 4096.0f, 32768.0f, 1048576.0f}) {
+@@ -14159,6 +14390,7 @@ static void usage(char ** argv) {
+ }
+ 
+ int main(int argc, char ** argv) {
++    if (std::getenv("INFER_MOE_MEASURE")) return infer_moe_measure();
+     test_mode mode = MODE_TEST;
+     output_formats output_format = CONSOLE;
+     const char * op_names_filter = nullptr;

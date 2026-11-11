@@ -1,0 +1,20 @@
+/workspace/infer-opt-llama-moe/llama.cpp/ggml/src/ggml-cuda/fattn.cu: In function ‘void ggml_cuda_flash_attn_ext(ggml_backend_cuda_context&, ggml_tensor*)’:
+/workspace/infer-opt-llama-moe/llama.cpp/ggml/src/ggml-cuda/fattn.cu:794:6: warning: function might be candidate for attribute ‘noreturn’ [-Wsuggest-attribute=noreturn]
+  794 | void ggml_cuda_flash_attn_ext(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/infer-opt-llama-moe/llama.cpp/ggml/src/ggml-cuda/ggml-cuda.cu:6650:18: warning: no previous declaration for ‘void* infer_moe_cuda_stream(ggml_backend_t)’ [-Wmissing-declarations]
+ 6650 | extern "C" GGML_BACKEND_API void * infer_moe_cuda_stream(ggml_backend_t backend) {
+      |                  ^~~~~~~~~~~~~~~~~~~~~
+/workspace/infer-opt-llama-moe/llama.cpp/ggml/src/ggml-cuda/ggml-cuda.cu:6654:18: warning: no previous declaration for ‘void* infer_moe_cuda_graph(ggml_backend_t, ggml_cgraph*)’ [-Wmissing-declarations]
+ 6654 | extern "C" GGML_BACKEND_API void * infer_moe_cuda_graph(ggml_backend_t backend, ggml_cgraph * gf) {
+      |                  ^~~~~~~~~~~~~~~~~~~~
+/workspace/infer-opt-llama-moe/llama.cpp/ggml/src/ggml-cuda/ggml-cuda.cu:6668:17: warning: no previous declaration for ‘void infer_moe_prelude(void*)’ [-Wmissing-declarations]
+ 6668 | extern "C" GGML_BACKEND_API void infer_moe_prelude(void * stream) {
+      |                 ^~~~~~~~~~~~~~~~~
+/workspace/infer-opt-llama-moe/llama.cpp/tests/test-backend-ops.cpp: In function ‘int infer_moe_measure()’:
+/workspace/infer-opt-llama-moe/llama.cpp/tests/test-backend-ops.cpp:10553:13: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+10553 |             if (!first) printf(","); first = false;
+      |             ^~
+/workspace/infer-opt-llama-moe/llama.cpp/tests/test-backend-ops.cpp:10553:38: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+10553 |             if (!first) printf(","); first = false;
+      |                                      ^~~~~

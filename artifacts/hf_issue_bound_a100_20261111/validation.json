@@ -1,0 +1,19 @@
+{
+  "hf_cli_before": "1.16.4",
+  "hf_cli_after": "2.4.0",
+  "job_id": "6af41296ab34849891ade37a",
+  "job_stage": "COMPLETED",
+  "job_finished_at": "2026-11-11 07:02:10.464000+00:00",
+  "archive_hash_verified": true,
+  "executed_script_hash_verified": true,
+  "cuda_compile_succeeded": true,
+  "cuda_execution_succeeded": true,
+  "counter_permission_denied": true,
+  "uid": 0,
+  "SYS_ADMIN_effective": false,
+  "PERFMON_effective": false,
+  "driver_profiling_params": [
+    "RmProfilingAdminOnly: 1"
+  ],
+  "issue_bound_confirmed": false
+}

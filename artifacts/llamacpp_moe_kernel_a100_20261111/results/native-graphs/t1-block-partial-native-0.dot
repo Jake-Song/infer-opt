@@ -1,0 +1,88 @@
+digraph dot {
+subgraph cluster_20 {
+label="graph_20" graph[style="dashed"];
+"graph_20_node_0"[style="bold" shape="record" label="{KERNEL
+| {ID | 0 (topoId: 6) | _Z13quantize_q8_1PKfPvlllllj5uint3\<\<\<8,256,0\>\>\>}
+| {{node handle | func handle} | {0x000055612C5FF320 | 0x000055612B662D20}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_1"[style="bold" shape="record" label="{KERNEL
+| {ID | 1 (topoId: 5) | _Z13mul_mat_vec_qIL9ggml_type8ELi1ELb1ELb0ELb0EEvPKvS2_PKi31ggml_cuda_mm_fusion_args_devicePfj5uint3jjjS7_jjjS7_jjjj\<\<\<\{512,8\},\{32,4\},0\>\>\>}
+| {{node handle | func handle} | {0x000055612C600B20 | 0x000055612C2BE6A0}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_2"[style="bold" shape="record" label="{KERNEL
+| {ID | 2 (topoId: 4) | _Z13quantize_q8_1PKfPvlllllj5uint3\<\<\<\{2,8\},256,0\>\>\>}
+| {{node handle | func handle} | {0x000055612C5FE320 | 0x000055612B662D20}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_3"[style="bold" shape="record" label="{KERNEL
+| {ID | 3 (topoId: 3) | _Z13mul_mat_vec_qIL9ggml_type8ELi1ELb0ELb1ELb0EEvPKvS2_PKi31ggml_cuda_mm_fusion_args_devicePfj5uint3jjjS7_jjjS7_jjjj\<\<\<\{512,8\},\{32,4\},0\>\>\>}
+| {{node handle | func handle} | {0x000055612C5FFB20 | 0x000055612C2D91F0}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_4"[style="bold" shape="record" label="{KERNEL
+| {ID | 4 (topoId: 2) | _Z11k_bin_bcastIXadL_ZN42_INTERNAL_aaf73c25_11_binbcast_cu_6840010b6op_mulEffEEfffJPKfEEvPKT0_PKT1_PT2_jjj5uint3SB_SB_SB_SB_jjjjjjjjjjjDpT3_\<\<\<\{8,8\},128,0\>\>\>}
+| {{node handle | func handle} | {0x000055612C5FDB20 | 0x000055612D0B9630}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_5"[style="bold" shape="record" label="{KERNEL
+| {ID | 5 (topoId: 1) | _Z20cpy_scalar_transposeIfEvPKcPclllllllllllllll\<\<\<64,\{32,8\},0\>\>\>}
+| {{node handle | func handle} | {0x000055612C5FD320 | 0x000055612D55E3F0}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_6"[style="bold" shape="record" label="{KERNEL
+| {ID | 6 (topoId: 0) | _Z15reduce_rows_f32ILb0EEvPKfPfi\<\<\<2048,32,0\>\>\>}
+| {{node handle | func handle} | {0x000055612C602B20 | 0x000055612D63AB20}}
+| {accessPolicyWindow | {base_ptr | num_bytes | hitRatio | hitProp | missProp} | {0x0000000000000000 | 0 | 0.000000 | N | N}}
+| {cooperative | 0}
+| {priority | 0}
+| {cluster dim | (0,0,0)}
+| {preferred cluster dim | (0,0,0)}
+| {cluster scheduling policy preference | 1}
+}"];
+
+"graph_20_node_0" -> "graph_20_node_1" [headlabel=0];
+"graph_20_node_1" -> "graph_20_node_2" [headlabel=0];
+"graph_20_node_2" -> "graph_20_node_3" [headlabel=0];
+"graph_20_node_3" -> "graph_20_node_4" [headlabel=0];
+"graph_20_node_4" -> "graph_20_node_5" [headlabel=0];
+"graph_20_node_5" -> "graph_20_node_6" [headlabel=0];
+}
+}

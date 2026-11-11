@@ -1,0 +1,7 @@
+{
+  "command": [
+    "nvidia-smi",
+    "-q"
+  ],
+  "returncode": 0
+}

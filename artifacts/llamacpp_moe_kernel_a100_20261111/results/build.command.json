@@ -1,0 +1,9 @@
+[
+  "cmake",
+  "--build",
+  "/workspace/infer-opt-llama-moe/llama.cpp/build",
+  "-j",
+  "12",
+  "--target",
+  "test-backend-ops"
+]

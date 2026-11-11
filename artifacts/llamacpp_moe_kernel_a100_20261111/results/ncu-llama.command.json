@@ -1,0 +1,13 @@
+[
+  "/usr/local/cuda/bin/ncu",
+  "--target-processes",
+  "all",
+  "--set",
+  "full",
+  "--launch-skip",
+  "10",
+  "--launch-count",
+  "4",
+  "--csv",
+  "/workspace/infer-opt-llama-moe/llama.cpp/build/bin/test-backend-ops"
+]

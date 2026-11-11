@@ -1,0 +1,8 @@
+[
+  "git",
+  "-C",
+  "/workspace/infer-opt-llama-moe/llama.cpp",
+  "checkout",
+  "--detach",
+  "FETCH_HEAD"
+]

@@ -1,0 +1,7 @@
+{
+  "command": [
+    "nvcc",
+    "--version"
+  ],
+  "returncode": 0
+}

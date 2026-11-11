@@ -1,0 +1,7 @@
+{
+  "command": [
+    "ncu",
+    "--version"
+  ],
+  "returncode": 0
+}

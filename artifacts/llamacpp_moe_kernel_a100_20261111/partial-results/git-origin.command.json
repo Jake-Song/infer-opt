@@ -1,0 +1,9 @@
+[
+  "git",
+  "-C",
+  "/workspace/infer-opt-llama-moe/llama.cpp",
+  "remote",
+  "add",
+  "origin",
+  "https://github.com/ggml-org/llama.cpp.git"
+]

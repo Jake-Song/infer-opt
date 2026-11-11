@@ -1,0 +1,14 @@
+{
+  "command": [
+    "ncu",
+    "--set",
+    "basic",
+    "--launch-skip",
+    "3",
+    "--launch-count",
+    "1",
+    "--csv",
+    "/tmp/hf-issue-check/probe"
+  ],
+  "returncode": 1
+}

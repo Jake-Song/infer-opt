@@ -1,0 +1,6 @@
+[
+  "git",
+  "-C",
+  "/workspace/infer-opt-llama-moe/llama.cpp",
+  "diff"
+]

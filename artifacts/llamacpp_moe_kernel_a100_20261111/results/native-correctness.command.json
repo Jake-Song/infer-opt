@@ -1,0 +1,6 @@
+[
+  "/workspace/infer-opt-llama-moe/llama.cpp/build/bin/test-backend-ops",
+  "test",
+  "-b",
+  "CUDA0"
+]

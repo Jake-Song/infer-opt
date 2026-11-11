@@ -1,0 +1,6 @@
+[
+  "/tmp/infer-opt-llama-venv/bin/python",
+  "/workspace/infer-opt-llama-moe/source/scripts/llamacpp_moe/compare.py",
+  "--out",
+  "/workspace/infer-opt-llama-moe/results/infer-opt.json"
+]
