@@ -1,0 +1,20 @@
+{
+  "resumed_at_utc": "2026-11-12T04:57:40.400006+00:00",
+  "session": "qwen35-moe-int8-mtp",
+  "endpoint": "gpu-g4-s-ft-use1d0-2pzr2lhcd07yw",
+  "allocation": "existing user-provided session; no new allocation",
+  "hardware": {
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "vram_gib": 94.97076416015625,
+    "capability": [
+      12,
+      0
+    ],
+    "initial_torch": "2.14.1+cu130",
+    "python": "3.13.16"
+  },
+  "worker_pid": 3295,
+  "launcher_sha256": "888691aa7405476fa6f0d9829febed1a2020971a0865777f9b76f71c8c1e2875",
+  "source_bundle_matches_workspace": true,
+  "contract": "request.json"
+}

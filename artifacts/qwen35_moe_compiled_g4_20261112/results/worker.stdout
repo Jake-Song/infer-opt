@@ -1,0 +1,5 @@
+{"stage": "hardware", "elapsed_s": 0.0012691020965576172}
+{"stage": "dependencies", "elapsed_s": 20.017264366149902}
+{"stage": "download-and-verify-int8", "elapsed_s": 170.66787981987}
+{"stage": "compiled-parallel-benchmark", "elapsed_s": 310.8879165649414}
+{"stage": "complete", "elapsed_s": 1003.118928194046}

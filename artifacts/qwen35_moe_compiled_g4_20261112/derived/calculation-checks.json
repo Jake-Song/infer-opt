@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "checked_rows": 20,
+  "raw_manifest_files_unchanged": 76,
+  "config_and_quantization_sha256": "matched recorded checkpoint",
+  "independent_formula_checks": [
+    "active expert count",
+    "INT8 scale overhead",
+    "BF16 vocabulary size",
+    "DeltaNet state size",
+    "bandwidth units"
+  ],
+  "report_local_links": "resolved"
+}

@@ -1,0 +1,5 @@
+[
+  "/usr/bin/python3",
+  "-c",
+  "import torch,json; p=torch.cuda.get_device_properties(0); assert \"RTX PRO 6000\" in p.name and p.total_memory>90*2**30; assert torch.cuda.get_device_capability()==(12,0); print(json.dumps({\"gpu\":p.name,\"vram_gib\":p.total_memory/2**30}))"
+]

@@ -1,0 +1,10 @@
+{
+  "matches_prior_a100_inputs": true,
+  "tokens": {
+    "chat_long": 32,
+    "code_1k": 1000,
+    "prose_1k": 1057,
+    "math": 43,
+    "korean": 20
+  }
+}

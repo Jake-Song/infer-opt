@@ -1,0 +1,14 @@
+{
+  "session": "qwen35-moe-int8-mtp",
+  "endpoint": "gpu-g4-s-ft-use1d0-2pzr2lhcd07yw",
+  "source": "existing user-provided session",
+  "worker_exit_code": 0,
+  "benchmark_executed": true,
+  "model_downloaded": true,
+  "results_recovered_and_hash_verified": true,
+  "independent_validation_passed": true,
+  "stop_result": "Session terminated.",
+  "server_sessions": "No active sessions found on server.",
+  "active_sessions": 0,
+  "checked_at_utc": "2026-11-12T05:16:07.604731+00:00"
+}

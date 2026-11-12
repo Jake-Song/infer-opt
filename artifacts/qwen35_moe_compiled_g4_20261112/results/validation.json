@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "timed_samples": 100,
+  "generated_ids_checked": 25600,
+  "rows": 20,
+  "parallel_verification": true,
+  "matching_input_ids": true,
+  "worker_hash_checked": true,
+  "source_files": 32,
+  "cuda_graph_observed_all_modes": true,
+  "exact_runs": {
+    "plain": 25,
+    "mtp1": 10,
+    "mtp2": 10,
+    "mtp3": 5
+  }
+}

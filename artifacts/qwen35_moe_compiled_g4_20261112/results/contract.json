@@ -1,0 +1,20 @@
+{
+  "checkpoint_repo": "Jakemu/Qwen3.5-35B-A3B-int8-g128-mtp",
+  "checkpoint_revision": "331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "mode": "compile-reduce-overhead",
+  "verification": "parallel",
+  "ks": [
+    1,
+    2,
+    3
+  ],
+  "cache_capacity": 2048,
+  "new_tokens": 256,
+  "warmup": 3,
+  "repeats": 5,
+  "max_autotune": true,
+  "coordinate_descent_tuning": true,
+  "allow_inexact": true,
+  "warp_override": false,
+  "hf_reference_rerun": false
+}

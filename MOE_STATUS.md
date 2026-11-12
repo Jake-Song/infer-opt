@@ -298,13 +298,27 @@ Eight separate full-request CUDA node traces retain prefill and are kept apart
 from unprofiled decode timings; target/draft phase costs are not separately labeled.
 CUDA kernels and warp settings were not changed.
 
-### G4 compiled parallel MTP preparation, 2026-11-12
+### G4 compiled parallel MTP measurement, 2026-11-12
 
-The [prepared G4 experiment](artifacts/qwen35_moe_compiled_g4_20261112/README.md)
-compares compiled MTP-off against compiled parallel k=1/2/3 on the five original
-prompts. The original G4 compiled record used consistent verification.
-The initial allocation and one explicitly authorized retry both returned
-503 Service Unavailable; the retry disabled the CLI's internal automatic retries.
-No GPU execution, model download or new performance measurement occurred.
-The harness and independent validator are prepared, all active sessions are gone,
-and the user deferred execution to a later session.
+The [completed G4 experiment](artifacts/qwen35_moe_compiled_g4_20261112/README.md)
+used the user-provided RTX PRO 6000 Blackwell session (94.97 GiB) after the earlier
+503 allocation failures. It compared compiled MTP-off with parallel k=1/2/3 on
+the five frozen prompts, cache 2048, 256 output tokens, three warmups and five
+repeats. PyTorch 2.11.0+cu130, Triton 3.6.0 and FLA 0.6.0 were pinned; compiler
+autotune settings and default kernels/warps were retained. All four modes showed
+an actual `cudaGraphLaunch` in separate profiler evidence.
+
+MTP-off measured 4.54–4.65 ms/token. Code preserved all 256 tokens in every repeat
+at k=1/2/3: 3.9930/3.4206/3.2078 ms/token, or 1.16×/1.35×/1.44× against its
+4.6190 ms/token compiled baseline. Math preserved output at k=1/2, reaching
+3.3302 ms/token (1.37×) at k=2. Math k=3 diverged at generated token 18; chat,
+prose and Korean diverged at every k. Those timings remain diagnostic. Korean
+k=3 was also slower than its MTP-off baseline (4.8707 versus 4.5445 ms/token).
+
+The independent validator checked 100 timing samples and 25,600 generated IDs,
+input IDs, acceptance histograms, timing denominators and CUDA Graph evidence.
+The archive and 76 internal file hashes were verified. Parity is against the
+same compiled MTP-off decoder; HF BF16/eager logit equivalence and task accuracy
+were not rerun. The original G4 consistent-verification run is separate evidence.
+Results were recovered before stopping the exact session; the server then
+reported no active sessions. Earlier failed allocations remain in the artifact history.

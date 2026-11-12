@@ -1,0 +1,18 @@
+[
+  "/usr/bin/python3",
+  "/tmp/moe-compiled-g4-20261112/source/scripts/bench_qwen3_5_moe_compiled.py",
+  "--weights",
+  "/tmp/infer-opt-models/moe-compiled-g4-20261112/weights/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "--out",
+  "/tmp/moe-compiled-g4-20261112/results/benchmark",
+  "--cache-capacity",
+  "2048",
+  "--new-tokens",
+  "256",
+  "--repeats",
+  "5",
+  "--warmup",
+  "3",
+  "--ks",
+  "1,2,3"
+]

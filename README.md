@@ -46,6 +46,14 @@ and off/k=1/2/3. Math measured 9.13/6.79/5.96/5.64 ms/token; Korean measured
 9.19/7.48/7.40/8.40 ms/token. All MTP settings diverged from MTP-off, so these
 are diagnostic timings, not output-preserving speedups or a paired infer-opt ranking.
 
+The [2026-11-12 G4 compiled parallel-MTP experiment](artifacts/qwen35_moe_compiled_g4_20261112/README.md)
+confirmed CUDA Graph launches for MTP-off and k=1/2/3. On the same compiled
+baseline, code k=3 preserved all 256 tokens in five repeats at 3.21 ms/token
+(1.44×); math k=2 preserved output at 3.33 ms/token (1.37×). Math k=3 and every
+chat/prose/Korean MTP condition diverged, so those timings remain diagnostic.
+All 100 timing samples and 25,600 generated IDs were independently checked.
+This checks same-compiled-decoder parity; HF BF16/eager equivalence was not rerun.
+
 The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
 measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
 9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded

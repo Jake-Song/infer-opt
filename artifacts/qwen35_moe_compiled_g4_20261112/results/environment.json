@@ -1,0 +1,20 @@
+{
+  "packages": {
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0",
+    "transformers": "5.22.0",
+    "accelerate": "1.15.0",
+    "safetensors": "0.8.0",
+    "huggingface_hub": "1.33.0",
+    "flash-linear-attention": "0.6.0",
+    "fla-core": "0.6.0",
+    "numpy": "2.4.6"
+  },
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "gpu": {
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "vram_gib": 94.97076416015625
+  },
+  "sm_clock": "provider automatic boost; no clock lock or warp override",
+  "source_revision": "db6f68931ed47137fd3eb3e6ce944a971624ec63"
+}

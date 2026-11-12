@@ -1,0 +1,9 @@
+{
+  "archive": "final-results.tar.gz",
+  "sha256": "5eb337c5f7ddc4fbba76b9f7371bb2b3f6dc0996d67a5401440b4bc8699034cf",
+  "bytes": 71228,
+  "verified_files": 76,
+  "matches_remote": true,
+  "source_archive_and_workspace_hashes_checked": 32,
+  "credential_pattern_scan": "passed"
+}

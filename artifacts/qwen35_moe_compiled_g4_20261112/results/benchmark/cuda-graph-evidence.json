@@ -1,0 +1,38 @@
+{
+  "plain": {
+    "events": {
+      "Torch-Compiled Region: 0/0": 1,
+      "Pregraph bytecode": 1,
+      "## Call CompiledFxGraph flfktt5rkuh6zctf5wmstzoz2kx2debtecrhj5qclva5ffjl6w5k ##": 1,
+      "cudaGraphLaunch": 1
+    },
+    "cuda_graph_launch_observed": true
+  },
+  "mtp1": {
+    "events": {
+      "Torch-Compiled Region: 1/0": 1,
+      "Pregraph bytecode": 1,
+      "## Call CompiledFxGraph ffzwy6zlgjuy3a7tnrx43s5jqovm4yhamdn5rrpmt4a2rhyerex6 ##": 1,
+      "cudaGraphLaunch": 1
+    },
+    "cuda_graph_launch_observed": true
+  },
+  "mtp2": {
+    "events": {
+      "Torch-Compiled Region: 1/1": 1,
+      "Pregraph bytecode": 1,
+      "## Call CompiledFxGraph fs5p7r7ovlqlnn5fc7avelerxyioa3qgdzespym6xcqq6kdcpun7 ##": 1,
+      "cudaGraphLaunch": 1
+    },
+    "cuda_graph_launch_observed": true
+  },
+  "mtp3": {
+    "events": {
+      "Torch-Compiled Region: 1/2": 1,
+      "Pregraph bytecode": 1,
+      "## Call CompiledFxGraph fq5avkncglellykgnuznifihwsvm36mvpsdfjqrrhbuz4vgso4cu ##": 1,
+      "cudaGraphLaunch": 1
+    },
+    "cuda_graph_launch_observed": true
+  }
+}
