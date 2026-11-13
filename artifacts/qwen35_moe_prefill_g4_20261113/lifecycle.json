@@ -1,0 +1,21 @@
+{
+  "session": "moe-prefill-g4-20261113",
+  "initial_allocation": {
+    "gpu": "G4",
+    "high_mem": true,
+    "result": "backend rejected accelerator"
+  },
+  "authorized_retry": {
+    "gpu": "G4",
+    "high_mem": false,
+    "result": "ready"
+  },
+  "recovery": {
+    "archive_sha256_verified": true,
+    "internal_file_hashes_verified": 183,
+    "aggregation_verified": true
+  },
+  "stop_result": "Session terminated.",
+  "server_sessions_after_stop": "No active sessions found on server.",
+  "model_cache_root": "/tmp/infer-opt-models/moe-prefill-g4-20261113"
+}

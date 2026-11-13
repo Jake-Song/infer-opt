@@ -1,0 +1,180 @@
+{
+  "hardware": {
+    "memory_bandwidth_gbps": 1597,
+    "dense_bf16_tflops_estimate": 467.8005349636989,
+    "dense_rate_derivation": "503.8 TFLOP/s workstation dense BF16 * server 2430 MHz / workstation 2617 MHz"
+  },
+  "active_projection_parameters": {
+    "routed_experts_active": 1006632960,
+    "shared_expert": 125829120,
+    "linear_attention_projections": 1010565120,
+    "full_attention_projections": 272629760,
+    "routers_and_shared_gates": 21053440
+  },
+  "active_projection_parameter_sum": 2436710400,
+  "major_projection_flops_per_token": 4873420800,
+  "target_weight_bytes_by_group": {
+    "linear_attention": 1032203520,
+    "routers": 42106880,
+    "routed_experts": 32715571200,
+    "shared_expert": 127795200,
+    "other": 331776,
+    "full_attention": 276899840,
+    "lm_head": 1017118720
+  },
+  "all_experts_target_weight_scan_bytes": 35212027136,
+  "expert_block_bytes_per_layer_all_256": 817889280.0,
+  "assumptions": [
+    "Batch one, existing INT8 group128 weights with BF16 activations; no W8A8/FP8/FP4 conversion.",
+    "FMA counts as two FLOPs. Major GEMMs and useful causal full-attention QK/AV only.",
+    "GatedDeltaNet core, convolution, normalization, softmax, nonlinearities, dequantization and routing arithmetic omitted.",
+    "Weight-only GDDR traffic; activation/cache traffic, repeated tile reads and host/kernel launch costs omitted.",
+    "One off-chip read per used weight/scale; ideal fused dequantization; no whole-bank persistent on-chip residency.",
+    "Unique-expert coverage is hypothetical; actual routing IDs were not retained in the benchmark.",
+    "All-expert weight scan excludes MTP and full embedding table, includes one BF16 lm_head scan.",
+    "Bulk stage model assumes full expert coverage and sequential whole-layer attention/MoE stages, not arbitrary pipelining.",
+    "The theoretical estimate does not establish achievable latency or output-preserving speedup."
+  ],
+  "sources": {
+    "gpu": "https://www.nvidia.com/en-us/data-center/rtx-pro-6000-blackwell-server-edition/",
+    "architecture": "https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/quadro-product-literature/NVIDIA-RTX-Blackwell-PRO-GPU-Architecture-v1.0.pdf"
+  },
+  "input_sha256": {
+    "artifacts/qwen35_moe_compiled_g4_20261112/derived/inputs/config.json": "5e4d7f74fec2f360eb9cfbfcd6ec0c4c76e684d3a11caaed259d9fd9bfbc7944",
+    "artifacts/qwen35_moe_compiled_g4_20261112/derived/inputs/tensor-metadata.json": "238663075efaff165bda369239c8888bb91870843c7075b9efd7333ac791b819"
+  },
+  "rows": [
+    {
+      "tokens": 128,
+      "major_gemm_flops": 626167644160,
+      "major_gemm_compute_ms": 1.3385355453015682,
+      "routing_scenarios": [
+        {
+          "routing": "minimum_8_shared",
+          "unique_experts_per_layer": 8,
+          "weights_read_bytes": 3518817536.0,
+          "weights_only_memory_ms": 2.203392320601127,
+          "global_roofline_ms": 2.203392320601127
+        },
+        {
+          "routing": "uniform_expected",
+          "unique_experts_per_layer": 251.60114596587061,
+          "weights_read_bytes": 34649874704.93763,
+          "weights_only_memory_ms": 21.696853290505715,
+          "global_roofline_ms": 21.696853290505715
+        },
+        {
+          "routing": "all_256",
+          "unique_experts_per_layer": 256,
+          "weights_read_bytes": 35212027136.0,
+          "weights_only_memory_ms": 22.04885856981841,
+          "global_roofline_ms": 22.04885856981841
+        }
+      ],
+      "bulk_layer_stage_model_ms": 22.048858569818414,
+      "sorted_measured_ms": {
+        "math": 709.1923990000168,
+        "korean": 595.3941860000214
+      }
+    },
+    {
+      "tokens": 512,
+      "major_gemm_flops": 2517725347840,
+      "major_gemm_compute_ms": 5.38204888550496,
+      "routing_scenarios": [
+        {
+          "routing": "minimum_8_shared",
+          "unique_experts_per_layer": 8,
+          "weights_read_bytes": 3518817536.0,
+          "weights_only_memory_ms": 2.203392320601127,
+          "global_roofline_ms": 5.38204888550496
+        },
+        {
+          "routing": "uniform_expected",
+          "unique_experts_per_layer": 255.9999776828718,
+          "weights_read_bytes": 35212024283.978134,
+          "weights_only_memory_ms": 22.048856783956253,
+          "global_roofline_ms": 22.048856783956253
+        },
+        {
+          "routing": "all_256",
+          "unique_experts_per_layer": 256,
+          "weights_read_bytes": 35212027136.0,
+          "weights_only_memory_ms": 22.04885856981841,
+          "global_roofline_ms": 22.04885856981841
+        }
+      ],
+      "bulk_layer_stage_model_ms": 24.083999039734675,
+      "sorted_measured_ms": {
+        "math": 860.2193620000662,
+        "korean": 666.1427760000151
+      }
+    },
+    {
+      "tokens": 2048,
+      "major_gemm_flops": 10325548072960,
+      "major_gemm_compute_ms": 22.072544388520754,
+      "routing_scenarios": [
+        {
+          "routing": "minimum_8_shared",
+          "unique_experts_per_layer": 8,
+          "weights_read_bytes": 3518817536.0,
+          "weights_only_memory_ms": 2.203392320601127,
+          "global_roofline_ms": 22.072544388520754
+        },
+        {
+          "routing": "uniform_expected",
+          "unique_experts_per_layer": 256.0,
+          "weights_read_bytes": 35212027136.0,
+          "weights_only_memory_ms": 22.04885856981841,
+          "global_roofline_ms": 22.072544388520754
+        },
+        {
+          "routing": "all_256",
+          "unique_experts_per_layer": 256,
+          "weights_read_bytes": 35212027136.0,
+          "weights_only_memory_ms": 22.04885856981841,
+          "global_roofline_ms": 22.072544388520754
+        }
+      ],
+      "bulk_layer_stage_model_ms": 33.19947182988636,
+      "sorted_measured_ms": {
+        "math": 915.1321729999609,
+        "korean": 745.1612110000951
+      }
+    },
+    {
+      "tokens": 4096,
+      "major_gemm_flops": 21337273794560,
+      "major_gemm_compute_ms": 45.611905502022914,
+      "routing_scenarios": [
+        {
+          "routing": "minimum_8_shared",
+          "unique_experts_per_layer": 8,
+          "weights_read_bytes": 3518817536.0,
+          "weights_only_memory_ms": 2.203392320601127,
+          "global_roofline_ms": 45.611905502022914
+        },
+        {
+          "routing": "uniform_expected",
+          "unique_experts_per_layer": 256.0,
+          "weights_read_bytes": 35212027136.0,
+          "weights_only_memory_ms": 22.04885856981841,
+          "global_roofline_ms": 45.611905502022914
+        },
+        {
+          "routing": "all_256",
+          "unique_experts_per_layer": 256,
+          "weights_read_bytes": 35212027136.0,
+          "weights_only_memory_ms": 22.04885856981841,
+          "global_roofline_ms": 45.611905502022914
+        }
+      ],
+      "bulk_layer_stage_model_ms": 46.63880265956971,
+      "sorted_measured_ms": {
+        "math": 985.2988420000202,
+        "korean": 821.321264000062
+      }
+    }
+  ]
+}

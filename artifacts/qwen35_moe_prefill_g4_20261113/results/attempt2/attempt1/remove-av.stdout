@@ -1,0 +1,6 @@
+Found existing installation: torchvision 0.29.1+cu130
+Uninstalling torchvision-0.29.1+cu130:
+  Successfully uninstalled torchvision-0.29.1+cu130
+Found existing installation: torchaudio 2.11.0+cu130
+Uninstalling torchaudio-2.11.0+cu130:
+  Successfully uninstalled torchaudio-2.11.0+cu130

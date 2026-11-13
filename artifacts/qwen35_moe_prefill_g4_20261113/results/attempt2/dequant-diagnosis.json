@@ -1,0 +1,50 @@
+[
+  {
+    "tokens": 128,
+    "experts_with_1_to_8_rows": 249,
+    "grouped_vs_dequantized": {
+      "exact": false,
+      "max_abs": 0.00390625,
+      "rms_relative": 0.0005301313940435648,
+      "allclose": false
+    },
+    "legacy_vs_dequantized": {
+      "exact": false,
+      "max_abs": 0.005859375,
+      "rms_relative": 0.006319737061858177,
+      "allclose": false
+    }
+  },
+  {
+    "tokens": 512,
+    "experts_with_1_to_8_rows": 3,
+    "grouped_vs_dequantized": {
+      "exact": false,
+      "max_abs": 0.0068359375,
+      "rms_relative": 0.004750152118504047,
+      "allclose": false
+    },
+    "legacy_vs_dequantized": {
+      "exact": false,
+      "max_abs": 0.00390625,
+      "rms_relative": 0.000426521961344406,
+      "allclose": false
+    }
+  },
+  {
+    "tokens": 2048,
+    "experts_with_1_to_8_rows": 0,
+    "grouped_vs_dequantized": {
+      "exact": false,
+      "max_abs": 0.0078125,
+      "rms_relative": 0.005945360288023949,
+      "allclose": false
+    },
+    "legacy_vs_dequantized": {
+      "exact": true,
+      "max_abs": 0.0,
+      "rms_relative": 0.0,
+      "allclose": true
+    }
+  }
+]

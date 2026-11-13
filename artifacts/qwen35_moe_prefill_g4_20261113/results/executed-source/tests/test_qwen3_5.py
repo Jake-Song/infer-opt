@@ -1,0 +1,258 @@
+import pytest
+import torch
+
+from infer_opt.qwen3_5 import Qwen3_5ForCausalLM, Qwen3_5TextConfig
+
+
+def tiny_config() -> Qwen3_5TextConfig:
+    return Qwen3_5TextConfig(
+        vocab_size=97, hidden_size=64, intermediate_size=96, num_hidden_layers=4,
+        num_attention_heads=4, num_key_value_heads=2, head_dim=16, rms_norm_eps=1e-6,
+        layer_types=["linear_attention", "linear_attention", "linear_attention", "full_attention"],
+        linear_conv_kernel_dim=4, linear_key_head_dim=8, linear_value_head_dim=8,
+        linear_num_key_heads=2, linear_num_value_heads=4,
+        rope_theta=10000.0, partial_rotary_factor=0.25, mrope_section=[1, 1, 0],
+    )
+
+
+def make_model() -> Qwen3_5ForCausalLM:
+    torch.manual_seed(0)
+    model = Qwen3_5ForCausalLM(tiny_config()).double().eval()
+    with torch.no_grad():
+        for name, p in model.named_parameters():
+            if name.endswith("A_log"):
+                p.copy_(torch.randn_like(p) * 0.5)
+            elif "norm" in name or name.endswith("dt_bias"):
+                p.copy_(torch.randn_like(p) * 0.1)
+            else:
+                p.copy_(torch.randn_like(p) * 0.2)
+    return model
+
+
+def test_token_by_token_matches_full_forward():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 150))  # >2 delta-rule chunks of 64
+    with torch.no_grad():
+        full = model(ids)
+        cache = model.new_cache()
+        steps = [model(ids[:, :100], cache)] + [model(ids[:, i : i + 1], cache) for i in range(100, 150)]
+    assert torch.allclose(full, torch.cat(steps, dim=1), atol=1e-4)  # delta rule runs in fp32 internally
+    assert cache.seen_tokens == 150
+
+
+def test_chunked_prefill_matches_full_forward():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 140))
+    with torch.no_grad():
+        full = model(ids)
+        cache = model.new_cache()
+        parts = [model(ids[:, a:b], cache) for a, b in [(0, 37), (37, 101), (101, 140)]]
+    assert torch.allclose(full, torch.cat(parts, dim=1), atol=1e-4)  # delta rule runs in fp32 internally
+
+
+def test_short_prompt_smaller_than_conv_kernel():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 2))
+    with torch.no_grad():
+        full = model(torch.cat([ids, ids], dim=1))
+        cache = model.new_cache()
+        out = torch.cat([model(ids, cache), model(ids[:, :1], cache), model(ids[:, 1:], cache)], dim=1)
+    assert torch.allclose(full, out, atol=1e-4)  # delta rule runs in fp32 internally
+
+
+def test_cached_greedy_matches_uncached():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 9))
+    assert torch.equal(model.generate_greedy(ids, 12, use_cache=True), model.generate_greedy(ids, 12, use_cache=False))
+
+
+def test_recurrent_state_is_constant_size():
+    model = make_model()
+    cache = model.new_cache()
+    with torch.no_grad():
+        model(torch.randint(0, 97, (1, 10)), cache)
+        before = [t.numel() for t in cache.recurrent_states if t is not None]
+        model(torch.randint(0, 97, (1, 1)), cache)
+    assert before == [t.numel() for t in cache.recurrent_states if t is not None]
+    assert len(before) == 3
+
+
+def test_static_cache_matches_dynamic_cache():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 70))
+    with torch.no_grad():
+        dyn, sta = model.new_cache(), model.new_cache(batch_size=2, max_seq_len=80)
+        out_d = [model(ids[:, :60], dyn)] + [model(ids[:, i : i + 1], dyn) for i in range(60, 70)]
+        out_s = [model(ids[:, :60], sta)] + [model(ids[:, i : i + 1], sta) for i in range(60, 70)]
+    assert torch.equal(torch.cat(out_d, 1), torch.cat(out_s, 1))
+    assert sta.keys[3].shape[2] == 80 and sta.seen_tokens == 70
+
+
+def test_static_cache_buffers_are_updated_in_place():
+    model = make_model()
+    cache = model.new_cache(max_seq_len=16)
+    addresses = [t.data_ptr() for t in cache.keys + cache.conv_states + cache.recurrent_states if t is not None]
+    with torch.no_grad():
+        model(torch.randint(0, 97, (1, 5)), cache)
+        model(torch.randint(0, 97, (1, 1)), cache)
+    assert addresses == [t.data_ptr() for t in cache.keys + cache.conv_states + cache.recurrent_states if t is not None]
+
+
+def test_static_cache_reset_and_overflow():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 12))
+    cache = model.new_cache(max_seq_len=12)
+    with torch.no_grad():
+        first = model(ids, cache)
+        cache.reset()
+        second = model(ids, cache)  # a dirty cache would change this
+        assert torch.equal(first, second)
+        try:
+            model(ids[:, :1], cache)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("expected overflow error")
+
+
+def test_static_greedy_matches_dynamic_greedy():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 9))
+    assert torch.equal(model.generate_greedy(ids, 12), model.generate_greedy(ids, 12, static_cache=True))
+
+
+def test_fixed_shape_decode_matches_sliced_decode():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 70))
+    with torch.no_grad():
+        ref_cache = model.new_cache(batch_size=2, max_seq_len=90)
+        fix_cache = model.new_cache(batch_size=2, max_seq_len=90)
+        model(ids[:, :40], ref_cache)
+        model(ids[:, :40], fix_cache)
+        assert fix_cache.position.item() == 40
+        for i in range(40, 70):
+            want = model(ids[:, i : i + 1], ref_cache)
+            got = model.decode_step(ids[:, i : i + 1], fix_cache)
+            assert torch.allclose(want, got, atol=1e-4), i
+    assert fix_cache.position.item() == fix_cache.seen_tokens == 70
+
+
+def test_fused_projections_give_the_same_logits():
+    model = make_model()
+    ids = torch.randint(0, 97, (2, 50))
+    with torch.no_grad():
+        cache = model.new_cache(batch_size=2, max_seq_len=60)
+        want = torch.cat([model(ids[:, :40], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(40, 50)], 1)
+        assert model.fuse_projections() == 8  # 4 MLPs, 3 GatedDeltaNets, 1 attention: one group each
+        assert model.fuse_projections() == 0  # nothing left to fuse
+        layer = model.model.language_model.layers[3]
+        assert layer.mlp.gate_up_proj.out_features == 2 * 96 and not hasattr(layer.mlp, "gate_proj")
+        cache = model.new_cache(batch_size=2, max_seq_len=60)
+        got = torch.cat([model(ids[:, :40], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(40, 50)], 1)
+    assert torch.allclose(want, got, atol=1e-10)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="the Triton decode attention needs CUDA")
+@pytest.mark.parametrize("position", [0, 37, 89])  # empty cache, partly filled, last slot
+def test_cuda_decode_attention_matches_fp32_reference(position):
+    from infer_opt.attention_kernels import decode_attention
+
+    torch.manual_seed(0)
+    q = torch.randn(2, 4, 6, 256, device="cuda", dtype=torch.float16)  # 27B layout: 6 query heads per KV head
+    k, v = (torch.randn(2, 4, 90, 256, device="cuda", dtype=torch.float16) for _ in range(2))  # 2 slices of 64
+    pos = torch.tensor([position], device="cuda")
+    scores = (q.float().unsqueeze(-2) * k.float().unsqueeze(2)).sum(-1) / 16
+    scores = scores.masked_fill(torch.arange(90, device="cuda") > pos, float("-inf"))
+    expected = (scores.softmax(-1).unsqueeze(-1) * v.float().unsqueeze(2)).sum(-2)
+    for fn in (decode_attention, torch.compile(decode_attention, fullgraph=True)):
+        got = fn(q, k, v, pos, 1 / 16)
+        assert got.dtype == torch.float16 and torch.allclose(got.float(), expected, atol=2e-3)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA decode path")
+def test_cuda_fixed_shape_decode_matches_sliced_decode():
+    model = make_model().half().cuda()
+    ids = torch.randint(0, 97, (1, 60), device="cuda")
+    with torch.no_grad():
+        ref_cache, fix_cache = model.new_cache(1, 70), model.new_cache(1, 70)
+        model(ids[:, :40], ref_cache)
+        model(ids[:, :40], fix_cache)
+        for i in range(40, 60):  # sliced: SDPA over the filled cache; fixed shape: Triton kernel over the buffer
+            want = model(ids[:, i : i + 1], ref_cache)
+            got = model.decode_step(ids[:, i : i + 1], fix_cache)
+            assert torch.allclose(want.float(), got.float(), atol=2e-2, rtol=1e-2), i
+
+
+def test_fixed_shape_decode_after_one_token_prompt_and_reset():
+    model = make_model()
+    cache = model.new_cache(max_seq_len=12)
+    ids = torch.randint(0, 97, (1, 12))
+    with torch.no_grad():
+        first = [model(ids[:, :1], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(1, 12)]
+        cache.reset()
+        assert cache.position.item() == 0
+        second = [model(ids[:, :1], cache)] + [model.decode_step(ids[:, i : i + 1], cache) for i in range(1, 12)]
+    assert torch.equal(torch.cat(first, 1), torch.cat(second, 1))
+    full = model(ids)
+    assert torch.allclose(full, torch.cat(first, 1), atol=1e-4)
+
+
+def test_decode_step_requires_static_cache_and_checks_capacity():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 4))
+    with torch.no_grad():
+        dynamic = model.new_cache()
+        model(ids, dynamic)
+        for bad in (lambda: model.decode_step(ids[:, :1], dynamic),):
+            try:
+                bad()
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("expected ValueError for a dynamic cache")
+        cache = model.new_cache(max_seq_len=5)
+        model(ids, cache)
+        model.decode_step(ids[:, :1], cache)
+        try:
+            model.decode_step(ids[:, :1], cache)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("expected a capacity error")
+
+
+def test_generate_with_fixed_shape_decoder_matches_default_generate():
+    model = make_model()
+    ids = torch.randint(0, 97, (1, 9))
+    assert torch.equal(model.generate_greedy(ids, 14), model.generate_greedy(ids, 14, decode_mode="eager"))
+
+
+def test_layer_summary_describes_layout():
+    assert tiny_config().layer_summary() == {
+        "num_layers": 4, "linear_attention": 3, "full_attention": 1, "pattern": "LLLF",
+    }
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="inductor Triton code generation")
+def test_cuda_wide_persistent_reductions_by_width_and_rows():
+    from torch._inductor.utils import run_and_get_code
+
+    from infer_opt.inductor_choices import wide_persistent_reductions
+
+    def rms(x):  # the decode RMSNorm: one row 5120 wide (Qwen3.5-27B hidden size)
+        h = x.float()
+        return (h * torch.rsqrt(h.pow(2).mean(-1, keepdim=True) + 1e-6)).half()
+
+    def compiled_code(x, wide):
+        torch._dynamo.reset()
+        with wide_persistent_reductions() if wide else torch.no_grad():
+            out, code = run_and_get_code(torch.compile(rms), x)
+        assert torch.allclose(out.float(), rms(x).float(), atol=1e-3, rtol=2e-3)  # 1 fp16 ulp
+        return "\n".join(code)
+
+    row = torch.randn(1, 1, 5120, device="cuda", dtype=torch.float16)
+    assert "@triton_heuristics.reduction" in compiled_code(row, wide=False)
+    assert "@triton_heuristics.persistent_reduction" in compiled_code(row, wide=True)
+    rows = torch.randn(2048, 5120, device="cuda", dtype=torch.float16)  # lm_head-like: many rows stay looped
+    assert "@triton_heuristics.persistent_reduction" not in compiled_code(rows, wide=True)
+    torch._dynamo.reset()

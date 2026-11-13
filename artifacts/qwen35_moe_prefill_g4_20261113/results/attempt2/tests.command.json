@@ -1,0 +1,7 @@
+[
+  "/usr/bin/python3",
+  "-m",
+  "pytest",
+  "tests/test_moe_prefill.py",
+  "-q"
+]

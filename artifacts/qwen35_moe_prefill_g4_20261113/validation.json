@@ -1,0 +1,68 @@
+{
+  "archive_files_verified": 183,
+  "expert_cases": 9,
+  "expert_timing_samples": 90,
+  "model_cases": 8,
+  "model_timing_samples": 80,
+  "continuation_ids_checked": 256,
+  "all_last_logits_exact": true,
+  "all_continuations_equal": true,
+  "model_rows": [
+    {
+      "prompt": "math",
+      "tokens": 128,
+      "reference_ms": 873.8416539999889,
+      "sorted_ms": 709.1923990000168,
+      "speedup": 1.2321644383557024
+    },
+    {
+      "prompt": "math",
+      "tokens": 512,
+      "reference_ms": 1266.0665560000552,
+      "sorted_ms": 860.2193620000662,
+      "speedup": 1.4717950001222568
+    },
+    {
+      "prompt": "math",
+      "tokens": 2048,
+      "reference_ms": 1383.124334999934,
+      "sorted_ms": 915.1321729999609,
+      "speedup": 1.5113929723023662
+    },
+    {
+      "prompt": "math",
+      "tokens": 4096,
+      "reference_ms": 1446.1123600000292,
+      "sorted_ms": 985.2988420000202,
+      "speedup": 1.4676890891951333
+    },
+    {
+      "prompt": "korean",
+      "tokens": 128,
+      "reference_ms": 972.699334999902,
+      "sorted_ms": 595.3941860000214,
+      "speedup": 1.6337064719000585
+    },
+    {
+      "prompt": "korean",
+      "tokens": 512,
+      "reference_ms": 1049.6107029999848,
+      "sorted_ms": 666.1427760000151,
+      "speedup": 1.5756542603412709
+    },
+    {
+      "prompt": "korean",
+      "tokens": 2048,
+      "reference_ms": 1187.169471000061,
+      "sorted_ms": 745.1612110000951,
+      "speedup": 1.5931713211517522
+    },
+    {
+      "prompt": "korean",
+      "tokens": 4096,
+      "reference_ms": 1268.0650859999787,
+      "sorted_ms": 821.321264000062,
+      "speedup": 1.5439331009453603
+    }
+  ]
+}

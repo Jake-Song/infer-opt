@@ -1,0 +1,1354 @@
+FFFFFFFFFFFFFFFFFF.                                                      [100%]
+=================================== FAILURES ===================================
+____________________ test_grouped_prefill[dtype0-shared-6] _____________________
+
+tokens = 6, routing = 'shared', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bdf53a80>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde709a0>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1c1b31470>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-shared-17] ____________________
+
+tokens = 17, routing = 'shared', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bc328050>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde6cc20>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc36b7b0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-shared-65] ____________________
+
+tokens = 65, routing = 'shared', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde79150>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde720c0>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bff47d30>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-spread-6] _____________________
+
+tokens = 6, routing = 'spread', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde2cc50>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde6c220>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bff11430>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-spread-17] ____________________
+
+tokens = 17, routing = 'spread', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde2d650>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde709a0>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ebf42b52bf0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-spread-65] ____________________
+
+tokens = 65, routing = 'spread', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bc334500>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde6e3e0>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc1d32b0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-skewed-6] _____________________
+
+tokens = 6, routing = 'skewed', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bdfb6210>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde71da0>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1c0560bf0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-skewed-17] ____________________
+
+tokens = 17, routing = 'skewed', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde3edd0>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde6fa60>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc183bb0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype0-skewed-65] ____________________
+
+tokens = 65, routing = 'skewed', dtype = torch.bfloat16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde3f850>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde73240>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc3d56b0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-shared-6] _____________________
+
+tokens = 6, routing = 'shared', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde7d5a0>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc376700>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bfed1470>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-shared-17] ____________________
+
+tokens = 17, routing = 'shared', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bde6efd0>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde6d300>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ebf42bf04b0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-shared-65] ____________________
+
+tokens = 65, routing = 'shared', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bc3b9760>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc3a13a0>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bde045f0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-spread-6] _____________________
+
+tokens = 6, routing = 'spread', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ebf42b43750>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc3a2c00>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc11eb70>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-spread-17] ____________________
+
+tokens = 17, routing = 'spread', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bc3dbcd0>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc374220>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc29eb70>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-spread-65] ____________________
+
+tokens = 65, routing = 'spread', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ebf42b43c50>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc3a0220>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ebf42bdaef0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-skewed-6] _____________________
+
+tokens = 6, routing = 'skewed', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bc2b8dd0>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc375b20>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc19eb70>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-skewed-17] ____________________
+
+tokens = 17, routing = 'skewed', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ebf42b425d0>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bde6d580>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ebf42c1a8b0>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+____________________ test_grouped_prefill[dtype1-skewed-65] ____________________
+
+tokens = 65, routing = 'skewed', dtype = torch.float16
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
+    @pytest.mark.parametrize('tokens', [6, 17, 65])
+    @pytest.mark.parametrize('routing', ['shared', 'spread', 'skewed'])
+    @pytest.mark.parametrize('dtype', [torch.bfloat16, torch.float16])
+    def test_grouped_prefill(tokens, routing, dtype):
+        from infer_opt.moe_prefill import grouped_int8_experts
+        torch.manual_seed(93)
+        e, h, m, group, top = 13, 128, 64, 32, 3
+        gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
+        down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
+        gs = (torch.rand(e, 2*m, h//group, device='cuda') * .0003 + .0001).to(dtype)
+        ds = (torch.rand(e, h, m//group, device='cuda') * .0003 + .0001).to(dtype)
+        x = torch.randn(tokens, h, device='cuda', dtype=dtype)
+        weights = torch.softmax(torch.randn(tokens, top, device='cuda'), -1).to(dtype)
+        ids = torch.rand(tokens, e, device='cuda').topk(top, -1).indices
+        if routing == 'shared':
+            ids[:] = torch.tensor([12, 0, 7], device='cuda')
+        elif routing == 'skewed':
+            ids[:tokens//2] = torch.tensor([12, 0, 7], device='cuda')
+        run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+        want = reference(x, ids, weights, gu, gs, down, ds)
+>       torch.testing.assert_close(run(), want, atol=2e-4, rtol=.03)
+                                   ^^^^^
+
+tests/test_moe_prefill.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_moe_prefill.py:39: in <lambda>
+    run = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+infer_opt/moe_prefill.py:130: in grouped_int8_experts
+    _combine[(t, triton.cdiv(h, 256))](routed, ids, weights, result, h, top,
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:720: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/runtime/jit.py:849: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:304: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <triton.compiler.compiler.ASTSource object at 0x7ec1bc2bab50>
+target = GPUTarget(backend='cuda', arch=120, warp_size=32)
+options = CUDAOptions(num_warps=4, num_ctas=1, num_stages=3, warp_size=32, maxnreg=None, ptx_version=None, ptx_options=None, ir_...b/libdevice.10.bc'),), debug=False, backend_name='cuda', sanitize_overflow=True, arch='sm120', instrumentation_mode='')
+codegen_fns = {'convert_custom_types': <function convert_custom_float8_sm80 at 0x7ec1be028b80>, 'min_dot_size': <function min_dot_size.<locals>.check_dot_compatibility at 0x7ec1bc374360>}
+module_map = {'triton.language.extra.libdevice': <module 'triton.language.extra.cuda.libdevice' from '/usr/local/lib/python3.13/dist-packages/triton/language/extra/cuda/libdevice.py'>}
+context = <triton._C.libtriton.ir.context object at 0x7ec1bc276930>
+
+    def make_ir(self, target: GPUTarget, options, codegen_fns, module_map, context):
+        from .code_generator import ast_to_ttir
+>       return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+                           module_map=module_map)
+E       triton.compiler.errors.CompilationError: at 9:4:
+E       def _combine(Y, Ids, W, Out, H: tl.constexpr, TOP: tl.constexpr,
+E                    BT: tl.constexpr, BLOCK: tl.constexpr):
+E           token = tl.program_id(0)
+E           col = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+E           slots = tl.arange(0, BT)
+E           ids = tl.load(Ids + token * TOP + slots, slots < TOP, other=2147483647)
+E           prev = -1
+E           acc = tl.full((BLOCK,), 0, tl.float32)
+E           for _ in range(TOP):
+E           ^
+E       AssertionError('Loop-carried variable prev has initial type int32 but is re-assigned to int64 in loop! Please make sure that the type stays consistent.')
+
+/usr/local/lib/python3.13/dist-packages/triton/compiler/compiler.py:80: CompilationError
+=========================== short test summary info ============================
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-shared-6] - tri...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-shared-17] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-shared-65] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-spread-6] - tri...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-spread-17] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-spread-65] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-skewed-6] - tri...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-skewed-17] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype0-skewed-65] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-shared-6] - tri...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-shared-17] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-shared-65] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-spread-6] - tri...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-spread-17] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-spread-65] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-skewed-6] - tri...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-skewed-17] - tr...
+FAILED tests/test_moe_prefill.py::test_grouped_prefill[dtype1-skewed-65] - tr...
+18 failed, 1 passed in 4.30s

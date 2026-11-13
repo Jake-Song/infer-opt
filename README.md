@@ -54,6 +54,14 @@ chat/prose/Korean MTP condition diverged, so those timings remain diagnostic.
 All 100 timing samples and 25,600 generated IDs were independently checked.
 This checks same-compiled-decoder parity; HF BF16/eager equivalence was not rerun.
 
+The [2026-11-13 G4 prefill experiment](artifacts/qwen35_moe_prefill_g4_20261113/README.md)
+adds opt-in stable route sorting while retaining the existing expert arithmetic.
+Warm batch-one text-model TTFT improved 1.23–1.63× over eight controlled
+math/Korean token workloads of 128–4096 tokens. All last-position logits were
+bit-exact and sixteen-token continuations matched. Separate profiles confirmed
+10240→40 stream synchronizations per full prefill. Reference remains the default;
+the separate new grouped GEMM failed real-shape numerical checks and was not adopted.
+
 The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
 measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
 9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded

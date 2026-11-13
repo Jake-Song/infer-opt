@@ -92,10 +92,11 @@ def normalize_expert_state(state, config):
 
 
 class Int8Experts(nn.Module):
-    """Packed W8A16 banks with selected-expert CUDA decode and reference prefill."""
+    """Packed W8A16 banks; grouped prefill is an explicit experimental opt-in."""
     def __init__(self, gate_up, gate_up_scale, down, down_scale, group_size):
         super().__init__()
         self.group_size = group_size
+        self.prefill_backend = 'reference'
         self.register_buffer('gate_up_proj', gate_up)
         self.register_buffer('gate_up_scale', gate_up_scale)
         self.register_buffer('down_proj', down)
@@ -116,11 +117,47 @@ class Int8Experts(nn.Module):
         return cls(gu, gs, down, ds, group_size)
 
     def forward(self, x, indices, weights):
-        from .quant import int8_linear
         if x.is_cuda and x.dtype in (torch.bfloat16, torch.float16) and x.shape[0] <= 5:
             from .moe_kernels import selected_int8_experts
             return selected_int8_experts(x, indices, weights, self.gate_up_proj,
                                         self.gate_up_scale, self.down_proj, self.down_scale)
+        if self.prefill_backend == 'grouped' and x.is_cuda and x.dtype in (torch.bfloat16, torch.float16):
+            from .moe_prefill import grouped_int8_experts
+            return grouped_int8_experts(x, indices, weights, self.gate_up_proj,
+                                       self.gate_up_scale, self.down_proj, self.down_scale)
+        if self.prefill_backend == 'sorted':
+            return self.forward_sorted(x, indices, weights)
+        return self.forward_reference(x, indices, weights)
+
+    def forward_sorted(self, x, indices, weights):
+        """Keep expert arithmetic/order; replace per-expert nonzero syncs with one count read.
+
+        Stable sorting preserves torch.where's token/slot order within each expert.
+        This eager prefill path intentionally synchronizes once for CPU loop bounds.
+        """
+        from .quant import int8_linear
+        experts = self.gate_up_proj.shape[0]
+        top = indices.shape[1]
+        flat = indices.reshape(-1).long()
+        order = torch.argsort(flat, stable=True)
+        tokens = order // top
+        slots = order % top
+        counts = torch.zeros(experts, device=x.device, dtype=torch.long)
+        counts.scatter_add_(0, flat, torch.ones_like(flat))
+        output = torch.zeros_like(x)
+        start = 0
+        for expert, count in enumerate(counts.tolist()):
+            if count:
+                selected = tokens[start:start + count]
+                selected_slots = slots[start:start + count]
+                gate, up = int8_linear(x[selected], self.gate_up_proj[expert], self.gate_up_scale[expert]).chunk(2, -1)
+                y = int8_linear(F.silu(gate) * up, self.down_proj[expert], self.down_scale[expert])
+                output.index_add_(0, selected, (y * weights[selected, selected_slots, None]).to(x.dtype))
+                start += count
+        return output
+
+    def forward_reference(self, x, indices, weights):
+        from .quant import int8_linear
         output = torch.zeros_like(x)
         for expert in range(self.gate_up_proj.shape[0]):
             tokens, slots = torch.where(indices == expert)

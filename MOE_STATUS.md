@@ -322,3 +322,33 @@ same compiled MTP-off decoder; HF BF16/eager logit equivalence and task accuracy
 were not rerun. The original G4 consistent-verification run is separate evidence.
 Results were recovered before stopping the exact session; the server then
 reported no active sessions. Earlier failed allocations remain in the artifact history.
+
+### G4 prefill route sorting, 2026-11-13
+
+The [prefill experiment](artifacts/qwen35_moe_prefill_g4_20261113/README.md)
+adds an explicit `Int8Experts.prefill_backend='sorted'` option. Stable route
+sorting and one CPU count read replace 256 per-expert `torch.where` queries;
+expert arithmetic, assigned-row order and small-row GEMV/matmul dispatch are
+preserved. Reference remains the default; decode/verification kernels are unchanged.
+
+On RTX PRO 6000 Blackwell with PyTorch 2.11.0+cu130, Triton 3.6.0 and FLA 0.6.0,
+batch-one warm text-model TTFT improved 1.23–1.63× across math/Korean fixtures
+at 128/512/2048/4096 tokens, two warmups and five repeats. Math 2048-token TTFT
+changed from 1383.12 to 915.13 ms; Korean from 1187.17 to 745.16 ms. All eight
+last-position logits were bit-exact and all sixteen-token continuations matched.
+The fixtures repeat frozen token sequences to exact lengths; this does not
+establish natural long-document task accuracy or performance on other GPUs.
+
+The G4 related test selection passed 34 tests. Nine synthetic real-shape routing
+cases also had exact outputs. Separate full-model profiles confirmed stream
+synchronizations fell from 10240 to 40 per prefill; profiled durations are not
+the unprofiled TTFT table. The validator checked 90 expert and 80 model timing
+samples, 256 continuation IDs and 183 internal file hashes. Cache tensors were
+not compared independently; no MTP throughput or HF BF16 accuracy claim changed.
+
+A separate experimental grouped W8A16 GEMM passed small-shape tests but failed
+the real-shape numerical criterion and was not adopted. Its initial integer-type
+compile error was in the newly added combine kernel and was fixed before the
+numerical checks. Failed runs and independent dequantized comparisons are retained.
+Results and raw traces were recovered and verified; the exact dedicated G4
+session was terminated and the server reported no active sessions.

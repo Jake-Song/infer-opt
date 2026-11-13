@@ -1,0 +1,9 @@
+{
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "vram_gib": 94.97076416015625,
+  "capability": [
+    12,
+    0
+  ],
+  "initial_torch": "2.11.0+cu130"
+}

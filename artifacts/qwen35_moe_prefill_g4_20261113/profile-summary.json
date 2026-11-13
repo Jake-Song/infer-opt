@@ -1,0 +1,147 @@
+{
+  "experts/experts-reference.json": {
+    "aten::nonzero": {
+      "count": 256,
+      "self_cpu_us": 3476.6430000002297,
+      "self_device_us": 1755.8429999999582,
+      "total_cpu_us": 10225.325000000012,
+      "total_device_us": 1755.8429999999582
+    },
+    "cudaStreamSynchronize": {
+      "count": 256,
+      "self_cpu_us": 1581.020999999999,
+      "self_device_us": 0,
+      "total_cpu_us": 1581.020999999999,
+      "total_device_us": 0
+    },
+    "Memcpy DtoH (Device -> Pinned)": {
+      "count": 256,
+      "self_cpu_us": 0,
+      "self_device_us": 107.94400000000871,
+      "total_cpu_us": 0,
+      "total_device_us": 107.94400000000871
+    }
+  },
+  "experts/experts-sorted.json": {
+    "Memcpy DtoH (Device -> Pageable)": {
+      "count": 1,
+      "self_cpu_us": 0,
+      "self_device_us": 0.4800000000000182,
+      "total_cpu_us": 0,
+      "total_device_us": 0.4800000000000182
+    },
+    "cudaStreamSynchronize": {
+      "count": 1,
+      "self_cpu_us": 6.600000000000023,
+      "self_device_us": 0,
+      "total_cpu_us": 6.600000000000023,
+      "total_device_us": 0
+    }
+  },
+  "model/model-math-128-reference.json": {
+    "moe::routed_experts": {
+      "count": 40,
+      "self_cpu_us": 0,
+      "self_device_us": 1627640.6140000003,
+      "total_cpu_us": 0,
+      "total_device_us": 1627640.6140000003
+    },
+    "aten::nonzero": {
+      "count": 10240,
+      "self_cpu_us": 134603.40399999594,
+      "self_device_us": 60468.75400002192,
+      "total_cpu_us": 380517.88400000724,
+      "total_device_us": 60597.83900002021
+    },
+    "cudaStreamSynchronize": {
+      "count": 10240,
+      "self_cpu_us": 63664.78199999252,
+      "self_device_us": 0,
+      "total_cpu_us": 63664.78199999252,
+      "total_device_us": 0
+    },
+    "Memcpy DtoH (Device -> Pinned)": {
+      "count": 10240,
+      "self_cpu_us": 0,
+      "self_device_us": 4203.958999994885,
+      "total_cpu_us": 0,
+      "total_device_us": 4203.958999994885
+    }
+  },
+  "model/model-math-128-sorted.json": {
+    "moe::routed_experts": {
+      "count": 40,
+      "self_cpu_us": 0,
+      "self_device_us": 1026857.0040000001,
+      "total_cpu_us": 0,
+      "total_device_us": 1026857.0040000001
+    },
+    "Memcpy DtoH (Device -> Pageable)": {
+      "count": 40,
+      "self_cpu_us": 0,
+      "self_device_us": 18.30400000045438,
+      "total_cpu_us": 0,
+      "total_device_us": 18.30400000045438
+    },
+    "cudaStreamSynchronize": {
+      "count": 40,
+      "self_cpu_us": 154.8900000000258,
+      "self_device_us": 0,
+      "total_cpu_us": 154.8900000000258,
+      "total_device_us": 0
+    }
+  },
+  "model/model-korean-128-reference.json": {
+    "moe::routed_experts": {
+      "count": 40,
+      "self_cpu_us": 0,
+      "self_device_us": 1410207.1499999997,
+      "total_cpu_us": 0,
+      "total_device_us": 1410207.1499999997
+    },
+    "aten::nonzero": {
+      "count": 10240,
+      "self_cpu_us": 132497.74599997472,
+      "self_device_us": 57558.716999983015,
+      "total_cpu_us": 364543.5209999946,
+      "total_device_us": 57618.401999982954
+    },
+    "cudaStreamSynchronize": {
+      "count": 10240,
+      "self_cpu_us": 63198.826999992314,
+      "self_device_us": 0,
+      "total_cpu_us": 63198.826999992314,
+      "total_device_us": 0
+    },
+    "Memcpy DtoH (Device -> Pinned)": {
+      "count": 10240,
+      "self_cpu_us": 0,
+      "self_device_us": 4197.273999998239,
+      "total_cpu_us": 0,
+      "total_device_us": 4197.273999998239
+    }
+  },
+  "model/model-korean-128-sorted.json": {
+    "moe::routed_experts": {
+      "count": 40,
+      "self_cpu_us": 0,
+      "self_device_us": 844233.2350000002,
+      "total_cpu_us": 0,
+      "total_device_us": 844233.2350000002
+    },
+    "Memcpy DtoH (Device -> Pageable)": {
+      "count": 40,
+      "self_cpu_us": 0,
+      "self_device_us": 18.301999999705004,
+      "total_cpu_us": 0,
+      "total_device_us": 18.301999999705004
+    },
+    "cudaStreamSynchronize": {
+      "count": 40,
+      "self_cpu_us": 152.16999999985546,
+      "self_device_us": 0,
+      "total_cpu_us": 152.16999999985546,
+      "total_device_us": 0
+    }
+  }
+}

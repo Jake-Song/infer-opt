@@ -1,0 +1,8 @@
+{
+  "archive": "results.tar.gz",
+  "bytes": 72632781,
+  "sha256": "548f07d90f22888e411f34f0dd7e340a1ae7ffa0d04ed2b5e1010eed2b806d87",
+  "files": 183,
+  "session": "moe-prefill-g4-20261113",
+  "base_revision": "7ad98bd8f4bee19cb04920eb05d2f831279eed6c"
+}
