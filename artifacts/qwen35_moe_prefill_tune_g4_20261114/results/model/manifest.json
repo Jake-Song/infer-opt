@@ -1,0 +1,47 @@
+{
+  "args": {
+    "weights": "/tmp/infer-opt-models/moe-prefill-g4-20261114b/weights/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+    "out": "/tmp/moe-prefill-g4-20261114b/results/model",
+    "lengths": [
+      128,
+      512,
+      2048,
+      4096
+    ],
+    "prompts": "math,korean",
+    "backends": [
+      "reference",
+      "grouped",
+      "grouped-tuned"
+    ],
+    "grouped_config": "/tmp/moe-prefill-g4-20261114b/results/tune/best-config.json",
+    "warmup": 2,
+    "repeats": 5,
+    "decode_tokens": 16,
+    "profile": true,
+    "breakdown": 3,
+    "kl_limit": 0.002,
+    "grouped_config_value": {
+      "block_m": 32,
+      "block_n": 128,
+      "block_k": 128,
+      "num_warps": 4
+    }
+  },
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "capability": [
+    12,
+    0
+  ],
+  "timing": "warm synchronized host wall time and CUDA events, reset excluded",
+  "scope": "batch-one text-model TTFT, MTP off",
+  "source_sha256": {
+    "scripts/bench_moe_prefill.py": "a663e742c2a48253feeecfe0cea2d5884044c9109c572948ffaa4956c0f0d154",
+    "infer_opt/moe.py": "2a2035e6fcb0d05ca7c7aa2dd87b6604d03272bda9bbcc6a674e1b0bcbd4be66",
+    "infer_opt/moe_prefill.py": "c723a77aa03bd586d3ada9962335460268291a594679e7baa9fa1a73cef95d3c",
+    "infer_opt/prefill_profile.py": "fb334e6c199cd2d0d4dc44fe83ee93e4766a33b873fe1b70230868b33ad1c15a",
+    "scripts/validate_qwen3_5_hf.py": "2dc56239e78024cf62b819c9915d128b25d7b93ec1e7351da80377de8426de86",
+    "scripts/code_prompt_source.txt": "f106d078a55e11747bb912a8dffb56054aa3d9734862a66c14649e6f7a4f91f2"
+  }
+}

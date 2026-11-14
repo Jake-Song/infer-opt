@@ -2,11 +2,17 @@
 import json
 from pathlib import Path
 
-OUT = Path('/tmp/moe-prefill-g4-20261113/results')
-for name in ['hardware.json', 'progress.json', 'exit.json']:
+# The most recently launched run on this runtime.
+ROOT = max(Path('/tmp').glob('moe-prefill-g4-*/launch.json'), key=lambda p: p.stat().st_mtime).parent
+OUT = ROOT/'results'
+print('run', ROOT)
+for name in ['hardware.json', 'progress.json', 'mtp/progress.json', 'mtp-parallel/progress.json',
+             'mtp-parallel.exit.json', 'gates.json', 'exit.json']:
     p = OUT/name
     print(name, p.read_text() if p.exists() else 'pending')
-for name in ['tests.stdout', 'tests.stderr', 'experts.stderr', 'model.stderr']:
+for name in ['tests.stdout', 'tests.stderr', 'numerics.stdout', 'numerics.stderr', 'tune.stdout', 'tune.stderr',
+             'projections.stdout', 'projections.stderr', 'experts.stderr', 'model.stderr',
+             'mtp.stdout', 'mtp.stderr', 'mtp-parallel.stdout', 'mtp-parallel.stderr']:
     p = OUT/name
     if p.exists():
         with p.open('rb') as f:
@@ -18,7 +24,7 @@ for name in ['experts/experts.json', 'model/model.json']:
         data = json.loads(p.read_text())
         print(name, 'rows', len(data['rows']))
         for row in data['rows'][-4:]:
-            print({k: v for k, v in row.items() if k not in ('reference', 'sorted', 'grouped')})
-            for key in ('reference', 'sorted', 'grouped'):
+            print({k: v for k, v in row.items() if k not in ('reference', 'sorted', 'grouped', 'grouped-tuned', 'routes')})
+            for key in ('reference', 'sorted', 'grouped', 'grouped-tuned'):
                 if key in row:
                     print(key, {k: v for k, v in row[key].items() if k not in ('samples', 'generated_ids')})

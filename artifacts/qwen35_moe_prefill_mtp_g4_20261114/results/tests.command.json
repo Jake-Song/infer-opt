@@ -1,0 +1,10 @@
+[
+  "/usr/bin/python3",
+  "-m",
+  "pytest",
+  "tests/test_moe_prefill.py",
+  "tests/test_moe.py",
+  "-k",
+  "not speculative and not verify and not compiled and not rejects",
+  "-q"
+]

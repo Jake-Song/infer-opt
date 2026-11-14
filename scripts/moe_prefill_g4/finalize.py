@@ -5,13 +5,22 @@ import json
 import shutil
 import tarfile
 
-root = Path('/tmp/moe-prefill-g4-20261113')
+root = max(Path('/tmp').glob('moe-prefill-g4-*/launch.json'), key=lambda p: p.stat().st_mtime).parent
 out = root/'results'
 assert json.loads((out/'exit.json').read_text())['exit_code'] == 0
-assert json.loads((out/'model/complete.json').read_text())['complete']
-assert json.loads((out/'experts/complete.json').read_text())['complete']
+plan = json.loads((out/'plan.json').read_text())['plan']
+if plan == 'mtp':
+    assert json.loads((out/'mtp/complete.json').read_text())['complete']
+else:
+    assert json.loads((out/'model/complete.json').read_text())['complete']
+if plan == 'tune':
+    assert json.loads((out/'tune/tile-tuning.json').read_text())['rows']
+    assert json.loads((out/'projections/projections.json').read_text())['per_prefill_ms']
+elif plan == 'gate':
+    assert json.loads((out/'experts/complete.json').read_text())['complete']
+    assert json.loads((out/'numerics/numerics.json').read_text())['rows']
 for path in (root/'source').rglob('*'):
-    if path.is_file() and '__pycache__' not in path.parts:
+    if path.is_file() and '__pycache__' not in path.parts and '.pytest_cache' not in path.parts:
         dest = out/'executed-source'/path.relative_to(root/'source')
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest)
@@ -34,5 +43,6 @@ with tarfile.open(archive, 'w:gz', compresslevel=6) as tar:
     for path in sorted(out.rglob('*')):
         if path.is_file():
             tar.add(path, arcname=str(path.relative_to(out)))
-print(json.dumps({'archive': str(archive), 'bytes': archive.stat().st_size,
+print(json.dumps({'run': root.name, 'gates': json.loads((out/'gates.json').read_text()),
+    'archive': str(archive), 'bytes': archive.stat().st_size,
     'sha256': hashlib.sha256(archive.read_bytes()).hexdigest(), 'files': len(files)}))

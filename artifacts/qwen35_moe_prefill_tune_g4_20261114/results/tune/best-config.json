@@ -1,0 +1,6 @@
+{
+  "block_m": 32,
+  "block_n": 128,
+  "block_k": 128,
+  "num_warps": 4
+}

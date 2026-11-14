@@ -1,0 +1,7 @@
+{
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "transformers": "5.22.0",
+  "flash-linear-attention": "0.6.0",
+  "fla-core": "0.6.0"
+}

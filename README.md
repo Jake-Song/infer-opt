@@ -62,6 +62,23 @@ bit-exact and sixteen-token continuations matched. Separate profiles confirmed
 10240→40 stream synchronizations per full prefill. Reference remains the default;
 the separate new grouped GEMM failed real-shape numerical checks and was not adopted.
 
+The [2026-11-14 G4 run](artifacts/qwen35_moe_prefill_g4_20261114/README.md) judges
+the route-grouped expert kernel by distance to FP64 instead of element-wise
+closeness to another BF16 path, after a
+[stage-wise diagnosis](artifacts/qwen35_moe_prefill_numerics_20261114/README.md)
+found no routing bug and moved its group scales to FP32 partial sums. Opt-in
+grouped prefill TTFT was 52–196 ms on the same eight workloads, 4.3–15.5× over
+sorted, with last-position logit KL at most 8.4e-4 and all sixteen-token
+continuations matching. MTP, natural long prompts and task accuracy were not measured.
+A [tile-tuning run](artifacts/qwen35_moe_prefill_tune_g4_20261114/README.md) then
+made 32×128×128 the kernel default: 97–98 ms at 2048 tokens and 178 ms at 4096,
+with 128-token prefill left at 52 ms and limited by host dispatch.
+After an [MTP on/off run](artifacts/qwen35_moe_prefill_mtp_g4_20261114/README.md)
+kept every sequential and consistent MTP match, grouped prefill is the default
+on CUDA BF16/FP16. It changes long greedy outputs at near-tie tokens (all five
+256-token continuations, at logit margins of at most 0.125); set
+`prefill_backend = 'reference'` on the expert banks for the earlier token-exact path.
+
 The [2026-11-05 G4 benchmarks](artifacts/qwen35_hf_int8_g4_20261105/README.md)
 measure the published INT8 checkpoint with MTP off: manual CUDA Graph decode was
 9.04–9.14 ms/token. Compiled decode was 5.54–5.60 ms/token, but failed the recorded

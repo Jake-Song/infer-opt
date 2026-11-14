@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "gate": {
+    "strong_margin": 0.5,
+    "failures": [
+      "grouped code_1k parallel k=3: MTP on leaves MTP off at token 242"
+    ],
+    "passes": false
+  }
+}

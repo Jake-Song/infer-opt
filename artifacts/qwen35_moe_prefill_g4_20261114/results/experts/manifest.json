@@ -1,0 +1,39 @@
+{
+  "args": {
+    "weights": null,
+    "out": "/tmp/moe-prefill-g4-20261114/results/experts",
+    "lengths": [
+      128,
+      512,
+      2048
+    ],
+    "prompts": "math,korean",
+    "backends": [
+      "reference",
+      "sorted",
+      "grouped"
+    ],
+    "warmup": 2,
+    "repeats": 5,
+    "decode_tokens": 16,
+    "profile": true,
+    "breakdown": 0,
+    "kl_limit": 0.002
+  },
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "capability": [
+    12,
+    0
+  ],
+  "timing": "warm synchronized host wall time and CUDA events, reset excluded",
+  "scope": "synthetic experts",
+  "source_sha256": {
+    "scripts/bench_moe_prefill.py": "ffbf04e14b9c9fa7fea56681d8c00eb63ad2ca4dd952d5908c69271486f7fa84",
+    "infer_opt/moe.py": "e1dc7021ebd329280b7574d4dcd2f84b8d7eb204bf1db004a19de415aabedb3f",
+    "infer_opt/moe_prefill.py": "ce3c2353a42b77205a81d70f2ff9f68b2a4f5140b70ab5c4a5beeb1822693961",
+    "infer_opt/prefill_profile.py": "520ee72e47973ea39df90152e9b3528b185798a4ef5bb26bffad87f18b05d8b9",
+    "scripts/validate_qwen3_5_hf.py": "2dc56239e78024cf62b819c9915d128b25d7b93ec1e7351da80377de8426de86",
+    "scripts/code_prompt_source.txt": "f106d078a55e11747bb912a8dffb56054aa3d9734862a66c14649e6f7a4f91f2"
+  }
+}

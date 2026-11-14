@@ -1,0 +1,6 @@
+[
+  "/usr/bin/python3",
+  "scripts/bench_w8a16_projection.py",
+  "--out",
+  "/tmp/moe-prefill-g4-20261114b/results/projections/projections.json"
+]

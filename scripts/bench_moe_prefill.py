@@ -2,6 +2,11 @@
 
 Model mode times text-model prefill + last-position vocabulary projection + argmax.
 Tokenization, cache reset, warmup, compilation and profiling are excluded.
+
+Acceptance: ``sorted`` keeps the expert arithmetic and must be bit-exact. ``grouped``
+changes the reduction and rounding points, so it is judged by distance to an FP64
+evaluation of the same INT8 banks (not larger than the adopted loop's), and in the
+model by last-position logit KL and greedy continuation parity.
 """
 from __future__ import annotations
 import argparse
@@ -17,6 +22,10 @@ import torch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from infer_opt.moe import Int8Experts
+from infer_opt.prefill_profile import RouteRecorder, section_times
+
+
+GATE_FAILED = 3  # exit status of a completed run whose grouped candidate missed its gate
 
 
 def save(path, value):
@@ -93,7 +102,7 @@ def profile(fn, reset, path, model=None):
 
 
 def synthetic(args, out):
-    from infer_opt.moe_prefill import grouped_int8_experts
+    from infer_opt.moe_prefill import float64_gate, float64_int8_experts, grouped_int8_experts
     e, h, m, g, top = 256, 2048, 512, 128, 8
     gu = torch.randint(-127, 128, (e, 2*m, h), device='cuda', dtype=torch.int8)
     down = torch.randint(-127, 128, (e, h, m), device='cuda', dtype=torch.int8)
@@ -130,14 +139,17 @@ def synthetic(args, out):
                     profile(candidate, lambda: None, out / 'experts-sorted')
             if 'grouped' not in args.backends:
                 continue
-            configs = [(16, 64, 64), (32, 64, 64), (32, 128, 64), (16, 64, 128)]
+            configs = [(32, 128, 128), (16, 64, 64), (32, 64, 64), (64, 64, 64), (32, 128, 64), (16, 64, 128)]
+            truth = float64_int8_experts(x, ids, weights, gu, gs, down, ds)
             for bm, bn, bk in configs:
                 candidate = lambda: grouped_int8_experts(x, ids, weights, gu, gs, down, ds,
                                                          block_m=bm, block_n=bn, block_k=bk)
-                error = differences(candidate(), want)
+                got = candidate()
                 row = {'backend': 'grouped', 'tokens': t, 'routing': routing, 'tile': [bm, bn, bk],
-                       'numerics': error, 'reference': baseline_time}
-                if error['allclose']:
+                       'numerics': differences(got, want), 'fp64_gate': float64_gate(got, want, truth),
+                       'reference': baseline_time}
+                del got
+                if row['fp64_gate']['passes']:
                     timing, _ = measure(candidate, lambda: None, args.repeats, args.warmup)
                     row.update(grouped=timing,
                                timing_ratio=baseline_time['median_wall_ms'] / timing['median_wall_ms'])
@@ -147,8 +159,8 @@ def synthetic(args, out):
             if args.profile and t == args.lengths[0] and routing == 'spread':
                 profile(baseline, lambda: None, out / 'experts-reference')
                 profile(candidate, lambda: None, out / 'experts-grouped')
-    if not all(row['numerics']['allclose'] for row in rows):
-        raise RuntimeError('expert numerical gate failed; inspect experts.json')
+    return [f"{row['tokens']}-{row['routing']}-{'x'.join(map(str, row['tile']))}" for row in rows
+            if row['backend'] == 'grouped' and not row['fp64_gate']['passes']]
 
 
 def full_model(args, out):
@@ -163,7 +175,10 @@ def full_model(args, out):
     if len(modules) != 40 or model.config.num_experts != 256:
         raise ValueError('expected Qwen3.5-35B-A3B INT8 target')
     cache = model.new_cache(1, max(args.lengths) + args.decode_tokens + 8)
-    rows, inputs = [], {}
+    rows, inputs, routes, failures = [], {}, {}, []
+    tuned = json.loads(Path(args.grouped_config).read_text()) if args.grouped_config else {}
+    if tuned.get('large'):
+        tuned['large'] = tuple(tuned['large'])
     for name in args.prompts.split(','):
         raw = tok(texts[name], add_special_tokens=False).input_ids
         for t in args.lengths:
@@ -176,9 +191,12 @@ def full_model(args, out):
             reference_logits = None
             reference_ids = None
             row = {'prompt': name, 'tokens': t, 'fused_groups': fused}
+            if tuned:
+                row['grouped_tuned_config'] = args.grouped_config_value
             for backend in args.backends:
-                for module in modules:
-                    module.prefill_backend = backend
+                for module in modules:  # grouped-tuned is the grouped kernel with --grouped-config tiles
+                    module.prefill_backend = 'grouped' if backend == 'grouped-tuned' else backend
+                    module.grouped_options = tuned if backend == 'grouped-tuned' else {}
                 def prefill():
                     hidden = model.model.language_model(ids, cache)
                     logits = model.lm_head(hidden[:, -1:])
@@ -186,9 +204,15 @@ def full_model(args, out):
                 timing, (logits, token) = measure(prefill, cache.reset, args.repeats, args.warmup)
                 timing['prompt_tokens_per_second'] = t * 1000 / timing['median_wall_ms']
                 generated = [token]
+                top2 = logits.float().flatten().topk(2).values
+                margins = [(top2[0] - top2[1]).item()]  # near ties explain a continuation divergence
                 for _ in range(args.decode_tokens - 1):
-                    token = model.decode_step(token, cache)[:, -1].argmax(-1, keepdim=True)
+                    step = model.decode_step(token, cache)[:, -1]
+                    token = step.argmax(-1, keepdim=True)
+                    top2 = step.float().flatten().topk(2).values
+                    margins.append((top2[0] - top2[1]).item())
                     generated.append(token)
+                timing['top2_margins'] = margins
                 generated_ids = torch.cat(generated, dim=1)[0].tolist()
                 timing['generated_ids'] = generated_ids
                 if backend == 'reference':
@@ -201,6 +225,19 @@ def full_model(args, out):
                     timing['first_divergence'] = next((i for i, (a, b) in
                         enumerate(zip(generated_ids, reference_ids)) if a != b), None)
                 row[backend] = timing
+                if args.breakdown:
+                    sections = section_times(model, prefill, cache.reset, args.breakdown)
+                    timing['sections_ms'], timing['sections_host_ms'] = sections['total_ms'], sections['host_ms']
+                    if 'routes' not in row:  # sorted routes equal the reference's; grouped may differ by rounding
+                        cache.reset()
+                        with RouteRecorder(model.model.language_model) as recorder:
+                            prefill()
+                        summary = recorder.summary()
+                        routes[key] = recorder.counts
+                        row['routes'] = {k: v for k, v in summary.items() if k != 'layers'}
+                        row['routes']['layers'] = [{k: v for k, v in layer.items() if k != 'experts'}
+                                                   for layer in summary['layers'].values()]
+                        save(out / 'routes.json', routes)
                 if args.profile and t == args.lengths[0]:
                     profile(prefill, cache.reset, out / f'model-{key}-{backend}', model)
             for backend in args.backends[1:]:
@@ -209,9 +246,17 @@ def full_model(args, out):
                 if backend == 'sorted' and not (row[backend]['numerics']['exact'] and row[backend]['greedy_parity']):
                     save(out / 'sorted-failure.json', row)
                     raise RuntimeError('sorted routing changed model logits or greedy output')
+                if backend.startswith('grouped'):
+                    kl = row[backend]['kl_reference_to_candidate']
+                    row[backend]['model_gate'] = {'kl_limit': args.kl_limit, 'kl': kl,
+                        'greedy_parity': row[backend]['greedy_parity'],
+                        'passes': kl <= args.kl_limit and row[backend]['greedy_parity']}
+                    if not row[backend]['model_gate']['passes']:
+                        failures.append(f'{key} {backend}: KL {kl:.3g}, first divergence {row[backend]["first_divergence"]}')
             rows.append(row)
             save(out / 'model.json', {'rows': rows})
             print(json.dumps(row), flush=True)
+    return failures
 
 
 @torch.inference_mode()
@@ -221,18 +266,28 @@ def main():
     p.add_argument('--out', required=True)
     p.add_argument('--lengths', default='128,512,2048,4096')
     p.add_argument('--prompts', default='math,korean')
-    p.add_argument('--backends', default='reference,sorted', help='reference,sorted[,grouped]; grouped is experimental')
+    p.add_argument('--backends', default='reference,sorted',
+                   help='reference, then any of sorted, grouped, grouped-tuned (model mode, needs --grouped-config)')
+    p.add_argument('--grouped-config', help='JSON keywords of grouped_int8_experts for the grouped-tuned backend')
     p.add_argument('--warmup', type=int, default=2)
     p.add_argument('--repeats', type=int, default=5)
     p.add_argument('--decode-tokens', type=int, default=16)
     p.add_argument('--profile', action='store_true')
+    p.add_argument('--breakdown', type=int, default=0, metavar='REPEATS',
+                   help='model mode: also record per-layer expert loads and synchronized section times')
+    p.add_argument('--kl-limit', type=float, default=2e-3,
+                   help='grouped model gate: last-position KL(reference || candidate) ceiling; the default is '
+                        "the scale of this checkpoint's recorded INT8-vs-HF-BF16 mean KL")
     args = p.parse_args()
     args.lengths = [int(x) for x in args.lengths.split(',')]
     args.backends = args.backends.split(',')
     if (args.backends[0] != 'reference' or len(args.backends) < 2 or
             len(set(args.backends)) != len(args.backends) or
-            any(b not in ('reference', 'sorted', 'grouped') for b in args.backends)):
+            any(b not in ('reference', 'sorted', 'grouped', 'grouped-tuned') for b in args.backends)):
         p.error('backends must start with reference and include unique sorted/grouped candidates')
+    if ('grouped-tuned' in args.backends) != bool(args.grouped_config and args.weights):
+        p.error('grouped-tuned and --grouped-config go together, in model mode')
+    args.grouped_config_value = json.loads(Path(args.grouped_config).read_text()) if args.grouped_config else None
     if min(*args.lengths, args.warmup, args.repeats, args.decode_tokens) <= 0:
         p.error('lengths, warmup, repeats and decode-tokens must be positive')
     if min(args.lengths) <= 5:
@@ -247,12 +302,14 @@ def main():
         'scope': 'synthetic experts' if not args.weights else 'batch-one text-model TTFT, MTP off',
         'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in [Path(__file__), ROOT/'infer_opt/moe.py', ROOT/'infer_opt/moe_prefill.py',
+                         ROOT/'infer_opt/prefill_profile.py',
                          ROOT/'scripts/validate_qwen3_5_hf.py', ROOT/'scripts/code_prompt_source.txt']}})
-    if args.weights:
-        full_model(args, out)
-    else:
-        synthetic(args, out)
-    save(out / 'complete.json', {'complete': True})
+    failures = full_model(args, out) if args.weights else synthetic(args, out)
+    # A failed grouped gate is a recorded result: every case is measured and saved first.
+    save(out / 'complete.json', {'complete': True, 'grouped_gate_failures': failures})
+    if failures:
+        print('grouped gate failed:', '; '.join(failures), file=sys.stderr)
+        raise SystemExit(GATE_FAILED)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,23 @@
+[
+  "/usr/bin/python3",
+  "scripts/bench_moe_prefill.py",
+  "--weights",
+  "/tmp/infer-opt-models/moe-prefill-g4-20261114b/weights/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+  "--out",
+  "/tmp/moe-prefill-g4-20261114b/results/model",
+  "--lengths",
+  "128,512,2048,4096",
+  "--backends",
+  "reference,grouped,grouped-tuned",
+  "--grouped-config",
+  "/tmp/moe-prefill-g4-20261114b/results/tune/best-config.json",
+  "--prompts",
+  "math,korean",
+  "--warmup",
+  "2",
+  "--repeats",
+  "5",
+  "--breakdown",
+  "3",
+  "--profile"
+]

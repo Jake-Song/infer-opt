@@ -1,0 +1,1 @@
+{"pid": 4139, "argv": ["/usr/bin/python3", "-u", "scripts/validate_moe_prefill_mtp.py", "--weights", "/tmp/infer-opt-models/moe-prefill-g4-20261114c/weights/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388", "--out", "/tmp/moe-prefill-g4-20261114c/results/mtp-parallel", "--verifications", "parallel", "--ks", "1,2,3"]}

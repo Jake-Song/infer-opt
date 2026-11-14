@@ -1,0 +1,5 @@
+{
+  "tune": 0,
+  "model": 0,
+  "model_backends": "reference,grouped,grouped-tuned"
+}

@@ -1,0 +1,9 @@
+{
+  "archive": "results.tar.gz",
+  "bytes": 73926471,
+  "sha256": "63f1be874da3d2f4cbaf0dbe4cc4a38afb6610c5df477853c9569ae77627c5f2",
+  "files": 140,
+  "session": "moe-prefill-g4-20261114",
+  "base_revision": "9ed8e76af973d6bca0681f6575c0d3fb288cd94a",
+  "note": "run from uncommitted changes on the base revision; executed sources and their hashes are in results/executed-source"
+}

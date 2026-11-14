@@ -1,0 +1,9 @@
+{
+  "archive": "results.tar.gz",
+  "bytes": 250442,
+  "sha256": "53cb4159112cfe8eaac7a2eb1861784798e2c129d4a812ef28dcd61bc476230f",
+  "files": 125,
+  "session": "moe-prefill-g4-20261114c",
+  "base_revision": "9ed8e76af973d6bca0681f6575c0d3fb288cd94a",
+  "note": "run from uncommitted changes on the base revision; executed sources and their hashes are in results/executed-source. The executed Int8Experts default was still 'reference'; both backends were set explicitly on every bank."
+}

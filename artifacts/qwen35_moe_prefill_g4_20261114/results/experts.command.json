@@ -1,0 +1,15 @@
+[
+  "/usr/bin/python3",
+  "scripts/bench_moe_prefill.py",
+  "--out",
+  "/tmp/moe-prefill-g4-20261114/results/experts",
+  "--lengths",
+  "128,512,2048",
+  "--backends",
+  "reference,sorted,grouped",
+  "--warmup",
+  "2",
+  "--repeats",
+  "5",
+  "--profile"
+]

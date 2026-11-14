@@ -1,0 +1,15 @@
+{
+  "session": "moe-prefill-g4-20261114b",
+  "allocation": {"gpu": "G4", "high_mem": false, "authorized_by_user": true, "result": "ready"},
+  "worker": {
+    "plan": "tune",
+    "exit_code": 0,
+    "elapsed_s": 649.529192279,
+    "gates": {"tune": 0, "model": 0, "model_backends": "reference,grouped,grouped-tuned"}
+  },
+  "recovery": {"archive_sha256_verified": true, "internal_file_hashes_verified": 138, "aggregation_verified": true},
+  "stop_result": "Session terminated.",
+  "server_sessions_after_stop": "No active sessions found on server.",
+  "compute_units": {"before": 186.96, "after": 185.42},
+  "model_cache_root": "/tmp/infer-opt-models/moe-prefill-g4-20261114b"
+}

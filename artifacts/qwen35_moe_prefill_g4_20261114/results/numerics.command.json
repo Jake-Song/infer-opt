@@ -1,0 +1,6 @@
+[
+  "/usr/bin/python3",
+  "scripts/diagnose_moe_prefill_numerics.py",
+  "--out",
+  "/tmp/moe-prefill-g4-20261114/results/numerics/numerics.json"
+]

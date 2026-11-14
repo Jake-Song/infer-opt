@@ -92,11 +92,23 @@ def normalize_expert_state(state, config):
 
 
 class Int8Experts(nn.Module):
-    """Packed W8A16 banks; grouped prefill is an explicit experimental opt-in."""
+    """Packed W8A16 banks.
+
+    More than five rows (prefill) go to ``prefill_backend``: ``grouped`` (default) is the route-grouped Triton
+    kernel on CUDA BF16/FP16; ``sorted`` and ``reference`` are the eager per-expert loops, which agree bit for bit.
+    ``grouped`` differs from them by rounding only and is closer to FP64 (see ``moe_prefill.float64_gate``); where
+    it does not apply (CPU, FP32, a scale group that is not a power of two of at least 16) ``sorted`` runs instead.
+
+    The rounding is visible in long greedy generations: on the 35B-A3B INT8 checkpoint all five 256-token
+    continuations left the ``reference`` ones, each at a token where the top two logits were tied or one BF16
+    step apart. MTP on/off parity (sequential and consistent verification) holds under either backend. Set
+    ``prefill_backend = 'reference'`` on every bank to reproduce earlier token-exact results.
+    """
     def __init__(self, gate_up, gate_up_scale, down, down_scale, group_size):
         super().__init__()
         self.group_size = group_size
-        self.prefill_backend = 'reference'
+        self.prefill_backend = 'grouped'
+        self.grouped_options = {}  # tile keywords of moe_prefill.grouped_int8_experts
         self.register_buffer('gate_up_proj', gate_up)
         self.register_buffer('gate_up_scale', gate_up_scale)
         self.register_buffer('down_proj', down)
@@ -121,13 +133,22 @@ class Int8Experts(nn.Module):
             from .moe_kernels import selected_int8_experts
             return selected_int8_experts(x, indices, weights, self.gate_up_proj,
                                         self.gate_up_scale, self.down_proj, self.down_scale)
-        if self.prefill_backend == 'grouped' and x.is_cuda and x.dtype in (torch.bfloat16, torch.float16):
+        if self.prefill_backend == 'grouped' and self.grouped_supported(x):
             from .moe_prefill import grouped_int8_experts
-            return grouped_int8_experts(x, indices, weights, self.gate_up_proj,
-                                       self.gate_up_scale, self.down_proj, self.down_scale)
-        if self.prefill_backend == 'sorted':
-            return self.forward_sorted(x, indices, weights)
-        return self.forward_reference(x, indices, weights)
+            return grouped_int8_experts(x.contiguous(), indices.contiguous(), weights.contiguous(),
+                                        self.gate_up_proj, self.gate_up_scale, self.down_proj, self.down_scale,
+                                        **self.grouped_options)
+        if self.prefill_backend == 'reference':
+            return self.forward_reference(x, indices, weights)
+        return self.forward_sorted(x, indices, weights)
+
+    def grouped_supported(self, x) -> bool:
+        """Whether the route-grouped kernel can evaluate ``x``: CUDA half precision matching the scales, and a
+        scale group its tensor-core K block can cover."""
+        group = self.group_size
+        return (x.is_cuda and x.dtype in (torch.bfloat16, torch.float16)
+                and self.gate_up_scale.dtype == x.dtype == self.down_scale.dtype
+                and group >= 16 and group & (group - 1) == 0)
 
     def forward_sorted(self, x, indices, weights):
         """Keep expert arithmetic/order; replace per-expert nonzero syncs with one count read.

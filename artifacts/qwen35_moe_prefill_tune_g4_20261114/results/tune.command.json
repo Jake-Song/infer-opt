@@ -1,0 +1,8 @@
+[
+  "/usr/bin/python3",
+  "scripts/tune_moe_prefill_tiles.py",
+  "--routes",
+  "artifacts/routes.json",
+  "--out",
+  "/tmp/moe-prefill-g4-20261114b/results/tune"
+]

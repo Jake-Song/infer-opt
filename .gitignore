@@ -18,6 +18,11 @@ wheels/
 # Local Colab run outputs and source archives
 experiments/
 
+# Recovered run archives: almost entirely raw profiler traces (over a gigabyte unpacked).
+# Extracted results, aggregate profiles and the archive's size and SHA-256 (recovery.json)
+# are committed instead. Archives committed before 2026-11-14 stay tracked.
+artifacts/*/results.tar.gz
+
 # Website dependencies and generated reports
 node_modules/
 web/test-results/

@@ -1,0 +1,22 @@
+{
+  "args": {
+    "weights": "/tmp/infer-opt-models/moe-prefill-g4-20261114c/weights/models--Jakemu--Qwen3.5-35B-A3B-int8-g128-mtp/snapshots/331d7db90ac4b9768c3f4a7bcd64d3b29bb9d388",
+    "out": "/tmp/moe-prefill-g4-20261114c/results/mtp",
+    "backends": "reference,grouped",
+    "prompts": "chat_long,code_1k,prose_1k,math,korean",
+    "ks": "1,2",
+    "verifications": "sequential,consistent",
+    "new_tokens": 256,
+    "cache_capacity": 2048,
+    "prefill_repeats": 3,
+    "strong_margin": 0.5
+  },
+  "fused_groups": 82,
+  "mode": "cudagraph",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu130",
+  "default_prefill_backend": "reference",
+  "expert_banks": 41,
+  "timing": "synchronized host wall clock; prefill and decode separate; MTP decode includes final-round overshoot in its token count",
+  "scope": "same-checkpoint greedy parity; not HF BF16 equivalence or task accuracy"
+}

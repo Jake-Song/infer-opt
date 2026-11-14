@@ -1,0 +1,19 @@
+{
+ "summary": {
+  "reference": {
+   "mtp_runs": 20,
+   "mtp_runs_equal_to_plain": 20,
+   "all_repeatable": true
+  },
+  "grouped": {
+   "mtp_runs": 20,
+   "mtp_runs_equal_to_plain": 20,
+   "all_repeatable": true
+  }
+ },
+ "gate": {
+  "strong_margin": 0.5,
+  "failures": [],
+  "passes": true
+ }
+}

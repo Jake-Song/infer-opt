@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "gate": {
+    "strong_margin": 0.5,
+    "failures": [],
+    "passes": true
+  }
+}

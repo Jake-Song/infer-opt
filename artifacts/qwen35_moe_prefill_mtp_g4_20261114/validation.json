@@ -1,0 +1,193 @@
+{
+  "archive_files_verified": 125,
+  "mtp": {
+    "summary": {
+      "reference": {
+        "mtp_runs": 20,
+        "mtp_runs_equal_to_plain": 20,
+        "all_repeatable": true
+      },
+      "grouped": {
+        "mtp_runs": 20,
+        "mtp_runs_equal_to_plain": 20,
+        "all_repeatable": true
+      }
+    },
+    "gate_passes": true,
+    "gate_failures": [],
+    "generated_ids_checked": 12800,
+    "rows": [
+      {
+        "prompt": "chat_long",
+        "prompt_tokens": 32,
+        "backend": "grouped",
+        "plain_first_divergence": 121,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          637.1213229999739,
+          44.1291550000642
+        ],
+        "plain_decode_ms_per_token": [
+          8.823108121568753,
+          8.82349630980401
+        ]
+      },
+      {
+        "prompt": "code_1k",
+        "prompt_tokens": 1000,
+        "backend": "grouped",
+        "plain_first_divergence": 219,
+        "reference_margin_at_divergence": 0.0,
+        "plain_prefill_ms": [
+          1252.0664339999712,
+          73.57570299996041
+        ],
+        "plain_decode_ms_per_token": [
+          8.850621286274631,
+          8.688851062745426
+        ]
+      },
+      {
+        "prompt": "prose_1k",
+        "prompt_tokens": 1057,
+        "backend": "grouped",
+        "plain_first_divergence": 155,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          1199.4690980000087,
+          74.32720300005258
+        ],
+        "plain_decode_ms_per_token": [
+          8.868888203921513,
+          8.765854952941357
+        ]
+      },
+      {
+        "prompt": "math",
+        "prompt_tokens": 43,
+        "backend": "grouped",
+        "plain_first_divergence": 2,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          670.0207099999034,
+          44.308132999958616
+        ],
+        "plain_decode_ms_per_token": [
+          8.843981823529516,
+          8.838465517647355
+        ]
+      },
+      {
+        "prompt": "korean",
+        "prompt_tokens": 20,
+        "backend": "grouped",
+        "plain_first_divergence": 43,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          504.62342200000876,
+          43.92664300007709
+        ],
+        "plain_decode_ms_per_token": [
+          8.83333233725495,
+          8.832892137254877
+        ]
+      }
+    ]
+  },
+  "mtp-parallel": {
+    "summary": {
+      "reference": {
+        "mtp_runs": 15,
+        "mtp_runs_equal_to_plain": 3,
+        "all_repeatable": true
+      },
+      "grouped": {
+        "mtp_runs": 15,
+        "mtp_runs_equal_to_plain": 3,
+        "all_repeatable": true
+      }
+    },
+    "gate_passes": false,
+    "gate_failures": [
+      "grouped code_1k parallel k=3: MTP on leaves MTP off at token 242"
+    ],
+    "generated_ids_checked": 10240,
+    "rows": [
+      {
+        "prompt": "chat_long",
+        "prompt_tokens": 32,
+        "backend": "grouped",
+        "plain_first_divergence": 121,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          635.0635399999192,
+          43.61519400003999
+        ],
+        "plain_decode_ms_per_token": [
+          8.822705058823171,
+          8.824483815686232
+        ]
+      },
+      {
+        "prompt": "code_1k",
+        "prompt_tokens": 1000,
+        "backend": "grouped",
+        "plain_first_divergence": 219,
+        "reference_margin_at_divergence": 0.0,
+        "plain_prefill_ms": [
+          1246.395299000028,
+          73.71432200000072
+        ],
+        "plain_decode_ms_per_token": [
+          8.842763721568367,
+          8.84086588627421
+        ]
+      },
+      {
+        "prompt": "prose_1k",
+        "prompt_tokens": 1057,
+        "backend": "grouped",
+        "plain_first_divergence": 155,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          1197.1348380000109,
+          74.18553200000133
+        ],
+        "plain_decode_ms_per_token": [
+          8.862921752941421,
+          8.848866745097885
+        ]
+      },
+      {
+        "prompt": "math",
+        "prompt_tokens": 43,
+        "backend": "grouped",
+        "plain_first_divergence": 2,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          665.4635339999686,
+          43.81482300004791
+        ],
+        "plain_decode_ms_per_token": [
+          8.842889733333482,
+          8.795921043136724
+        ]
+      },
+      {
+        "prompt": "korean",
+        "prompt_tokens": 20,
+        "backend": "grouped",
+        "plain_first_divergence": 43,
+        "reference_margin_at_divergence": 0.125,
+        "plain_prefill_ms": [
+          501.3831770000934,
+          43.63077099992552
+        ],
+        "plain_decode_ms_per_token": [
+          8.830890839215712,
+          8.833299113725575
+        ]
+      }
+    ]
+  }
+}

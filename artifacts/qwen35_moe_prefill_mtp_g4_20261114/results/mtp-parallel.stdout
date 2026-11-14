@@ -1,0 +1,21 @@
+{
+ "summary": {
+  "reference": {
+   "mtp_runs": 15,
+   "mtp_runs_equal_to_plain": 3,
+   "all_repeatable": true
+  },
+  "grouped": {
+   "mtp_runs": 15,
+   "mtp_runs_equal_to_plain": 3,
+   "all_repeatable": true
+  }
+ },
+ "gate": {
+  "strong_margin": 0.5,
+  "failures": [
+   "grouped code_1k parallel k=3: MTP on leaves MTP off at token 242"
+  ],
+  "passes": false
+ }
+}

@@ -352,3 +352,109 @@ compile error was in the newly added combine kernel and was fixed before the
 numerical checks. Failed runs and independent dequantized comparisons are retained.
 Results and raw traces were recovered and verified; the exact dedicated G4
 session was terminated and the server reported no active sessions.
+
+### Prefill acceptance criterion and grouped numerics, 2026-11-14
+
+The [numerical diagnosis](artifacts/qwen35_moe_prefill_numerics_20261114/README.md)
+replaces, at the user's decision, the `atol=2e-4, rtol=.03` comparison for
+prefill backends that change rounding order. A candidate's RMS error to an FP64
+evaluation of the same INT8 banks must not exceed the adopted loop's (1% tie
+allowance); at model level the last-position logit KL must stay within 2e-3
+(provisional) and the sixteen-token continuation must match. `sorted` must
+still be bit-exact.
+
+On a local RTX 2080 SUPER (SM 7.5, PyTorch 2.14.0+cu130, Triton 3.8.0), one
+synthetic real-shape bank: every BF16 path is 0.55–0.64% RMS from FP64. The
+grouped candidate had no routing or tiling bug; it equalled the dequantized loop
+in at least 99.98% of projection elements. Rounding `q * scale` to BF16 costs
+0.237% per projection against 0.166% for output rounding alone, so the candidate
+was less accurate than the small-row GEMV and failed 15 of 45 gate checks. The
+kernel now applies group scales to FP32 partial sums, as the GEMV does, and
+passes 45 of 45 (0.547–0.566% against 0.568–0.631% for the adopted loop).
+
+The local GPU could not reproduce the 2026-11-13 G4 difference at 16–64 rows
+per expert, nor hold the checkpoint; both were settled by the G4 run below.
+
+### G4 route-grouped prefill, 2026-11-14
+
+The [G4 experiment](artifacts/qwen35_moe_prefill_g4_20261114/README.md) ran
+reference, sorted and grouped on RTX PRO 6000 Blackwell with PyTorch
+2.11.0+cu130, Triton 3.6.0 and FLA 0.6.0, MTP off, batch one, two warmups and
+five repeats. Grouped warm text-model TTFT was 52.5/57.6/106.0/196.2 ms (math)
+and 52.3/52.9/105.0/195.7 ms (Korean) at 128/512/2048/4096 tokens: 4.3–15.5×
+over sorted and 6.6–22.4× over reference. All 45 expert FP64 gates passed
+(0.554–0.561% RMS against 0.564–0.675% for the adopted loop). All eight model
+gates passed: last-position KL 4.7e-7 to 8.4e-4 under the provisional 2e-3
+ceiling, and every sixteen-token continuation matched. Sorted stayed bit-exact.
+
+The 2026-11-13 difference came from the adopted path: on this GPU `F.linear` on
+the dequantized gate/up matrix is correctly rounded in only 59–80% of elements
+at 16–128 rows per expert (99.9% at 4 and at 512+ rows), an unbiased error of
+about one extra BF16 rounding. The responsible cuBLAS kernel was not identified.
+
+Synchronized section times at 2048 tokens put routed experts at 42 ms of 123 ms
+with the grouped backend (871 of 955 ms sorted); GatedDeltaNet is 29 ms core
+plus 20 ms projections, layer norms 7 ms, full attention 11 ms. Routing on these
+repeated fixtures used 155–232 (math) and 87–211 (Korean) of 256 experts per
+layer at 2048 tokens, median 32–39 rows per used expert, with about 50 experts
+at eight rows or fewer and single experts taking up to every token.
+
+Not established: cache-tensor equality, HF BF16 equivalence or task accuracy
+with the grouped backend, natural long prompts, MTP on (the MTP bank and its
+parity with the same backend were not run), batch sizes above one and other
+GPUs. No tile was tuned. `grouped` remains an explicit opt-in and `reference`
+the default. The validator rechecked 140 file hashes, 435 timing samples and
+384 continuation IDs; the dedicated session was stopped after verified recovery
+and the server reported no active sessions.
+
+### G4 prefill tile tuning and remaining sections, 2026-11-14
+
+The [tuning run](artifacts/qwen35_moe_prefill_tune_g4_20261114/README.md) replayed
+the recorded per-layer expert loads on one real-shape bank over 36 tile
+configurations. A 32×128×128 tile took 0.793× the expert time of 16×64×64
+(geometric mean of the eight cases) and passed the FP64 gate; a second tile
+shape for busy experts did not help (0.931× at best). In the model, same
+session, TTFT went from 106.0 to 98.3 ms (math) and 105.1 to 96.8 ms (Korean)
+at 2048 tokens and from 196 to 178 ms at 4096, and stayed at 52 ms at 128.
+All sixteen model gates passed (KL at most 7.7e-4, continuations equal). The
+tuned tile is now the grouped kernel's default; `grouped` is still opt-in.
+
+A fused INT8 kernel for the dense prefill projections (`w8a16_gemm`) was
+slower than dequantize + `F.linear` from 2048 tokens (27.2 against 24.3 ms per
+prefill) and is not used. Dequantizing the dense weights costs 6.5 ms per
+prefill at any length; cached BF16 copies would remove it for about 2.8 GB.
+
+Synchronized sections with host times show the 128-token prefill is
+dispatch-bound: about 41 ms of host time in leaf sections, 12.6 ms of it in
+the FLA chunk delta rule (0.42 ms per layer at every length). At 4096 tokens
+routed experts are 27% and GatedDeltaNet 50% of the synchronized total, spread
+over projections, delta rule, elementwise work, gated norm and convolution.
+No GatedDeltaNet or dispatch optimization has been attempted; MTP on, natural
+prompts and task accuracy remain unmeasured. The session was stopped after
+verified recovery (138 file hashes) and the server reported no active sessions.
+
+### Grouped prefill becomes the default, 2026-11-14
+
+The [MTP run](artifacts/qwen35_moe_prefill_mtp_g4_20261114/README.md) set each
+backend on all 41 expert banks (the MTP head's own prefill covers every prompt
+row) and generated 256 tokens for five natural prompts with CUDA-graph decode.
+With sequential and consistent verification at k=1,2, all 20 MTP-on runs
+equalled MTP off under the reference loop and all 20 under grouped.
+`Int8Experts.prefill_backend` now defaults to `grouped`; where the kernel does
+not apply (CPU, FP32, a scale group that is not a power of two of at least 16)
+the bit-exact `sorted` loop runs.
+
+This changes long greedy outputs. With MTP off all five 256-token continuations
+left the reference ones, at generated tokens 121, 219, 155, 2 and 43, each where
+the reference's top two logits were tied or one BF16 step (0.125) apart; the
+reference has an exact tie in four of the five continuations. Earlier
+token-exact records (sorted parity, compiled and MTP parity tables) were made
+with the reference loop; set `prefill_backend = 'reference'` on every bank to
+reproduce them. Which continuation is closer to HF BF16 was not measured.
+
+Prefill was 504.6–1252.1 ms with the reference loop and 43.9–74.3 ms with
+grouped (11.5–17×); MTP adds 1.8–3.7 ms to it. Decode was unchanged (8.7–8.9
+ms/token, one run each). Parallel verification, added as a diagnostic, equalled
+MTP off in 3 of 15 runs under each backend, and not the same three, so it stays
+inexact regardless of the prefill backend. The session was stopped after
+verified recovery (125 file hashes) and the server reported no active sessions.
